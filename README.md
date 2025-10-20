@@ -13,5 +13,5 @@
 | Resource          | Link                                                                 |
 |-------------------|---------------------------------------------------------------------|
 | Project Wiki      | [View Wiki](https://github.com/CMPUT301F25yellow/yellow-project/wiki) |
-| UI Mockups        | [View Designs](url) |
+| UI Mockups        | [View Designs] |
 
