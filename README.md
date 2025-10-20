@@ -3,7 +3,7 @@
 | Student Name | CCID      | Github username|
 | ------------ | --------- | -------------- |
 |  `Kien Tran` | `kht` | `TranKien-n`|
-| `Add name` | `mdlau`  | `mdlau7`|
+| `Marcus Lau` | `mdlau`  | `mdlau7`|
 | `Tabrez Anwar` | `tabrez1`  | `Zatsii`|
 | `Waylon Wang` | `waylon1`  | `WaylonWang17`|
 | `Will Thomas` | `wmthomas`  | `Wthomas403`|
