@@ -7,6 +7,7 @@
 | `Tabrez Anwar` | `tabrez1`  | `Zatsii`|
 | `Waylon Wang` | `waylon1`  | `WaylonWang17`|
 | `Will Thomas` | `wmthomas`  | `Wthomas403`|
+| `Kartik Jakhar` | `kjakhar`  | `kartikjakharr`|
 
 ## Project Description
 
