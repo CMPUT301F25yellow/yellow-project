@@ -29,4 +29,5 @@
 | Resource          | Link                                                                 |
 |-------------------|---------------------------------------------------------------------|
 | Project Wiki      | [View Wiki](https://github.com/CMPUT301F25yellow/yellow-project/wiki) |
-| UI Mockups        | [View Designs] |
+| UI Mockups        | [View Designs](https://github.com/CMPUT301F25yellow/yellow-project/wiki/UI-Mockups) |
+| Storyboard Sequence| [View Storyboard](https://github.com/CMPUT301F25yellow/yellow-project/wiki/Storyboard-Sequence) |
