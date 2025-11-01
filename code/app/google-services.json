@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "427673213326",
+    "project_id": "yellow-db-934a3",
+    "storage_bucket": "yellow-db-934a3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:427673213326:android:12d43117f9cb888a756cdf",
+        "android_client_info": {
+          "package_name": "com.example.yellow"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEAF9Gv6DvHlvtm_0P69ofqeQ4L-kZRsY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
