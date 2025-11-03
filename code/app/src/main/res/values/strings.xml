@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">Yellow</string>
+
+    <string name="profile_title">Profile</string>
+
+    <string name="full_name">Full Name</string>
+    <string name="email_address">Email Address</string>
+    <string name="phone_optional">Phone Number (optional)</string>
+
+    <string name="save_changes">Save Changes</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete_profile">Delete Profile</string>
+    <string name="delete_warning">This action cannot be undone.</string>
+
+    <string name="admin_settings">Admin Settings</string>
+    <string name="open_admin_dashboard">Open Admin Dashboard</string>
+
+    <string name="profile_avatar_desc">Profile avatar</string>
+    <string name="edit_avatar_desc">Edit profile picture</string>
+    <string name="delete_icon_desc">Delete</string>
 </resources>
