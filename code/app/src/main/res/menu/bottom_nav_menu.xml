@@ -7,6 +7,8 @@
         android:id="@+id/nav_home"
         android:title="Home"
         android:icon="@drawable/home"/>
+
+    <!--TO DO IMPLEMENT THE REST OF THE NAV BAR
     <item
         android:id="@+id/nav_summary"
         android:title="Summary"
@@ -16,4 +18,3 @@
         android:title="Events"
         android:icon="@drawable/events"/>
 </menu>
-

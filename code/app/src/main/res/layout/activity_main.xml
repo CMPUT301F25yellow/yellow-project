@@ -22,7 +22,7 @@
                 android:text="EventHub"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="22sp"
                 android:fontFamily="sans-serif-medium"
                 android:layout_marginBottom="16dp" />
@@ -35,26 +35,56 @@
                 android:gravity="center_vertical"
                 android:layout_marginBottom="12dp">
 
-                <Button
+                <!-- Interests dropdown -->
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="All Interests"
-                    android:backgroundTint="#1E1E1E"
-                    android:textColor="#FFFFFF" />
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:hint="All Interests"
+                    app:hintTextColor="@color/white"
+                    app:boxStrokeColor="@color/white"
+                    android:theme="@style/ThemeOverlay.MaterialComponents.Dark"
+                    android:layout_marginEnd="6dp">
 
-                <View
-                    android:layout_width="12dp"
-                    android:layout_height="match_parent" />
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/dropdown_interests"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:textColor="@color/white"
+                        android:textColorHint="@color/white"
+                        android:popupBackground="@color/black"
+                        android:backgroundTint="@android:color/transparent"
+                        android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <Button
+                <!-- Dates dropdown -->
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="All Dates"
-                    android:backgroundTint="#1E1E1E"
-                    android:textColor="#FFFFFF" />
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:hint="All Dates"
+                    app:hintTextColor="@color/white"
+                    app:boxStrokeColor="@color/white"
+                    android:theme="@style/ThemeOverlay.MaterialComponents.Dark"
+                    android:layout_marginStart="6dp">
+
+                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                        android:id="@+id/dropdown_dates"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:textColor="@color/white"
+                        android:textColorHint="@color/white"
+                        android:popupBackground="@color/black"
+                        android:backgroundTint="@android:color/transparent"
+                        android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
+                </com.google.android.material.textfield.TextInputLayout>
+
             </LinearLayout>
+
 
             <!-- Search Bar -->
             <EditText
@@ -73,7 +103,7 @@
                 android:text="Upcoming Events"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="18sp"
                 android:fontFamily="sans-serif-medium"
                 android:layout_marginBottom="4dp" />
@@ -94,6 +124,12 @@
                 android:layout_marginBottom="12dp"
                 android:clipToOutline="true"
                 android:elevation="4dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:src="@drawable/my_image"
+                />
 
                 <TextView
                     android:text="Summer Music Festival 2025"
@@ -129,6 +165,12 @@
                 android:padding="8dp"
                 android:clipToOutline="true"
                 android:elevation="4dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:src="@drawable/my_image"
+                    />
 
                 <TextView
                     android:text="Championship Finals 2025"
