@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--The following code is from: https://www.geeksforgeeks.org/android/bottom-navigation-bar-in-android/
+        15 Jul, 2025
+        agarwalkeshav8399-->
+    <item
+        android:id="@+id/nav_home"
+        android:title="Home"
+        android:icon="@drawable/home"/>
+    <item
+        android:id="@+id/nav_summary"
+        android:title="Summary"
+        android:icon="@drawable/summary"/>
+    <item
+        android:id="@+id/nav_events"
+        android:title="Events"
+        android:icon="@drawable/events"/>
+</menu>
+
