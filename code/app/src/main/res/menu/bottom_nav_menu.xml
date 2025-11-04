@@ -17,4 +17,5 @@
         android:id="@+id/nav_events"
         android:title="Events"
         android:icon="@drawable/events"/>
+    -->
 </menu>

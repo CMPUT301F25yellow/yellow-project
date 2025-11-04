@@ -40,7 +40,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.android.material:material:1.11.0") // material design
     implementation("com.github.bumptech.glide:glide:4.16.0") // image loading
-    implementation("com.google.android.gms:play-services-auth:22.0.0") // google auth
+    implementation("com.google.android.gms:play-services-auth:21.3.0") // google auth
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
