@@ -4,4 +4,26 @@
     <color name="white">#FFFFFFFF</color>
     <color name="hinty">#AAAAAA</color>
     <color name="grey">#1E1E1E</color>
+
+    <color name="background_black">#0D0D0D</color>
+    <color name="surface_dark">#1C1C1E</color>
+    <color name="on_surface_muted">#BDBDBD</color>
+
+
+    <color name="brand_primary">#4F46E5</color>
+    <color name="brand_primary_on">#FFFFFF</color>
+
+    <color name="admin_card_bg">#142131</color>
+    <color name="admin_card_stroke">#2A3A4F</color>
+    <color name="admin_text">#E1ECFF</color>
+    <color name="admin_text_secondary">#A9B9D3</color>
+
+    <color name="btn_outline_stroke">#E6E6E6</color>
+    <color name="btn_disabled_bg">#2A2A2A</color>
+
+    <color name="danger_red">#E35D5D</color>
+    <color name="danger_red_on">#FFFFFF</color>
+
+    <color name="ripple_light">#1FFFFFFF</color>  <!-- white @ 12% -->
+    <color name="ripple_dark">#14FFFFFF</color>   <!-- white @ 8% -->
 </resources>
