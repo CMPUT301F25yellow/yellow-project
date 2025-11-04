@@ -23,17 +23,15 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.example.yellow.R;
-import com.example.yellow.organizers.Event;
 import com.example.yellow.utils.FirebaseManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 public class CreateEventActivity extends AppCompatActivity {
-
-    private static final String TAG = "CreateEventActivity";
 
     // UI Components
     private MaterialToolbar toolbar;
@@ -72,6 +70,9 @@ public class CreateEventActivity extends AppCompatActivity {
         setupImagePicker();
     }
 
+    /**
+     * Initializes the UI components.
+     */
     private void initializeViews() {
         toolbar = findViewById(R.id.toolbar);
         posterImageView = findViewById(R.id.posterImageView);
@@ -88,6 +89,9 @@ public class CreateEventActivity extends AppCompatActivity {
         createEventButton = findViewById(R.id.createEventButton);
     }
 
+    /**
+     * Initializes the data and sets up listeners.
+     */
     private void initializeData() {
         dateFormatter = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
         firebaseManager = FirebaseManager.getInstance();
@@ -103,6 +107,9 @@ public class CreateEventActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Sets up the listeners for the UI components.
+     */
     private void setupListeners() {
         toolbar.setNavigationOnClickListener(v -> finish());
         posterCard.setOnClickListener(v -> openImagePicker());
@@ -111,6 +118,9 @@ public class CreateEventActivity extends AppCompatActivity {
         createEventButton.setOnClickListener(v -> validateAndCreateEvent());
     }
 
+    /**
+     * Sets up the image picker for selecting an image.
+     */
     private void setupImagePicker() {
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
@@ -132,10 +142,17 @@ public class CreateEventActivity extends AppCompatActivity {
         );
     }
 
+    /**
+     * Opens the image picker to select an image.
+     */
     private void openImagePicker() {
         imagePickerLauncher.launch("image/*");
     }
 
+    /**
+     * Shows a date picker dialog.
+     * @param isStartDate Whether to show the start date picker.
+     */
     private void showDatePicker(boolean isStartDate) {
         Calendar calendar = Calendar.getInstance();
         if (isStartDate && startDate != null) {
@@ -170,22 +187,20 @@ public class CreateEventActivity extends AppCompatActivity {
                 calendar.get(Calendar.DAY_OF_MONTH)
         );
 
-        // You can also apply the theme directly to the dialog if needed, but the constructor is often enough
-        // datePickerDialog.getContext().setTheme(R.style.DatePickerDialogTheme);
-
-
         // Set minimum date to today
         datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
         datePickerDialog.show();
     }
 
-
+    /**
+     * Validates and creates an event based on user input.
+     */
     private void validateAndCreateEvent() {
         // Get input values
-        String name = eventNameInput.getText().toString().trim();
-        String description = descriptionInput.getText().toString().trim();
-        String location = locationInput.getText().toString().trim();
-        String maxEntrantsStr = maxEntrantsInput.getText().toString().trim();
+        String name = Objects.requireNonNull(eventNameInput.getText()).toString().trim();
+        String description = Objects.requireNonNull(descriptionInput.getText()).toString().trim();
+        String location = Objects.requireNonNull(locationInput.getText()).toString().trim();
+        String maxEntrantsStr = Objects.requireNonNull(maxEntrantsInput.getText()).toString().trim();
 
         // Validate required fields
         if (TextUtils.isEmpty(name)) {
@@ -257,6 +272,10 @@ public class CreateEventActivity extends AppCompatActivity {
         createEvent(event);
     }
 
+    /**
+     * Creates an event using FirebaseManager.
+     * @param event The event to be created.
+     */
     private void createEvent(Event event) {
         // Show progress
         progressDialog.show();
@@ -288,9 +307,7 @@ public class CreateEventActivity extends AppCompatActivity {
                                 Toast.LENGTH_LONG).show();
                     }
                 },
-                progress -> {
-                    progressDialog.setMessage("Uploading image... " + progress + "%");
-                }
+                progress -> progressDialog.setMessage("Uploading image... " + progress + "%")
         );
     }
 }

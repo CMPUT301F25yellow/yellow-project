@@ -8,6 +8,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents an event with various attributes.
+ */
 public class Event {
     @DocumentId
     private String id;
@@ -32,6 +35,19 @@ public class Event {
     // Required empty constructor for Firebase
     public Event() {}
 
+    /**
+     * Constructor for creating an event.
+     * @param name Name of the event.
+     * @param description Description of the event.
+     * @param location Location of the event.
+     * @param startDate Start date of the event.
+     * @param endDate End date of the event.
+     * @param maxEntrants Maximum number of entrants allowed for the event.
+     * @param requireGeolocation Whether the event requires geolocation.
+     * @param posterImageUrl URL of the poster image.
+     * @param organizerId ID of the organizer.
+     * @param organizerName Name of the organizer.
+     */
     public Event(String name, String description, String location,
                  Timestamp startDate, Timestamp endDate, Integer maxEntrants,
                  boolean requireGeolocation, String posterImageUrl,
@@ -53,7 +69,10 @@ public class Event {
         this.enrolled = 0;
     }
 
-    // Convert to Map for Firebase
+    /**
+     * Converts the event object to a map for Firestore.
+     * @return A map containing the event's attributes.
+     */
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("name", name);
@@ -75,7 +94,10 @@ public class Event {
         return map;
     }
 
-    // Getters and Setters
+    /**
+     * Getter and setter methods for each attribute.
+     * @return The value of the attribute.
+     */
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
