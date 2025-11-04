@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="@color/black">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!-- Header -->
+            <!--Header-->
             <TextView
                 android:text="EventHub"
                 android:layout_width="match_parent"
@@ -27,7 +27,7 @@
                 android:fontFamily="sans-serif-medium"
                 android:layout_marginBottom="16dp" />
 
-            <!-- Filter Row -->
+            <!--Interests + Date-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -35,7 +35,13 @@
                 android:gravity="center_vertical"
                 android:layout_marginBottom="12dp">
 
-                <!-- Interests dropdown -->
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/my_image"
+                    />
+
+                <!--Interests-->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -53,13 +59,20 @@
                         android:layout_height="wrap_content"
                         android:inputType="none"
                         android:textColor="@color/white"
-                        android:textColorHint="@color/white"
+                        android:textColorHint="@color/hinty"
                         android:popupBackground="@color/black"
                         android:backgroundTint="@android:color/transparent"
                         android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Dates dropdown -->
+                <!--Dates-->
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/my_image"
+                    />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -71,34 +84,35 @@
                     android:theme="@style/ThemeOverlay.MaterialComponents.Dark"
                     android:layout_marginStart="6dp">
 
+
                     <com.google.android.material.textfield.MaterialAutoCompleteTextView
                         android:id="@+id/dropdown_dates"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="none"
                         android:textColor="@color/white"
-                        android:textColorHint="@color/white"
+                        android:textColorHint="@color/hinty"
                         android:popupBackground="@color/black"
                         android:backgroundTint="@android:color/transparent"
                         android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
+
                 </com.google.android.material.textfield.TextInputLayout>
 
             </LinearLayout>
 
-
-            <!-- Search Bar -->
+            <!--Search bar-->
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Search events or organizers"
                 android:padding="12dp"
-                android:textColor="#FFFFFF"
-                android:textColorHint="#AAAAAA"
+                android:textColor="@color/white"
+                android:textColorHint="@color/hinty"
                 android:drawableStart="@android:drawable/ic_menu_search"
                 android:drawablePadding="8dp"
                 android:layout_marginBottom="16dp" />
 
-            <!-- Section Title -->
+            <!--Upcoming events-->
             <TextView
                 android:text="Upcoming Events"
                 android:layout_width="match_parent"
@@ -110,16 +124,18 @@
 
             <TextView
                 android:text="Discover and join events near you"
-                android:textColor="#AAAAAA"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:textColor="@color/hinty"
                 android:textSize="13sp"
                 android:layout_marginBottom="12dp" />
 
-            <!-- Event Card 1 -->
+            <!--Event1-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#1E1E1E"
+                android:background="@color/grey"
                 android:padding="8dp"
                 android:layout_marginBottom="12dp"
                 android:clipToOutline="true"
@@ -135,7 +151,7 @@
                     android:text="Summer Music Festival 2025"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/white"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp" />
 
@@ -143,7 +159,7 @@
                     android:text="Oct 25, 2025 · 6:00 PM\nCentral Park, New York"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/hinty"
                     android:textSize="13sp"
                     android:layout_marginTop="4dp" />
 
@@ -152,16 +168,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_marginTop="8dp"
-                    android:backgroundTint="#FFFFFF"
-                    android:textColor="#000000" />
+                    android:backgroundTint="@color/white"
+                    android:textColor="@color/black" />
             </LinearLayout>
 
-            <!-- Event Card 2 -->
+            <!--Event2-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#1E1E1E"
+                android:background="@color/grey"
                 android:padding="8dp"
                 android:clipToOutline="true"
                 android:elevation="4dp">
@@ -176,7 +192,7 @@
                     android:text="Championship Finals 2025"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/white"
                     android:textSize="16sp"
                     android:layout_marginTop="8dp" />
 
@@ -184,7 +200,7 @@
                     android:text="Nov 3, 2025 · 8:00 PM\nMadison Square Garden"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/hinty"
                     android:textSize="13sp"
                     android:layout_marginTop="4dp" />
 
@@ -193,13 +209,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_marginTop="8dp"
-                    android:backgroundTint="#FFFFFF"
-                    android:textColor="#000000" />
+                    android:backgroundTint="@color/white"
+                    android:textColor="@color/black" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Navigation -->
+    <!--Nav bar-->
     <FrameLayout
         android:id="@+id/flFragment"
         android:layout_width="match_parent"
@@ -216,8 +232,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="@color/black"
-        app:itemIconTint="@android:color/white"
-        app:itemTextColor="@android:color/white"
+        app:itemIconTint="@color/white"
+        app:itemTextColor="@color/white"
         app:labelVisibilityMode="labeled"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
