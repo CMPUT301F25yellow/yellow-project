@@ -15,7 +15,24 @@
         android:icon="@drawable/summary"/>
         -->
     <item
+        android:id="@+id/nav_history"
+        android:icon="@drawable/ic_history"
+        android:title="History" />
+
+    <!-- Center (+) create -->
+    <item
         android:id="@+id/nav_create_event"
         android:title="Create event"
         android:icon="@drawable/create_event"/>
+
+    <item
+        android:id="@+id/nav_my_events"
+        android:icon="@drawable/ic_eventscal"
+        android:title="My Events" />
+
+    <item
+        android:id="@+id/nav_scan"
+        android:icon="@drawable/ic_qrscan"
+        android:title="Scan" />
+
 </menu>
