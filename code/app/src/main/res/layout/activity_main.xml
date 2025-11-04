@@ -1,36 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
     android:id="@+id/main"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black">
+    android:background="@color/black"
+    android:fitsSystemWindows="true">
 
-    <!--IN REVIEW-->
+    <!-- Header -->
+    <RelativeLayout
+        android:id="@+id/header_main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="40dp"
+        android:paddingBottom="12dp"
+        android:background="@color/black"
+        android:fitsSystemWindows="true">
 
+        <!-- App title -->
+        <TextView
+            android:id="@+id/tvHeaderTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="16dp"
+            android:text="EventHub"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:fontFamily="sans-serif-medium"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true" />
+
+
+        <ImageView
+            android:id="@+id/iconNotifications"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="4dp"
+            android:layout_toStartOf="@id/iconProfile"
+            android:adjustViewBounds="true"
+            android:clickable="true"
+            android:contentDescription="@string/notifications_title"
+            android:focusable="true"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_bell" />
+
+        <ImageView
+            android:id="@+id/iconProfile"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="10dp"
+            android:adjustViewBounds="true"
+            android:clickable="true"
+            android:contentDescription="@string/profile_title"
+            android:focusable="true"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_profile_avatar" />
+    </RelativeLayout>
+
+    <!-- Scrollable content below header -->
     <ScrollView
+        android:id="@+id/scrollContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp"
+        android:layout_marginTop="90dp"
+        android:layout_marginBottom="70dp"
         android:clipToPadding="false"
-        android:layout_marginBottom="70dp">
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="24dp">
 
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!--Header-->
-            <TextView
-                android:text="EventHub"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:textColor="@color/white"
-                android:textSize="22sp"
-                android:fontFamily="sans-serif-medium"
-                android:layout_marginBottom="16dp" />
-
-            <!--Interests + Date-->
+            <!-- Interests + Date -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -41,194 +87,176 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/my_image"
-                    />
+                    android:src="@drawable/my_image" />
 
-                <!--Interests-->
+                <!-- Interests -->
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:hint="All Interests"
-                    app:hintTextColor="@color/white"
                     app:boxStrokeColor="@color/white"
-                    android:theme="@style/ThemeOverlay.MaterialComponents.Dark"
-                    android:layout_marginEnd="6dp">
+                    app:hintTextColor="@color/white"
+                    android:theme="@style/ThemeOverlay.MaterialComponents.Dark">
 
                     <com.google.android.material.textfield.MaterialAutoCompleteTextView
                         android:id="@+id/dropdown_interests"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:backgroundTint="@android:color/transparent"
                         android:inputType="none"
+                        android:popupBackground="@color/black"
                         android:textColor="@color/white"
                         android:textColorHint="@color/hinty"
-                        android:popupBackground="@color/black"
-                        android:backgroundTint="@android:color/transparent"
                         android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!--Dates-->
-
+                <!-- Dates -->
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/my_image"
-                    />
+                    android:src="@drawable/my_image" />
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:hint="All Dates"
-                    app:hintTextColor="@color/white"
                     app:boxStrokeColor="@color/white"
-                    android:theme="@style/ThemeOverlay.MaterialComponents.Dark"
-                    android:layout_marginStart="6dp">
-
+                    app:hintTextColor="@color/white"
+                    android:theme="@style/ThemeOverlay.MaterialComponents.Dark">
 
                     <com.google.android.material.textfield.MaterialAutoCompleteTextView
                         android:id="@+id/dropdown_dates"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:backgroundTint="@android:color/transparent"
                         android:inputType="none"
+                        android:popupBackground="@color/black"
                         android:textColor="@color/white"
                         android:textColorHint="@color/hinty"
-                        android:popupBackground="@color/black"
-                        android:backgroundTint="@android:color/transparent"
                         android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
-
                 </com.google.android.material.textfield.TextInputLayout>
-
             </LinearLayout>
 
-            <!--Search bar-->
+            <!-- Search bar -->
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:drawableStart="@android:drawable/ic_menu_search"
+                android:drawablePadding="8dp"
                 android:hint="Search events or organizers"
                 android:padding="12dp"
                 android:textColor="@color/white"
-                android:textColorHint="@color/hinty"
-                android:drawableStart="@android:drawable/ic_menu_search"
-                android:drawablePadding="8dp"
-                android:layout_marginBottom="16dp" />
+                android:textColorHint="@color/hinty" />
 
-            <!--Upcoming events-->
+            <!-- Upcoming events -->
             <TextView
-                android:text="Upcoming Events"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:textColor="@color/white"
-                android:textSize="18sp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
                 android:fontFamily="sans-serif-medium"
-                android:layout_marginBottom="4dp" />
+                android:text="Upcoming Events"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
 
             <TextView
-                android:text="Discover and join events near you"
-                android:layout_height="match_parent"
                 android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="Discover and join events near you"
                 android:textColor="@color/hinty"
-                android:textSize="13sp"
-                android:layout_marginBottom="12dp" />
+                android:textSize="13sp" />
 
-            <!--Event1-->
+            <!-- Event 1 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@color/grey"
-                android:padding="8dp"
                 android:layout_marginBottom="12dp"
+                android:background="@color/grey"
                 android:clipToOutline="true"
-                android:elevation="4dp">
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="8dp">
 
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
-                    android:src="@drawable/my_image"
-                />
+                    android:src="@drawable/my_image" />
 
                 <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="Summer Music Festival 2025"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
                     android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:layout_marginTop="8dp" />
+                    android:textSize="16sp" />
 
                 <TextView
-                    android:text="Oct 25, 2025 · 6:00 PM\nCentral Park, New York"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Oct 25, 2025 · 6:00 PM\nCentral Park, New York"
                     android:textColor="@color/hinty"
-                    android:textSize="13sp"
-                    android:layout_marginTop="4dp" />
+                    android:textSize="13sp" />
 
                 <Button
-                    android:text="Join Waiting Room"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:backgroundTint="@color/white"
+                    android:text="Join Waiting Room"
                     android:textColor="@color/black" />
             </LinearLayout>
 
-            <!--Event2-->
+            <!-- Event 2 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:background="@color/grey"
-                android:padding="8dp"
                 android:clipToOutline="true"
-                android:elevation="4dp">
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="8dp">
 
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
-                    android:src="@drawable/my_image"
-                    />
+                    android:src="@drawable/my_image" />
 
                 <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="Championship Finals 2025"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
                     android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:layout_marginTop="8dp" />
+                    android:textSize="16sp" />
 
                 <TextView
-                    android:text="Nov 3, 2025 · 8:00 PM\nMadison Square Garden"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Nov 3, 2025 · 8:00 PM\nMadison Square Garden"
                     android:textColor="@color/hinty"
-                    android:textSize="13sp"
-                    android:layout_marginTop="4dp" />
+                    android:textSize="13sp" />
 
                 <Button
-                    android:text="Join Waiting Room"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:backgroundTint="@color/white"
+                    android:text="Join Waiting Room"
                     android:textColor="@color/black" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
-    <!--Nav bar-->
-    <FrameLayout
-        android:id="@+id/flFragment"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
+    <!-- Bottom Nav -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
@@ -238,10 +266,6 @@
         app:itemIconTint="@color/white"
         app:itemTextColor="@color/white"
         app:labelVisibilityMode="labeled"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

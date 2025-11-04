@@ -2,6 +2,7 @@
     <string name="app_name">Yellow</string>
 
     <string name="profile_title">Profile</string>
+    <string name="notifications_title">Notification</string>
 
     <string name="full_name">Full Name</string>
     <string name="email_address">Email Address</string>
@@ -18,4 +19,14 @@
     <string name="profile_avatar_desc">Profile avatar</string>
     <string name="edit_avatar_desc">Edit profile picture</string>
     <string name="delete_icon_desc">Delete</string>
+
+    <string name="congratulation_text">Congratulations! You have been selected to attend the Summer Music Festival on Oct 20, 2025.</string>
+
+    <string name="notif_title_selected">Selected for %1$s</string>
+    <string name="notif_title_not_selected">Not Selected for %1$s</string>
+    <string name="notif_msg_selected">Congratulations! You have been selected to attend %1$s on %2$s.</string>
+    <string name="notif_msg_not_selected">Unfortunately, you were not selected for %1$s. Better luck next time!</string>
+    <string name="accept">Accept</string>
+    <string name="reject">Reject</string>
+    <string name="view_event_details">View Event Details</string>
 </resources>
