@@ -1,13 +1,6 @@
 # macOS system files
 .DS_Store
 
-# Android Studio / IntelliJ
-.idea/
-.gradle/
-local.properties
-*.iml
-*.ipr
-*.iws
 
 # Build outputs
 /build/
