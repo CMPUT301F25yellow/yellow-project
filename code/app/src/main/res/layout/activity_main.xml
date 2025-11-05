@@ -14,9 +14,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="16dp"
-        android:paddingTop="40dp"
+        android:paddingTop="16dp"
         android:paddingBottom="12dp"
-        android:background="@color/black"
+        android:background="@color/surface_dark"
         android:fitsSystemWindows="true">
 
         <!-- App title -->
@@ -214,6 +214,46 @@
                     android:textColor="@color/black" />
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="@color/grey"
+                android:clipToOutline="true"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:src="@drawable/my_image" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Summer Music Festival 2025"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Oct 25, 2025 · 6:00 PM\nCentral Park, New York"
+                    android:textColor="@color/hinty"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="@color/white"
+                    android:text="Join Waiting Room"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+
             <!-- Event 2 -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -262,7 +302,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@color/black"
+        android:background="@color/surface_dark"
         app:itemIconTint="@color/white"
         app:itemTextColor="@color/white"
         app:labelVisibilityMode="labeled"
