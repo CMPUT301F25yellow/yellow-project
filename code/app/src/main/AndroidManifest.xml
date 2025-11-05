@@ -31,6 +31,8 @@
                 android:value=".MainActivity" />
         </activity>
 
+        <activity android:name=".organizers.CreateEventActivity" />
+
     </application>
 
 </manifest>

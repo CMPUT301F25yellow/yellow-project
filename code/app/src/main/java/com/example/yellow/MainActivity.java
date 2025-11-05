@@ -10,6 +10,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.yellow.organizers.CreateEventActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -85,7 +86,8 @@ public class MainActivity extends AppCompatActivity {
                 // TODO: show HistoryFragment
                 return true;
             } else if (id == R.id.nav_create_event) {
-                // TODO: open Create flow
+                Intent intent = new Intent(MainActivity.this, CreateEventActivity.class);
+                startActivity(intent);
                 return true;
             } else if (id == R.id.nav_my_events) {
                 // TODO: show MyEventsFragment
