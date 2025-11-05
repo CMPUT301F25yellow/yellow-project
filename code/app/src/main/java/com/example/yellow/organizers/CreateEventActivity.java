@@ -298,20 +298,30 @@ public class CreateEventActivity extends AppCompatActivity {
     private void createEvent(Event event) {
         progressDialog.show();
 
-        FirebaseUser currentUser = auth.getCurrentUser();
-        if (currentUser == null) {
-            // Anonymous sign-in just like in ProfileUserFragment
-            auth.signInAnonymously()
-                    .addOnSuccessListener(r -> uploadPosterAndSave(event))
-                    .addOnFailureListener(e -> {
+        FirebaseManager.getInstance().uploadImageAndCreateEvent(
+                selectedImageUri,
+                event,
+                new FirebaseManager.CreateEventCallback() {
+                    @Override
+                    public void onSuccess(Event createdEvent) {
                         progressDialog.dismiss();
-                        Toast.makeText(this, "Auth failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
-        } else {
-            uploadPosterAndSave(event);
-        }
-    }
+                        Toast.makeText(CreateEventActivity.this,
+                                "Event created successfully!",
+                                Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
 
+                    @Override
+                    public void onFailure(Exception e) {
+                        progressDialog.dismiss();
+                        Toast.makeText(CreateEventActivity.this,
+                                "Error creating event: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                },
+                progress -> progressDialog.setMessage("Uploading image... " + progress + "%")
+        );
+    }
 
     private void uploadPosterAndSave(Event event) {
         if (selectedImageUri == null) {

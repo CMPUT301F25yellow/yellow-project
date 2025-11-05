@@ -3,21 +3,18 @@ package com.example.yellow.utils;
 import android.net.Uri;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.example.yellow.organizers.Event;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import com.example.yellow.organizers.Event;
-
+import java.util.List;
 import java.util.UUID;
 
 public class FirebaseManager {
@@ -44,23 +41,27 @@ public class FirebaseManager {
         return instance;
     }
 
-    // Create Event
+    // ---------------- CREATE EVENT ----------------
     public void createEvent(Event event, CreateEventCallback callback) {
-        // Get current user
         FirebaseUser currentUser = auth.getCurrentUser();
+
+        // Ensure user is authenticated (anonymous if needed)
         if (currentUser == null) {
-            callback.onFailure(new Exception("User not authenticated"));
+            auth.signInAnonymously()
+                    .addOnSuccessListener(result -> createEvent(event, callback))
+                    .addOnFailureListener(callback::onFailure);
             return;
         }
 
-        // Set organizer info
+        // Add organizer info
         event.setOrganizerId(currentUser.getUid());
         event.setOrganizerName(currentUser.getDisplayName() != null ?
                 currentUser.getDisplayName() : "Unknown");
 
-        // Add to Firestore
+        event.setCreatedAt(Timestamp.now());
+
         db.collection(EVENTS_COLLECTION)
-                .add(event.toMap())
+                .add(event)
                 .addOnSuccessListener(documentReference -> {
                     Log.d(TAG, "Event created with ID: " + documentReference.getId());
                     event.setId(documentReference.getId());
@@ -72,23 +73,20 @@ public class FirebaseManager {
                 });
     }
 
-    // Upload Image and Create Event
+    // ---------------- UPLOAD IMAGE & CREATE EVENT ----------------
     public void uploadImageAndCreateEvent(Uri imageUri, Event event,
                                           CreateEventCallback callback,
                                           UploadProgressCallback progressCallback) {
         if (imageUri == null) {
-            // No image, just create event
             createEvent(event, callback);
             return;
         }
 
-        // Create unique filename
         String filename = UUID.randomUUID().toString() + ".jpg";
         StorageReference imageRef = storage.getReference()
                 .child(STORAGE_EVENTS_PATH)
                 .child(filename);
 
-        // Upload image
         UploadTask uploadTask = imageRef.putFile(imageUri);
 
         uploadTask.addOnProgressListener(taskSnapshot -> {
@@ -97,68 +95,37 @@ public class FirebaseManager {
             if (progressCallback != null) {
                 progressCallback.onProgress((int) progress);
             }
-        }).addOnSuccessListener(taskSnapshot -> {
-            // Get download URL
-            imageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
-                event.setPosterImageUrl(downloadUri.toString());
-                createEvent(event, callback);
-            }).addOnFailureListener(e -> {
-                Log.e(TAG, "Error getting download URL", e);
-                callback.onFailure(e);
-            });
-        }).addOnFailureListener(e -> {
-            Log.e(TAG, "Error uploading image", e);
-            callback.onFailure(e);
-        });
+        }).addOnSuccessListener(taskSnapshot ->
+                imageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                    event.setPosterImageUrl(downloadUri.toString());
+                    createEvent(event, callback);
+                }).addOnFailureListener(callback::onFailure)
+        ).addOnFailureListener(callback::onFailure);
     }
 
-    // Update Event
-    public void updateEvent(String eventId, Event event, UpdateEventCallback callback) {
+    // ---------------- FETCH EVENTS ----------------
+    public void getAllEvents(GetEventsCallback callback) {
         db.collection(EVENTS_COLLECTION)
-                .document(eventId)
-                .set(event.toMap())
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Event updated successfully");
-                    callback.onSuccess();
+                .orderBy("startDate", Query.Direction.ASCENDING)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    callback.onSuccess(querySnapshot.getDocuments());
                 })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating event", e);
-                    callback.onFailure(e);
-                });
+                .addOnFailureListener(callback::onFailure);
     }
 
-    // Delete Event
-    public void deleteEvent(String eventId, DeleteEventCallback callback) {
-        db.collection(EVENTS_COLLECTION)
-                .document(eventId)
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Event deleted successfully");
-                    callback.onSuccess();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error deleting event", e);
-                    callback.onFailure(e);
-                });
-    }
-
-    // Callbacks
+    // ---------------- INTERFACES ----------------
     public interface CreateEventCallback {
         void onSuccess(Event event);
         void onFailure(Exception e);
     }
 
-    public interface UpdateEventCallback {
-        void onSuccess();
-        void onFailure(Exception e);
-    }
-
-    public interface DeleteEventCallback {
-        void onSuccess();
-        void onFailure(Exception e);
-    }
-
     public interface UploadProgressCallback {
         void onProgress(int progress);
+    }
+
+    public interface GetEventsCallback {
+        void onSuccess(List<DocumentSnapshot> documents);
+        void onFailure(Exception e);
     }
 }
