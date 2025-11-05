@@ -22,7 +22,7 @@
     <!-- Center (+) create -->
     <item
         android:id="@+id/nav_create_event"
-        android:title="Create event"
+        android:title="Create"
         android:icon="@drawable/create_event"/>
 
     <item
