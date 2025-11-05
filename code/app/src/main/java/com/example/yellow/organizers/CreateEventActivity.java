@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -24,6 +25,12 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.example.yellow.R;
 import com.example.yellow.utils.FirebaseManager;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -32,6 +39,12 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class CreateEventActivity extends AppCompatActivity {
+
+    private FirebaseAuth auth;
+
+    private FirebaseFirestore db;
+
+    private FirebaseStorage storage;
 
     // UI Components
     private MaterialToolbar toolbar;
@@ -55,6 +68,7 @@ public class CreateEventActivity extends AppCompatActivity {
     private SimpleDateFormat dateFormatter;
     private ProgressDialog progressDialog;
     private FirebaseManager firebaseManager;
+
 
     // Image Picker
     private ActivityResultLauncher<String> imagePickerLauncher;
@@ -100,6 +114,10 @@ public class CreateEventActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Creating event...");
         progressDialog.setCancelable(false);
+
+        auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
 
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -269,6 +287,7 @@ public class CreateEventActivity extends AppCompatActivity {
         );
 
         // Upload and create event
+        Log.d("CreateEventActivity", "Validation passed — creating event...");
         createEvent(event);
     }
 
@@ -277,37 +296,68 @@ public class CreateEventActivity extends AppCompatActivity {
      * @param event The event to be created.
      */
     private void createEvent(Event event) {
-        // Show progress
         progressDialog.show();
 
-        // Upload image and create event
-        firebaseManager.uploadImageAndCreateEvent(
-                selectedImageUri,
-                event,
-                new FirebaseManager.CreateEventCallback() {
-                    @Override
-                    public void onSuccess(Event createdEvent) {
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser == null) {
+            // Anonymous sign-in just like in ProfileUserFragment
+            auth.signInAnonymously()
+                    .addOnSuccessListener(r -> uploadPosterAndSave(event))
+                    .addOnFailureListener(e -> {
                         progressDialog.dismiss();
-                        Toast.makeText(CreateEventActivity.this,
-                                "Event created successfully!",
-                                Toast.LENGTH_SHORT).show();
-
-                        // Return to previous screen
-                        Intent resultIntent = new Intent();
-                        resultIntent.putExtra("event_id", createdEvent.getId());
-                        setResult(RESULT_OK, resultIntent);
-                        finish();
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        progressDialog.dismiss();
-                        Toast.makeText(CreateEventActivity.this,
-                                "Error creating event: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show();
-                    }
-                },
-                progress -> progressDialog.setMessage("Uploading image... " + progress + "%")
-        );
+                        Toast.makeText(this, "Auth failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        } else {
+            uploadPosterAndSave(event);
+        }
     }
+
+
+    private void uploadPosterAndSave(Event event) {
+        if (selectedImageUri == null) {
+            saveEventToFirestore(event, null);
+            return;
+        }
+
+        StorageReference ref = storage.getReference()
+                .child("event_posters/" + System.currentTimeMillis() + ".jpg");
+
+        UploadTask uploadTask = ref.putFile(selectedImageUri);
+
+        uploadTask.addOnProgressListener(snapshot -> {
+            double progress = (100.0 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
+            progressDialog.setMessage("Uploading image... " + (int) progress + "%");
+        }).addOnSuccessListener(taskSnapshot ->
+                ref.getDownloadUrl().addOnSuccessListener(uri ->
+                        saveEventToFirestore(event, uri.toString())
+                )
+        ).addOnFailureListener(e -> {
+            progressDialog.dismiss();
+            Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        });
+    }
+
+    private void saveEventToFirestore(Event event, String imageUrl) {
+        if (imageUrl != null) event.setPosterImageUrl(imageUrl);
+
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) {
+            event.setOrganizerId(user.getUid());
+            event.setOrganizerName(user.getDisplayName() != null ?
+                    user.getDisplayName() : "Anonymous");
+        }
+
+        db.collection("events")
+                .add(event)
+                .addOnSuccessListener(doc -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(this, "Event created successfully!", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(this, "Error creating event: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
 }
