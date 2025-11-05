@@ -11,6 +11,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.yellow.organizers.CreateEventActivity;
+import com.example.yellow.users.WaitingListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -34,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         // (Optional) if you want to wire notifications later:
         // View iconNotifications = findViewById(R.id.iconNotifications);
 
-        // ✅ Open ProfileActivity on profile icon tap
+        // Open ProfileActivity on profile icon tap
         if (iconProfile != null) {
             iconProfile.setOnClickListener(v -> {
                 Intent i = new Intent(MainActivity.this, ProfileActivity.class);
@@ -42,7 +43,26 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(i);
             });
         }
+        View iconWaitingRoom = findViewById(R.id.iconWaitingRoom);
+        //opens waiting room
+        if (iconWaitingRoom != null) {
+            iconWaitingRoom.setOnClickListener(v -> {
 
+                // Hide the ScrollView content
+                scrollContent.setVisibility(View.GONE);
+
+                // Show the fragment container
+                View fragmentContainer = findViewById(R.id.fragment_container);
+                fragmentContainer.setVisibility(View.VISIBLE);
+
+                // Load fragment
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new WaitingListFragment())
+                        .addToBackStack(null)
+                        .commit();
+            });
+        }
         // Window insets: keep header safe, keep content above nav, nav flush to bottom
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -98,6 +118,22 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
+
+    }
+
+    public void onBackPressedDispatcher() {
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+
+            // Remove fragment
+            getSupportFragmentManager().popBackStack();
+
+            // Show home content
+            findViewById(R.id.scrollContent).setVisibility(View.VISIBLE);
+            findViewById(R.id.fragment_container).setVisibility(View.GONE);
+
+        } else {
+            super.getOnBackPressedDispatcher();
+        }
     }
 
     private int dp(int d) {

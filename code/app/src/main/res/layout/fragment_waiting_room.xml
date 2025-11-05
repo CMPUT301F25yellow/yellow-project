@@ -83,9 +83,12 @@
 
         <TextView
             android:text="Oct 20, 2025 at 6:00 PM"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:textColor="@android:color/white"
             android:textSize="14sp"
             android:layout_marginBottom="12dp" />
+
 
         <!-- Location -->
         <LinearLayout
@@ -156,7 +159,7 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/my_image"
-            android:tint="@color/white"
+            app:tint="@color/white"
             android:layout_marginEnd="8dp" />
 
         <TextView
