@@ -32,4 +32,5 @@
     <color name="stroke_color">#404040</color>
     <color name="light_grey">#2C2C2C</color>
     <color name="light_grey_text">#999999</color>
+    <color name="pink_bg">#9C27B0</color>
 </resources>

@@ -4,8 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
-    android:padding="50dp">
+    android:background="@color/black">
 
     <!-- App Bar -->
     <com.google.android.material.appbar.AppBarLayout
@@ -90,10 +89,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:hint="@string/event_name"
-                android:textColorHint="#999999"
+                android:textColorHint="@color/light_grey_text"
                 app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="#9C27B0"
-                app:hintTextColor="#9C27B0"
+                app:boxStrokeColor="@color/pink_bg"
+                app:hintTextColor="@color/pink_bg"
                 app:boxBackgroundMode="outline"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -106,7 +105,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="@color/white"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -117,10 +116,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:hint="@string/description"
-                android:textColorHint="#999999"
+                android:textColorHint="@color/light_grey_text"
                 app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="#9C27B0"
-                app:hintTextColor="#9C27B0"
+                app:boxStrokeColor="@color/pink_bg"
+                app:hintTextColor="@color/pink_bg"
                 app:boxBackgroundMode="outline"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -135,7 +134,7 @@
                     android:inputType="textMultiLine"
                     android:minLines="4"
                     android:gravity="top"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="@color/white"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -146,10 +145,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:hint="@string/location"
-                android:textColorHint="#999999"
+                android:textColorHint="@color/light_grey_text"
                 app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="#9C27B0"
-                app:hintTextColor="#9C27B0"
+                app:boxStrokeColor="@color/pink_bg"
+                app:hintTextColor="@color/pink_bg"
                 app:boxBackgroundMode="outline"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -162,7 +161,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="@color/white"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -171,7 +170,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/select_date"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 android:layout_marginBottom="8dp"
                 android:layout_marginTop="8dp"/>
@@ -190,13 +189,13 @@
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     android:hint="@string/start_date"
-                    android:textColorHint="#999999"
+                    android:textColorHint="@color/light_grey_text"
                     app:boxBackgroundColor="@color/surface_dark"
-                    app:boxStrokeColor="#9C27B0"
-                    app:hintTextColor="#9C27B0"
+                    app:boxStrokeColor="@color/pink_bg"
+                    app:hintTextColor="@color/pink_bg"
                     app:endIconMode="custom"
                     app:endIconDrawable="@drawable/my_image"
-                    app:endIconTint="#9C27B0"
+                    app:endIconTint="@color/pink_bg"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusTopStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
@@ -208,9 +207,9 @@
                         android:id="@+id/startDateInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:focusable="false"
+                        android:focusable="true"
                         android:clickable="true"
-                        android:textColor="#FFFFFF"/>
+                        android:textColor="@color/white"/>
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -222,13 +221,13 @@
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
                     android:hint="@string/end_date"
-                    android:textColorHint="#999999"
+                    android:textColorHint="@color/light_grey_text"
                     app:boxBackgroundColor="@color/surface_dark"
-                    app:boxStrokeColor="#9C27B0"
-                    app:hintTextColor="#9C27B0"
+                    app:boxStrokeColor="@color/pink_bg"
+                    app:hintTextColor="@color/pink_bg"
                     app:endIconMode="custom"
                     app:endIconDrawable="@drawable/my_image"
-                    app:endIconTint="#9C27B0"
+                    app:endIconTint="@color/pink_bg"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusTopStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
@@ -240,9 +239,9 @@
                         android:id="@+id/endDateInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:focusable="false"
+                        android:focusable="true"
                         android:clickable="true"
-                        android:textColor="#FFFFFF"/>
+                        android:textColor="@color/white"/>
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -255,10 +254,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:hint="@string/max_entrants"
-                android:textColorHint="#999999"
+                android:textColorHint="@color/light_grey_text"
                 app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="#9C27B0"
-                app:hintTextColor="#9C27B0"
+                app:boxStrokeColor="@color/pink_bg"
+                app:hintTextColor="@color/pink_bg"
                 app:boxBackgroundMode="outline"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -271,7 +270,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="number"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="@color/white"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -282,7 +281,7 @@
                 android:layout_marginBottom="24dp"
                 app:cardBackgroundColor="@color/surface_dark"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#404040"
+                app:strokeColor="@color/stroke_color"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -302,14 +301,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/require_geolocation"
-                            android:textColor="#FFFFFF"
+                            android:textColor="@color/white"
                             android:textSize="16sp"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/track_entrant_location"
-                            android:textColor="#999999"
+                            android:textColor="@color/light_grey_text"
                             android:textSize="12sp"
                             android:layout_marginTop="4dp"/>
 
@@ -319,9 +318,8 @@
                         android:id="@+id/geolocationSwitch"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:thumbTint="#FFFFFF"
-                        app:trackTint="#404040"
-                        app:trackTintMode="src_over"/>
+                        app:thumbTint="@color/white"
+                        app:track="@drawable/switch_track_oval"/>
 
                 </LinearLayout>
 
@@ -333,9 +331,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:text="@string/create_event"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="16sp"
-                app:backgroundTint="#9C27B0"
+                app:backgroundTint="@color/pink_bg"
                 app:cornerRadius="30dp"
                 app:elevation="4dp"/>
 

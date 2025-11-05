@@ -35,7 +35,9 @@ import com.google.firebase.storage.UploadTask;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 public class CreateEventActivity extends AppCompatActivity {
@@ -347,8 +349,12 @@ public class CreateEventActivity extends AppCompatActivity {
                     user.getDisplayName() : "Anonymous");
         }
 
+        // Use a LinkedHashMap to preserve insertion order.
+        Map<String, Object> eventData = event.toMap();
+
+        // After getting the map with good order, add the map to Firestore instead of the 'event' object
         db.collection("events")
-                .add(event)
+                .add(eventData) // Use the map here
                 .addOnSuccessListener(doc -> {
                     progressDialog.dismiss();
                     Toast.makeText(this, "Event created successfully!", Toast.LENGTH_SHORT).show();
@@ -359,5 +365,4 @@ public class CreateEventActivity extends AppCompatActivity {
                     Toast.makeText(this, "Error creating event: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
-
 }
