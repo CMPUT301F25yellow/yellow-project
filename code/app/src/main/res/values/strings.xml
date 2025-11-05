@@ -29,4 +29,17 @@
     <string name="accept">Accept</string>
     <string name="reject">Reject</string>
     <string name="view_event_details">View Event Details</string>
+
+    <!--For Create Event Activity-->
+    <string name="upload_poster">Tap to upload poster</string>
+    <string name="create_event">Create Event</string>
+    <string name="select_date">Event Dates</string>
+    <string name="require_geolocation">Require Geolocation</string>
+    <string name="track_entrant_location">Track entrant locations</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_date">End Date</string>
+    <string name="event_name">Event Name</string>
+    <string name="location">Location</string>
+    <string name="description">Description</string>
+    <string name="max_entrants">Maximum Entrants</string>
 </resources>

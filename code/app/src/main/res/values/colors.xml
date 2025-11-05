@@ -28,4 +28,8 @@
 
     <color name="ripple_light">#1FFFFFFF</color>  <!-- white @ 12% -->
     <color name="ripple_dark">#14FFFFFF</color>   <!-- white @ 8% -->
+
+    <color name="stroke_color">#404040</color>
+    <color name="light_grey">#2C2C2C</color>
+    <color name="light_grey_text">#999999</color>
 </resources>
