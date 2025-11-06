@@ -50,7 +50,7 @@
             android:layout_centerInParent="true"
             android:text="@string/profile_title"
             android:textColor="@color/white"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:fontFamily="sans-serif-medium" />
     </RelativeLayout>
 

@@ -25,7 +25,7 @@
             android:id="@+id/tvHeaderTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="16dp"
+            android:layout_centerHorizontal="true"
             android:text="@string/main_page_title"
             android:textColor="@color/white"
             android:textSize="22sp"
