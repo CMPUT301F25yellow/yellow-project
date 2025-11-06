@@ -1,51 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
-    android:fitsSystemWindows="true">
+    android:background="@color/black">
 
-    <!-- Header -->
+    <!-- ===== Header ===== -->
     <RelativeLayout
         android:id="@+id/header_main"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:background="@color/surface_dark"
         android:paddingHorizontal="16dp"
         android:paddingTop="16dp"
         android:paddingBottom="12dp"
-        android:background="@color/surface_dark"
-        android:fitsSystemWindows="true">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <!-- App title -->
         <TextView
             android:id="@+id/tvHeaderTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="16dp"
-            android:text="EventHub"
+            android:layout_centerHorizontal="true"
+            android:text="@string/main_page_title"
             android:textColor="@color/white"
             android:textSize="22sp"
-            android:fontFamily="sans-serif-medium"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true" />
+            android:fontFamily="sans-serif-medium" />
 
-
+        <!-- Bell -->
         <ImageView
             android:id="@+id/iconNotifications"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
             android:layout_toStartOf="@id/iconProfile"
+            android:layout_marginEnd="4dp"
             android:adjustViewBounds="true"
             android:clickable="true"
-            android:contentDescription="@string/notifications_title"
             android:focusable="true"
             android:scaleType="centerInside"
+            android:contentDescription="@string/notifications_title"
             android:src="@drawable/ic_bell" />
 
+        <!-- Profile -->
         <ImageView
             android:id="@+id/iconProfile"
             android:layout_width="28dp"
@@ -54,35 +54,37 @@
             android:layout_marginEnd="10dp"
             android:adjustViewBounds="true"
             android:clickable="true"
-            android:contentDescription="@string/profile_title"
             android:focusable="true"
             android:scaleType="centerInside"
+            android:contentDescription="@string/profile_title"
             android:src="@drawable/ic_profile_avatar" />
     </RelativeLayout>
 
-    <!-- Scrollable content below header -->
+    <!-- ===== Scrollable content (between header and bottom nav) ===== -->
     <ScrollView
         android:id="@+id/scrollContent"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="90dp"
-        android:layout_marginBottom="70dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:clipToPadding="false"
         android:paddingHorizontal="16dp"
-        android:paddingBottom="24dp">
+        android:paddingBottom="24dp"
+        app:layout_constraintTop_toBottomOf="@id/header_main"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
-            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
             <!-- Interests + Date -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginBottom="12dp"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
+                android:orientation="horizontal">
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -113,12 +115,12 @@
                         android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Dates -->
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/my_image" />
 
+                <!-- Dates -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="0dp"
@@ -160,10 +162,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="4dp"
-                android:fontFamily="sans-serif-medium"
                 android:text="Upcoming Events"
                 android:textColor="@color/white"
-                android:textSize="18sp" />
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-medium" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -173,48 +175,7 @@
                 android:textColor="@color/hinty"
                 android:textSize="13sp" />
 
-            <!-- Event 1 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:background="@color/grey"
-                android:clipToOutline="true"
-                android:elevation="4dp"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
-                    android:src="@drawable/my_image" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Summer Music Festival 2025"
-                    android:textColor="@color/white"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Oct 25, 2025 · 6:00 PM\nCentral Park, New York"
-                    android:textColor="@color/hinty"
-                    android:textSize="13sp" />
-
-                <Button
-                    android:id="@+id/iconWaitingRoom"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:backgroundTint="@color/white"
-                    android:text="Join Waiting Room"
-                    android:textColor="@color/black" />
-            </LinearLayout>
-
+            <!-- Event card 1 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -255,7 +216,48 @@
                     android:textColor="@color/black" />
             </LinearLayout>
 
-            <!-- Event 2 -->
+            <!-- Event card 2 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="@color/grey"
+                android:clipToOutline="true"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:src="@drawable/my_image" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Summer Music Festival 2025"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Oct 25, 2025 · 6:00 PM\nCentral Park, New York"
+                    android:textColor="@color/hinty"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="@color/white"
+                    android:text="Join Waiting Room"
+                    android:textColor="@color/black" />
+            </LinearLayout>
+
+            <!-- Event card 3 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -294,28 +296,40 @@
                     android:text="Join Waiting Room"
                     android:textColor="@color/black" />
             </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
+
+    <!-- ===== Fragment container (FULLSCREEN over content) ===== -->
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- ===== Bottom nav ===== -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/surface_dark"
+        app:itemIconTint="@color/white"
+        app:itemTextColor="@color/white"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="90dp"
-        android:layout_marginBottom="70dp"
-        android:background="@color/black"
-        android:visibility="gone" />
+        android:layout_marginBottom="70dp" />
 
-    <!-- Bottom Nav -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigationView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/surface_dark"
-        app:itemIconTint="@color/white"
-        app:itemTextColor="@color/white"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav_menu" />
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

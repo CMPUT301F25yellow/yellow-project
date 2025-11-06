@@ -15,6 +15,8 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -35,7 +37,9 @@ import com.google.firebase.storage.UploadTask;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 public class CreateEventActivity extends AppCompatActivity {
@@ -77,6 +81,17 @@ public class CreateEventActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_event);
+        View root = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+
+            // Add top padding and match background color to your theme
+            v.setPadding(0, topInset, 0, 0);
+            v.setBackgroundColor(getColor(R.color.surface_dark));
+
+            return insets;
+        });
+
 
         initializeViews();
         initializeData();
@@ -298,20 +313,30 @@ public class CreateEventActivity extends AppCompatActivity {
     private void createEvent(Event event) {
         progressDialog.show();
 
-        FirebaseUser currentUser = auth.getCurrentUser();
-        if (currentUser == null) {
-            // Anonymous sign-in just like in ProfileUserFragment
-            auth.signInAnonymously()
-                    .addOnSuccessListener(r -> uploadPosterAndSave(event))
-                    .addOnFailureListener(e -> {
+        FirebaseManager.getInstance().uploadImageAndCreateEvent(
+                selectedImageUri,
+                event,
+                new FirebaseManager.CreateEventCallback() {
+                    @Override
+                    public void onSuccess(Event createdEvent) {
                         progressDialog.dismiss();
-                        Toast.makeText(this, "Auth failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    });
-        } else {
-            uploadPosterAndSave(event);
-        }
-    }
+                        Toast.makeText(CreateEventActivity.this,
+                                "Event created successfully!",
+                                Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
 
+                    @Override
+                    public void onFailure(Exception e) {
+                        progressDialog.dismiss();
+                        Toast.makeText(CreateEventActivity.this,
+                                "Error creating event: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                },
+                progress -> progressDialog.setMessage("Uploading image... " + progress + "%")
+        );
+    }
 
     private void uploadPosterAndSave(Event event) {
         if (selectedImageUri == null) {
@@ -347,8 +372,12 @@ public class CreateEventActivity extends AppCompatActivity {
                     user.getDisplayName() : "Anonymous");
         }
 
+        // Use a LinkedHashMap to preserve insertion order.
+        Map<String, Object> eventData = event.toMap();
+
+        // After getting the map with good order, add the map to Firestore instead of the 'event' object
         db.collection("events")
-                .add(event)
+                .add(eventData) // Use the map here
                 .addOnSuccessListener(doc -> {
                     progressDialog.dismiss();
                     Toast.makeText(this, "Event created successfully!", Toast.LENGTH_SHORT).show();
@@ -359,5 +388,4 @@ public class CreateEventActivity extends AppCompatActivity {
                     Toast.makeText(this, "Error creating event: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
-
 }
