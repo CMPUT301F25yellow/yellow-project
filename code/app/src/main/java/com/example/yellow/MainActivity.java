@@ -3,6 +3,7 @@ package com.example.yellow;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
@@ -19,6 +20,7 @@ import com.example.yellow.ui.MyEventsFragment;
 import com.example.yellow.ui.NotificationFragment;
 import com.example.yellow.ui.ProfileUserFragment;
 import com.example.yellow.ui.QrScanFragment;
+import com.example.yellow.users.WaitingListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -40,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         scrollContent      = findViewById(R.id.scrollContent);
         bottomNav          = findViewById(R.id.bottomNavigationView);
         fragmentContainer  = findViewById(R.id.fragmentContainer);
+
 
         // ---- Header icons ----
         View iconProfile = findViewById(R.id.iconProfile);
@@ -125,6 +128,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        //joins waiting room
+        Button join1 = findViewById(R.id.join_waiting_room_1);
+        if (join1 != null) {
+            join1.setOnClickListener(v -> {
+                String eventId = "4AHZ0xJWF2kEsxQTpcpN"; // <-- real event ID
+                openWaitingRoom(eventId);
+            });
+        }
     }
 
     // ---------- Helpers ----------
@@ -159,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
     }
 
-    private void showHomeUI(boolean show) {
+    public void showHomeUI(boolean show) {
         int visible = show ? View.VISIBLE : View.GONE;
         if (header != null) header.setVisibility(visible);
         if (scrollContent != null) scrollContent.setVisibility(visible);
@@ -194,5 +206,17 @@ public class MainActivity extends AppCompatActivity {
     // My Events: keep bottom nav
     private void openMyEvents() {
         openFragment(new MyEventsFragment(), "MyEvents", /*keepBottomNavVisible=*/true);
+    // ------Join waiting list---------
+
+    //waiting list
+    public void openWaitingRoom(String eventId) {
+        WaitingListFragment fragment = new WaitingListFragment();
+
+        Bundle args = new Bundle();
+        args.putString("eventId", eventId);
+        fragment.setArguments(args);
+
+        // full screen → hide everything including bottom nav
+        openFragment(fragment, "WAITING_ROOM", /*keepBottomNavVisible=*/false);
     }
 }
