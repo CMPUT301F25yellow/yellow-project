@@ -9,6 +9,9 @@
     <string name="email_address">Email Address</string>
     <string name="phone_optional">Phone Number (optional)</string>
 
+    <string name="qr_text">Point the camera at a QR code</string>
+    <string name="qr_scan_title">QR Scanner</string>
+
     <string name="save_changes">Save Changes</string>
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>

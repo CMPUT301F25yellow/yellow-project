@@ -11,10 +11,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+
 
 import com.example.yellow.organizers.CreateEventActivity;
 import com.example.yellow.ui.NotificationFragment;
 import com.example.yellow.ui.ProfileUserFragment;
+import com.example.yellow.ui.QrScanFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import com.example.yellow.ui.MyEventsFragment;
@@ -88,7 +91,8 @@ public class MainActivity extends AppCompatActivity {
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.nav_home) {
-                    // TODO: show HomeFragment if you add one
+                    showHomeUI(true); // This brings back your home layout
+                            getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                     return true;
                 } else if (id == R.id.nav_history) {
                     // TODO: show HistoryFragment
@@ -100,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                     // TODO: show MyEventsFragment
                     return true;
                 } else if (id == R.id.nav_scan) {
-                    // TODO: show ScannerFragment
+                    openQrScan();
                     return true;
                 }
                 return false;
@@ -154,6 +158,18 @@ public class MainActivity extends AppCompatActivity {
         showHomeUI(false);
         replaceInContainer(new NotificationFragment(), "Notifications");
     }
+
+    // ---- Open QR Scanner as a fragment ----
+    private void openQrScan() {
+        // Hide header + scroll content, show fragment, KEEP bottom nav visible
+        if (header != null) header.setVisibility(View.GONE);
+        if (scrollContent != null) scrollContent.setVisibility(View.GONE);
+        if (fragmentContainer != null) fragmentContainer.setVisibility(View.VISIBLE);
+        if (bottomNav != null) bottomNav.setVisibility(View.VISIBLE);
+
+        replaceInContainer(new QrScanFragment(), "QR_SCAN");
+    }
+
 
     // ---- Toggle Home views vs fragment container ----
     private void showHomeUI(boolean show) {
