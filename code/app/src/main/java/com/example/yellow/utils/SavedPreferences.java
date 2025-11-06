@@ -23,7 +23,7 @@ public class SavedPreferences {
     public static final String PHONE_NUMBER = "phone_number";
 
     // No Constructor required
-    private SavedPreferences() {} 
+    private SavedPreferences() {}
 
     /**
      * Initializes a SharedPreference object with the name of our app
