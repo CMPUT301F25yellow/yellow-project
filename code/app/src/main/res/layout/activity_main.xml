@@ -207,8 +207,9 @@
                     android:textColor="@color/hinty"
                     android:textSize="13sp" />
 
+                <!--joins waiting room-->
                 <Button
-                    android:id="@+id/iconWaitingRoom"
+                    android:id="@+id/join_waiting_room_1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
@@ -326,11 +327,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <FrameLayout
-        android:id="@+id/fragment_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="90dp"
-        android:layout_marginBottom="70dp" />
+<!--    <FrameLayout-->
+<!--        android:id="@+id/fragment_container"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:layout_marginTop="90dp"-->
+<!--        android:layout_marginBottom="70dp" />-->
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
