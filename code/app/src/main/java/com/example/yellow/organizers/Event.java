@@ -119,7 +119,7 @@ public class Event {
     public Integer getMaxEntrants() { return maxEntrants; }
     public void setMaxEntrants(Integer maxEntrants) { this.maxEntrants = maxEntrants; }
 
-    public boolean isRequireGeolocation() { return requireGeolocation; }
+    public boolean isGeolocationRequired() { return requireGeolocation; }
     public void setRequireGeolocation(boolean requireGeolocation) {
         this.requireGeolocation = requireGeolocation;
     }
