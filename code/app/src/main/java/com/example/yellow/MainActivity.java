@@ -13,15 +13,12 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-
 import com.example.yellow.organizers.CreateEventActivity;
+import com.example.yellow.ui.HistoryFragment;
 import com.example.yellow.ui.NotificationFragment;
 import com.example.yellow.ui.ProfileUserFragment;
 import com.example.yellow.ui.QrScanFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-
-import com.example.yellow.ui.MyEventsFragment;
-
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,23 +34,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // ---- Views ----
-        View root     = findViewById(R.id.main);
-        header        = findViewById(R.id.header_main);
-        scrollContent = findViewById(R.id.scrollContent);
-        bottomNav     = findViewById(R.id.bottomNavigationView);
-        fragmentContainer = findViewById(R.id.fragmentContainer);
+        View root          = findViewById(R.id.main);
+        header             = findViewById(R.id.header_main);
+        scrollContent      = findViewById(R.id.scrollContent);
+        bottomNav          = findViewById(R.id.bottomNavigationView);
+        fragmentContainer  = findViewById(R.id.fragmentContainer);
 
         // ---- Header icons ----
         View iconProfile = findViewById(R.id.iconProfile);
-        if (iconProfile != null) {
-            iconProfile.setOnClickListener(v -> openProfileFragment());
-        }
+        if (iconProfile != null) iconProfile.setOnClickListener(v -> openProfile());
 
-        // in onCreate after findViewById(...)
         View iconNotifications = findViewById(R.id.iconNotifications);
-        if (iconNotifications != null) {
-            iconNotifications.setOnClickListener(v -> openNotificationsFragment());
-        }
+        if (iconNotifications != null) iconNotifications.setOnClickListener(v -> openNotifications());
 
         // ---- Safe-area insets ----
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
@@ -91,17 +83,17 @@ public class MainActivity extends AppCompatActivity {
             bottomNav.setOnItemSelectedListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.nav_home) {
-                    showHomeUI(true); // This brings back your home layout
-                            getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                    showHomeUI(true);
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                     return true;
                 } else if (id == R.id.nav_history) {
-                    // TODO: show HistoryFragment
+                    openHistory();
                     return true;
                 } else if (id == R.id.nav_create_event) {
                     startActivity(new Intent(MainActivity.this, CreateEventActivity.class));
                     return true;
                 } else if (id == R.id.nav_my_events) {
-                    // TODO: show MyEventsFragment
+                    // TODO: replace with your MyEvents fragment when ready
                     return true;
                 } else if (id == R.id.nav_scan) {
                     openQrScan();
@@ -124,69 +116,77 @@ public class MainActivity extends AppCompatActivity {
 
         // ---- Modern back handling (Android 13–16 compatible) ----
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
+            @Override public void handleOnBackPressed() {
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-                    getSupportFragmentManager().popBackStack();    // Profile -> Home
+                    getSupportFragmentManager().popBackStack();
                 } else {
-                    finish();                                       // Exit from Home
+                    finish();
                 }
             }
         });
     }
 
+    // ---------- Helpers ----------
+
     private int dp(int d) {
         return Math.round(getResources().getDisplayMetrics().density * d);
     }
 
-    // ---- Open Profile as a fragment ----
-    private void openProfileFragment() {
-        showHomeUI(false);                           // hide header/list/nav
-        if (bottomNav != null) {
-            bottomNav.getMenu().setGroupCheckable(0, false, true);
-        }
+    /** Centralized open method: choose if bottom nav stays visible. */
+    private void openFragment(Fragment fragment, String tag, boolean keepBottomNavVisible) {
+        // Hide header + scroll
+        if (header != null) header.setVisibility(View.GONE);
+        if (scrollContent != null) scrollContent.setVisibility(View.GONE);
+
+        // Fragment container visible
         if (fragmentContainer != null) {
             fragmentContainer.setVisibility(View.VISIBLE);
             fragmentContainer.bringToFront();
         }
-        replaceInContainer(new ProfileUserFragment(), "Profile");
-    }
 
-    // ---- Open Notification as a fragment ----
+        // Decide bottom nav visibility per screen
+        if (bottomNav != null) {
+            bottomNav.setVisibility(keepBottomNavVisible ? View.VISIBLE : View.GONE);
+        }
 
-    private void openNotificationsFragment() {
-        showHomeUI(false);
-        replaceInContainer(new NotificationFragment(), "Notifications");
-    }
-
-    // ---- Open QR Scanner as a fragment ----
-    private void openQrScan() {
-        // Hide header + scroll content, show fragment, KEEP bottom nav visible
-        if (header != null) header.setVisibility(View.GONE);
-        if (scrollContent != null) scrollContent.setVisibility(View.GONE);
-        if (fragmentContainer != null) fragmentContainer.setVisibility(View.VISIBLE);
-        if (bottomNav != null) bottomNav.setVisibility(View.VISIBLE);
-
-        replaceInContainer(new QrScanFragment(), "QR_SCAN");
-    }
-
-
-    // ---- Toggle Home views vs fragment container ----
-    private void showHomeUI(boolean show) {
-        int visible = show ? View.VISIBLE : View.GONE;
-        if (header != null)        header.setVisibility(visible);
-        if (scrollContent != null) scrollContent.setVisibility(visible);
-        if (fragmentContainer != null)
-            fragmentContainer.setVisibility(show ? View.GONE : View.VISIBLE);
-        if (bottomNav != null)     bottomNav.setVisibility(visible);
-    }
-
-    private void replaceInContainer(Fragment fragment, String tag) {
+        // Navigate
         getSupportFragmentManager()
                 .beginTransaction()
                 .setReorderingAllowed(true)
                 .replace(R.id.fragmentContainer, fragment, tag)
                 .addToBackStack(tag)
                 .commit();
+    }
+
+    private void showHomeUI(boolean show) {
+        int visible = show ? View.VISIBLE : View.GONE;
+        if (header != null) header.setVisibility(visible);
+        if (scrollContent != null) scrollContent.setVisibility(visible);
+        if (fragmentContainer != null) fragmentContainer.setVisibility(show ? View.GONE : View.VISIBLE);
+        if (bottomNav != null) bottomNav.setVisibility(visible);
+    }
+
+    // ---------- Screens ----------
+
+    // Profile: no bottom nav
+    private void openProfile() {
+        // Optional: prevent item checks while in a full-screen fragment
+        if (bottomNav != null) bottomNav.getMenu().setGroupCheckable(0, false, true);
+        openFragment(new ProfileUserFragment(), "Profile", /*keepBottomNavVisible=*/false);
+    }
+
+    // Notifications: no bottom nav
+    private void openNotifications() {
+        openFragment(new NotificationFragment(), "Notifications", /*keepBottomNavVisible=*/false);
+    }
+
+    // QR Scan: keep bottom nav
+    private void openQrScan() {
+        openFragment(new QrScanFragment(), "QR_SCAN", /*keepBottomNavVisible=*/true);
+    }
+
+    // History: keep bottom nav
+    private void openHistory() {
+        openFragment(new HistoryFragment(), "History", /*keepBottomNavVisible=*/true);
     }
 }
