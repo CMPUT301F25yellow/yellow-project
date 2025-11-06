@@ -16,6 +16,9 @@ import com.example.yellow.organizers.CreateEventActivity;
 import com.example.yellow.ui.ProfileUserFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import com.example.yellow.ui.MyEventsFragment;
+
+
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
