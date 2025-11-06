@@ -3,12 +3,19 @@
 
     <string name="profile_title">Profile</string>
     <string name="notifications_title">Notification</string>
+    <string name="main_page_title">Event Hub</string>
 
     <string name="full_name">Full Name</string>
     <string name="email_address">Email Address</string>
     <string name="phone_optional">Phone Number (optional)</string>
 
+    <string name="qr_text">Point the camera at a QR code</string>
+    <string name="qr_scan_title">QR Scanner</string>
+
+    <string name="history_title">Event History</string>
+
     <string name="save_changes">Save Changes</string>
+    <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="delete_profile">Delete Profile</string>
     <string name="delete_warning">This action cannot be undone.</string>
@@ -29,4 +36,17 @@
     <string name="accept">Accept</string>
     <string name="reject">Reject</string>
     <string name="view_event_details">View Event Details</string>
+
+    <!--For Create Event Activity-->
+    <string name="upload_poster">Tap to upload poster</string>
+    <string name="create_event">Create Event</string>
+    <string name="select_date">Event Dates</string>
+    <string name="require_geolocation">Require Geolocation</string>
+    <string name="track_entrant_location">Track entrant locations</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_date">End Date</string>
+    <string name="event_name">Event Name</string>
+    <string name="location">Location</string>
+    <string name="description">Description</string>
+    <string name="max_entrants">Maximum Entrants</string>
 </resources>

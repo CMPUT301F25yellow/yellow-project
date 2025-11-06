@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- State when the switch is ON (checked) -->
+    <item android:state_checked="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp" />
+            <solid android:color="@color/pink_bg" />
+            <size android:height="24dp" />
+        </shape>
+    </item>
+
+    <!-- State when the switch is OFF (unchecked) -->
+    <item android:state_checked="false">
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp" />
+            <solid android:color="@color/stroke_color" />
+            <size android:height="24dp" />
+        </shape>
+    </item>
+
+</selector>
