@@ -13,6 +13,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.yellow.organizers.CreateEventActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import com.example.yellow.ui.MyEventsFragment;
+
+
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
@@ -90,7 +93,11 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
                 return true;
             } else if (id == R.id.nav_my_events) {
-                // TODO: show MyEventsFragment
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new MyEventsFragment())
+                        .addToBackStack(null)
+                        .commit();
                 return true;
             } else if (id == R.id.nav_scan) {
                 // TODO: show ScannerFragment

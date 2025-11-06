@@ -124,6 +124,14 @@ public class FirebaseManager {
         void onProgress(int progress);
     }
 
+    public void getEventsByOrganizer(String organizerId, GetEventsCallback callback) {
+        db.collection("events")
+                .whereEqualTo("organizerId", organizerId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> callback.onSuccess(querySnapshot.getDocuments()))
+                .addOnFailureListener(callback::onFailure);
+    }
+
     public interface GetEventsCallback {
         void onSuccess(List<DocumentSnapshot> documents);
         void onFailure(Exception e);
