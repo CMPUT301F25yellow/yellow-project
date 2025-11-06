@@ -124,6 +124,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+    }
+
+    public void restoreHomeUI() {
+        findViewById(R.id.header_main).setVisibility(View.VISIBLE);
+        findViewById(R.id.bottomNavigationView).setVisibility(View.VISIBLE);
+        findViewById(R.id.scrollContent).setVisibility(View.VISIBLE);
+        findViewById(R.id.fragment_container).setVisibility(View.GONE);
     }
 
     // ---------- Helpers ----------
