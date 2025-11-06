@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.organizers.CreateEventActivity;
+import com.example.yellow.ui.NotificationFragment;
 import com.example.yellow.ui.ProfileUserFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -43,6 +44,12 @@ public class MainActivity extends AppCompatActivity {
         View iconProfile = findViewById(R.id.iconProfile);
         if (iconProfile != null) {
             iconProfile.setOnClickListener(v -> openProfileFragment());
+        }
+
+        // in onCreate after findViewById(...)
+        View iconNotifications = findViewById(R.id.iconNotifications);
+        if (iconNotifications != null) {
+            iconNotifications.setOnClickListener(v -> openNotificationsFragment());
         }
 
         // ---- Safe-area insets ----
@@ -139,6 +146,13 @@ public class MainActivity extends AppCompatActivity {
             fragmentContainer.bringToFront();
         }
         replaceInContainer(new ProfileUserFragment(), "Profile");
+    }
+
+    // ---- Open Notification as a fragment ----
+
+    private void openNotificationsFragment() {
+        showHomeUI(false);
+        replaceInContainer(new NotificationFragment(), "Notifications");
     }
 
     // ---- Toggle Home views vs fragment container ----

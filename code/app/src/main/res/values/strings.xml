@@ -10,6 +10,7 @@
     <string name="phone_optional">Phone Number (optional)</string>
 
     <string name="save_changes">Save Changes</string>
+    <string name="back">Back</string>
     <string name="cancel">Cancel</string>
     <string name="delete_profile">Delete Profile</string>
     <string name="delete_warning">This action cannot be undone.</string>
