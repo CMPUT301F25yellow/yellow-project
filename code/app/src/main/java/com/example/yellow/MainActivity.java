@@ -15,6 +15,7 @@ import androidx.fragment.app.FragmentManager;
 
 import com.example.yellow.organizers.CreateEventActivity;
 import com.example.yellow.ui.HistoryFragment;
+import com.example.yellow.ui.MyEventsFragment;
 import com.example.yellow.ui.NotificationFragment;
 import com.example.yellow.ui.ProfileUserFragment;
 import com.example.yellow.ui.QrScanFragment;
@@ -93,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(new Intent(MainActivity.this, CreateEventActivity.class));
                     return true;
                 } else if (id == R.id.nav_my_events) {
-                    // TODO: replace with your MyEvents fragment when ready
+                    openMyEvents();
                     return true;
                 } else if (id == R.id.nav_scan) {
                     openQrScan();
@@ -188,5 +189,10 @@ public class MainActivity extends AppCompatActivity {
     // History: keep bottom nav
     private void openHistory() {
         openFragment(new HistoryFragment(), "History", /*keepBottomNavVisible=*/true);
+    }
+
+    // My Events: keep bottom nav
+    private void openMyEvents() {
+        openFragment(new MyEventsFragment(), "MyEvents", /*keepBottomNavVisible=*/true);
     }
 }

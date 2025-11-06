@@ -26,6 +26,7 @@
         </activity>
 
         <activity android:name=".organizers.CreateEventActivity" />
+        <activity android:name=".organizers.ViewEventActivity" />
 
     </application>
 
