@@ -9,6 +9,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
@@ -27,7 +31,7 @@ import java.util.Map;
 public class ProfileUserFragment extends Fragment {
 
     private TextInputEditText inputFullName, inputEmail, inputPhone;
-    private MaterialButton btnSave, btnCancel, btnDeleteProfile;
+    private MaterialButton btnSave, btnDeleteProfile;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -52,8 +56,29 @@ public class ProfileUserFragment extends Fragment {
         inputEmail    = v.findViewById(R.id.inputEmail);
         inputPhone    = v.findViewById(R.id.inputPhone);
         btnSave       = v.findViewById(R.id.btnSave);
-        btnCancel     = v.findViewById(R.id.btnCancel);
         btnDeleteProfile     = v.findViewById(R.id.btnDeleteProfile);
+
+        requireActivity().getWindow().setStatusBarColor(
+                ContextCompat.getColor(requireContext(), R.color.surface_dark)
+        );
+
+        View spacer = v.findViewById(R.id.statusBarSpacer);
+        ViewCompat.setOnApplyWindowInsetsListener(v, (view, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            ViewGroup.LayoutParams lp = spacer.getLayoutParams();
+            if (lp.height != bars.top) {
+                lp.height = bars.top;
+                spacer.setLayoutParams(lp);
+            }
+            return insets;
+        });
+
+        View btnBack = v.findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(b ->
+                    requireActivity().getSupportFragmentManager().popBackStack()
+            );
+        }
 
         // Firebase
         auth = FirebaseAuth.getInstance();
@@ -65,8 +90,6 @@ public class ProfileUserFragment extends Fragment {
         // Save
         btnSave.setOnClickListener(v1 -> saveProfile());
 
-        // Cancel (just reload from server; or you can clear fields)
-        btnCancel.setOnClickListener(v12 -> loadProfile());
 
         // Optional: delete profile document
         if (btnDeleteProfile != null) {
