@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -23,6 +24,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+
+                    getSupportFragmentManager().popBackStack();
+                    restoreHomeUI();
+
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
 
         // Views
         View root          = findViewById(R.id.main);
@@ -48,14 +65,13 @@ public class MainActivity extends AppCompatActivity {
         if (iconWaitingRoom != null) {
             iconWaitingRoom.setOnClickListener(v -> {
 
-                // Hide the ScrollView content
                 scrollContent.setVisibility(View.GONE);
 
-                // Show the fragment container
+                header.setVisibility(View.GONE);
+
                 View fragmentContainer = findViewById(R.id.fragment_container);
                 fragmentContainer.setVisibility(View.VISIBLE);
 
-                // Load fragment
                 getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.fragment_container, new WaitingListFragment())
@@ -121,19 +137,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void onBackPressedDispatcher() {
-        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-
-            // Remove fragment
-            getSupportFragmentManager().popBackStack();
-
-            // Show home content
-            findViewById(R.id.scrollContent).setVisibility(View.VISIBLE);
-            findViewById(R.id.fragment_container).setVisibility(View.GONE);
-
-        } else {
-            super.getOnBackPressedDispatcher();
-        }
+    public void restoreHomeUI() {
+        findViewById(R.id.header_main).setVisibility(View.VISIBLE);
+        findViewById(R.id.bottomNavigationView).setVisibility(View.VISIBLE);
+        findViewById(R.id.scrollContent).setVisibility(View.VISIBLE);
+        findViewById(R.id.fragment_container).setVisibility(View.GONE);
     }
 
     private int dp(int d) {

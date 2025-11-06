@@ -15,23 +15,30 @@ import com.example.yellow.organizers.CreateEventActivity;
 
 public class WaitingListFragment extends Fragment {
 
-    public WaitingListFragment() {
-        // Required empty constructor
-    }
+    public WaitingListFragment() {}
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_waiting_room, container, false);
 
         View leaveButton = view.findViewById(R.id.leaveButton);
 
         leaveButton.setOnClickListener(v -> {
+
+            // Tell MainActivity to restore UI
+            if (requireActivity() instanceof MainActivity) {
+                ((MainActivity) requireActivity()).restoreHomeUI();
+            }
+
+            // Pop fragment
             requireActivity().getSupportFragmentManager().popBackStack();
         });
 
         return view;
     }
 }
+
