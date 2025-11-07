@@ -170,6 +170,7 @@ public class WaitingFragment extends Fragment {
         for (String id : selected) {
             Map<String, Object> data = new HashMap<>();
             data.put("userId", id);
+            data.put("selected", true);
             data.put("timestamp", System.currentTimeMillis());
 
             db.collection("events").document(eventId)
