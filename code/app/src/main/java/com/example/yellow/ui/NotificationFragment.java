@@ -26,7 +26,6 @@ public class NotificationFragment extends Fragment {
     enum NotifType { INFO, EVENT, REMINDER, ALERT, ACTIONABLE }
 
 
-=======
     /**
      * Inflates the notification layout.
      *
