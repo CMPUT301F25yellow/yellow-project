@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Sun / circle (top-right) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M17,6.5a2.5,2.5 0 1,1 -5,0a2.5,2.5 0 1,1 5,0" />
+
+    <!-- Mountain silhouette -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,18 L9.2,10.2 L12.8,14.2 L16.2,11 L21,18 Z" />
+
+    <!-- Ground (optional base so it reads well at small sizes) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,18 H21 V19 H3 Z" />
+
+</vector>

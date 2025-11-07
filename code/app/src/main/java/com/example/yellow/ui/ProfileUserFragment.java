@@ -1,5 +1,6 @@
 package com.example.yellow.ui;
 
+import android.content.Intent; // <-- ADDED
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -44,7 +45,6 @@ public class ProfileUserFragment extends Fragment {
             @Nullable Bundle savedInstanceState
     ) {
         return inflater.inflate(R.layout.fragment_profile_users, container, false);
-        // ^ If your fragment layout file is different, change this to that file (NOT the host layout).
     }
 
     @Override
@@ -56,7 +56,7 @@ public class ProfileUserFragment extends Fragment {
         inputEmail    = v.findViewById(R.id.inputEmail);
         inputPhone    = v.findViewById(R.id.inputPhone);
         btnSave       = v.findViewById(R.id.btnSave);
-        btnDeleteProfile     = v.findViewById(R.id.btnDeleteProfile);
+        btnDeleteProfile = v.findViewById(R.id.btnDeleteProfile);
 
         requireActivity().getWindow().setStatusBarColor(
                 ContextCompat.getColor(requireContext(), R.color.surface_dark)
@@ -84,12 +84,14 @@ public class ProfileUserFragment extends Fragment {
         auth = FirebaseAuth.getInstance();
         db   = FirebaseFirestore.getInstance();
 
-        // Make sure we have a user (anonymous is fine), then load
-        ensureSignedIn(() -> loadProfile());
+        // Make sure we have a user (anonymous is fine), then load & toggle admin button
+        ensureSignedIn(() -> {
+            loadProfile();
+            toggleAdminButtonFromFirestore();
+        });
 
         // Save
         btnSave.setOnClickListener(v1 -> saveProfile());
-
 
         // Optional: delete profile document
         if (btnDeleteProfile != null) {
@@ -195,6 +197,44 @@ public class ProfileUserFragment extends Fragment {
                     inputPhone.setText("");
                 })
                 .addOnFailureListener(e -> toast("Delete failed: " + e.getMessage()));
+    }
+
+    // ----- Admin toggle (NEW) -----
+    private void toggleAdminButtonFromFirestore() {
+        View btnAdmin = getView() != null ? getView().findViewById(R.id.btnAdminDashboard) : null;
+        if (btnAdmin == null) return;
+
+        String uid = uidOrNull();
+        if (uid == null) { btnAdmin.setVisibility(View.GONE); return; }
+
+        // Start hidden until we confirm admin
+        btnAdmin.setVisibility(View.GONE);
+
+        db.collection("roles").document(uid)
+                .addSnapshotListener((doc, err) -> {
+                    if (err != null) {
+                        android.util.Log.e("ADMIN", "roles read error: " + err.getMessage(), err);
+                        // Do NOT force-hide again on error; just keep current state
+                        return;
+                    }
+                    if (doc == null || !doc.exists()) {
+                        android.util.Log.d("ADMIN", "roles/" + uid + " missing");
+                        btnAdmin.setVisibility(View.GONE);
+                        btnAdmin.setOnClickListener(null);
+                        return;
+                    }
+                    String role = doc.getString("role");
+                    android.util.Log.d("ADMIN", "role=" + role);
+                    boolean isAdmin = "admin".equals(role);
+                    btnAdmin.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+                    if (isAdmin) {
+                        btnAdmin.setOnClickListener(v ->
+                                startActivity(new android.content.Intent(
+                                        requireContext(), com.example.yellow.admin.AdminDashboardActivity.class)));
+                    } else {
+                        btnAdmin.setOnClickListener(null);
+                    }
+                });
     }
 
     // ----- Helpers -----
