@@ -82,12 +82,15 @@
                 android:layout_marginBottom="8dp">
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_clock"
-                    android:layout_marginEnd="8dp" />
+                    android:id="@+id/eventBanner"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/my_image"
+                    android:layout_marginBottom="16dp" />
 
                 <TextView
+                    android:id="@+id/eventDateTime"
                     android:text="Oct 20, 2025 at 6:00 PM"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -109,6 +112,7 @@
                     android:layout_marginEnd="8dp" />
 
                 <TextView
+                    android:id="@+id/eventLocation"
                     android:text="Central Park"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
