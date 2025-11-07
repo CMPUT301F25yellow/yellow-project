@@ -116,6 +116,8 @@ public class FirebaseManager {
 
     // ---------------- INTERFACES ----------------
     public interface CreateEventCallback {
+        void onSuccess(String docId);
+
         void onSuccess(Event event);
         void onFailure(Exception e);
     }

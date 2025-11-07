@@ -1,391 +1,417 @@
 package com.example.yellow.organizers;
 
 import android.app.DatePickerDialog;
-import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-import com.bumptech.glide.Glide;
+import com.example.yellow.utils.FirebaseManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.Timestamp;
-import com.example.yellow.R;
-import com.example.yellow.utils.FirebaseManager;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
 
+import com.example.yellow.organizers.Event;
+import com.example.yellow.R;
+
+
+/**
+ * Firestore-only event creation with inline Base64 poster (no Firebase Storage).
+ * Adds robust guards to avoid "app keeps stopping".
+ */
 public class CreateEventActivity extends AppCompatActivity {
 
+    private static final String TAG = "CreateEventActivity";
+
+    // Firebase
     private FirebaseAuth auth;
 
-    private FirebaseFirestore db;
-
-    private FirebaseStorage storage;
-
-    // UI Components
+    // UI (IDs must match activity_create_event.xml)
     private MaterialToolbar toolbar;
+    private MaterialCardView posterCard;
     private ImageView posterImageView;
     private TextView uploadPosterText;
     private ImageView uploadIcon;
-    private MaterialCardView posterCard;
+
     private TextInputEditText eventNameInput;
     private TextInputEditText descriptionInput;
     private TextInputEditText locationInput;
+
     private TextInputEditText startDateInput;
     private TextInputEditText endDateInput;
+
     private TextInputEditText maxEntrantsInput;
     private SwitchMaterial geolocationSwitch;
+
     private MaterialButton createEventButton;
 
-    // Data
-    private Uri selectedImageUri;
-    private Date startDate;
-    private Date endDate;
-    private SimpleDateFormat dateFormatter;
-    private ProgressDialog progressDialog;
-    private FirebaseManager firebaseManager;
+    // State
+    private final Calendar startCal = Calendar.getInstance();
+    private final Calendar endCal = Calendar.getInstance();
+    private Uri selectedPosterUri = null;
 
+    private final SimpleDateFormat dateFmt = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
-    // Image Picker
-    private ActivityResultLauncher<String> imagePickerLauncher;
+    // Photo Picker (preferred)
+    private final ActivityResultLauncher<PickVisualMediaRequest> photoPicker =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri != null) {
+                    selectedPosterUri = uri;
+                    // Avoid Glide dependency; use setImageURI to remove one crash variable
+                    posterImageView.setImageURI(selectedPosterUri);
+                    if (uploadPosterText != null) uploadPosterText.setVisibility(View.GONE);
+                    if (uploadIcon != null) uploadIcon.setVisibility(View.GONE);
+                } else {
+                    toast("No image selected");
+                }
+            });
+
+    // Fallback: GetContent (works on all API levels)
+    private final ActivityResultLauncher<String> contentPicker =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri != null) {
+                    selectedPosterUri = uri;
+                    posterImageView.setImageURI(selectedPosterUri);
+                    if (uploadPosterText != null) uploadPosterText.setVisibility(View.GONE);
+                    if (uploadIcon != null) uploadIcon.setVisibility(View.GONE);
+                } else {
+                    toast("No image selected");
+                }
+            });
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create_event);
-        View root = findViewById(android.R.id.content);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
 
-            // Add top padding and match background color to your theme
-            v.setPadding(0, topInset, 0, 0);
-            v.setBackgroundColor(getColor(R.color.surface_dark));
-
-            return insets;
-        });
-
-
-        initializeViews();
-        initializeData();
-        setupListeners();
-        setupImagePicker();
-    }
-
-    /**
-     * Initializes the UI components.
-     */
-    private void initializeViews() {
-        toolbar = findViewById(R.id.toolbar);
-        posterImageView = findViewById(R.id.posterImageView);
-        uploadPosterText = findViewById(R.id.uploadPosterText);
-        uploadIcon = findViewById(R.id.uploadIcon);
-        posterCard = findViewById(R.id.posterCard);
-        eventNameInput = findViewById(R.id.eventNameInput);
-        descriptionInput = findViewById(R.id.descriptionInput);
-        locationInput = findViewById(R.id.locationInput);
-        startDateInput = findViewById(R.id.startDateInput);
-        endDateInput = findViewById(R.id.endDateInput);
-        maxEntrantsInput = findViewById(R.id.maxEntrantsInput);
-        geolocationSwitch = findViewById(R.id.geolocationSwitch);
-        createEventButton = findViewById(R.id.createEventButton);
-    }
-
-    /**
-     * Initializes the data and sets up listeners.
-     */
-    private void initializeData() {
-        dateFormatter = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
-        firebaseManager = FirebaseManager.getInstance();
-
-        // Progress Dialog
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Creating event...");
-        progressDialog.setCancelable(false);
-
-        auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
-
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-    }
-
-    /**
-     * Sets up the listeners for the UI components.
-     */
-    private void setupListeners() {
-        toolbar.setNavigationOnClickListener(v -> finish());
-        posterCard.setOnClickListener(v -> openImagePicker());
-        startDateInput.setOnClickListener(v -> showDatePicker(true));
-        endDateInput.setOnClickListener(v -> showDatePicker(false));
-        createEventButton.setOnClickListener(v -> validateAndCreateEvent());
-    }
-
-    /**
-     * Sets up the image picker for selecting an image.
-     */
-    private void setupImagePicker() {
-        imagePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.GetContent(),
-                uri -> {
-                    if (uri != null) {
-                        selectedImageUri = uri;
-
-                        // Load image using Glide
-                        Glide.with(this)
-                                .load(uri)
-                                .centerCrop()
-                                .into(posterImageView);
-
-                        posterImageView.setVisibility(View.VISIBLE);
-                        uploadPosterText.setVisibility(View.GONE);
-                        uploadIcon.setVisibility(View.GONE);
-                    }
-                }
-        );
-    }
-
-    /**
-     * Opens the image picker to select an image.
-     */
-    private void openImagePicker() {
-        imagePickerLauncher.launch("image/*");
-    }
-
-    /**
-     * Shows a date picker dialog.
-     * @param isStartDate Whether to show the start date picker.
-     */
-    private void showDatePicker(boolean isStartDate) {
-        Calendar calendar = Calendar.getInstance();
-        if (isStartDate && startDate != null) {
-            calendar.setTime(startDate);
-        } else if (!isStartDate && endDate != null) {
-            calendar.setTime(endDate);
+        try {
+            setContentView(R.layout.activity_create_event);
+        } catch (Exception e) {
+            // Wrong layout name will crash here
+            Log.e(TAG, "Layout inflate failed", e);
+            toast("Layout inflate failed: " + e.getMessage());
+            finish();
+            return;
         }
 
-        // 1. Define the listener first
-        DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
-            Calendar selectedCalendar = Calendar.getInstance();
-            selectedCalendar.set(year, month, dayOfMonth);
-            Date selectedDate = selectedCalendar.getTime();
+        // Firebase
+        try {
+            FirebaseApp.initializeApp(this);
+            auth = FirebaseAuth.getInstance();
+        } catch (Exception e) {
+            Log.e(TAG, "Firebase init failed", e);
+            toast("Firebase init failed: " + e.getMessage());
+            finish();
+            return;
+        }
 
-            String formattedDate = dateFormatter.format(selectedDate);
+        // Bind UI safely
+        try {
+            toolbar = requireView(R.id.toolbar, "toolbar");
+            setSupportActionBar(toolbar);
+            toolbar.setNavigationOnClickListener(v -> finish());
 
-            if (isStartDate) {
-                startDate = selectedDate;
-                startDateInput.setText(formattedDate);
+            posterCard = requireView(R.id.posterCard, "posterCard");
+            posterImageView = requireView(R.id.posterImageView, "posterImageView");
+            uploadPosterText = findViewById(R.id.uploadPosterText); // optional
+            uploadIcon = findViewById(R.id.uploadIcon);             // optional
+
+            eventNameInput = requireView(R.id.eventNameInput, "eventNameInput");
+            descriptionInput = requireView(R.id.descriptionInput, "descriptionInput");
+            locationInput = requireView(R.id.locationInput, "locationInput");
+
+            startDateInput = requireView(R.id.startDateInput, "startDateInput");
+            endDateInput = requireView(R.id.endDateInput, "endDateInput");
+
+            maxEntrantsInput = requireView(R.id.maxEntrantsInput, "maxEntrantsInput");
+            geolocationSwitch = requireView(R.id.geolocationSwitch, "geolocationSwitch");
+
+            createEventButton = requireView(R.id.createEventButton, "createEventButton");
+        } catch (IllegalStateException badId) {
+            Log.e(TAG, "Missing view ID", badId);
+            toast(badId.getMessage());
+            finish();
+            return;
+        }
+
+        // Image picking (Photo Picker if available, else GetContent)
+        View.OnClickListener pickImage = v -> {
+            if (ActivityResultContracts.PickVisualMedia.isPhotoPickerAvailable(this)) {
+                photoPicker.launch(new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                        .build());
             } else {
-                endDate = selectedDate;
-                endDateInput.setText(formattedDate);
+                contentPicker.launch("image/*");
             }
         };
+        posterCard.setOnClickListener(pickImage);
+        posterImageView.setOnClickListener(pickImage);
 
-        // 2. Use the corrected constructor
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
-                this,
-                dateSetListener, // Pass the listener
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
-        );
+        // Date pickers
+        startDateInput.setOnClickListener(v -> showDatePicker(true));
+        endDateInput.setOnClickListener(v -> showDatePicker(false));
 
-        // Set minimum date to today
-        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
-        datePickerDialog.show();
+        // Defaults
+        startDateInput.setText(dateFmt.format(startCal.getTime()));
+        endCal.setTimeInMillis(startCal.getTimeInMillis());
+        endDateInput.setText(dateFmt.format(endCal.getTime()));
+
+        createEventButton.setOnClickListener(v -> onCreateEvent());
     }
 
-    /**
-     * Validates and creates an event based on user input.
-     */
-    private void validateAndCreateEvent() {
-        // Get input values
-        String name = Objects.requireNonNull(eventNameInput.getText()).toString().trim();
-        String description = Objects.requireNonNull(descriptionInput.getText()).toString().trim();
-        String location = Objects.requireNonNull(locationInput.getText()).toString().trim();
-        String maxEntrantsStr = Objects.requireNonNull(maxEntrantsInput.getText()).toString().trim();
+    private <T extends View> T requireView(int id, String name) {
+        T v = findViewById(id);
+        if (v == null) throw new IllegalStateException("Missing view in layout: " + name);
+        return v;
+    }
 
-        // Validate required fields
-        if (TextUtils.isEmpty(name)) {
-            eventNameInput.setError("Event name is required");
-            eventNameInput.requestFocus();
-            return;
-        }
+    private void showDatePicker(boolean isStart) {
+        final Calendar cal = isStart ? startCal : endCal;
+        int y = cal.get(Calendar.YEAR);
+        int m = cal.get(Calendar.MONTH);
+        int d = cal.get(Calendar.DAY_OF_MONTH);
+        DatePickerDialog dlg = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+            @Override public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                cal.set(Calendar.YEAR, year);
+                cal.set(Calendar.MONTH, month);
+                cal.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                if (isStart) {
+                    startDateInput.setText(dateFmt.format(cal.getTime()));
+                    if (endCal.before(startCal)) {
+                        endCal.setTimeInMillis(startCal.getTimeInMillis());
+                        endDateInput.setText(dateFmt.format(endCal.getTime()));
+                    }
+                } else {
+                    endDateInput.setText(dateFmt.format(cal.getTime()));
+                }
+            }
+        }, y, m, d);
+        dlg.show();
+    }
 
-        if (TextUtils.isEmpty(description)) {
-            descriptionInput.setError("Description is required");
-            descriptionInput.requestFocus();
-            return;
-        }
+    private void onCreateEvent() {
+        try {
+            String name = textOf(eventNameInput);
+            String desc = textOf(descriptionInput);
+            String loc  = textOf(locationInput);
+            String maxStr = textOf(maxEntrantsInput);
+            boolean requireGeo = geolocationSwitch.isChecked();
 
-        if (TextUtils.isEmpty(location)) {
-            locationInput.setError("Location is required");
-            locationInput.requestFocus();
-            return;
-        }
+            if (TextUtils.isEmpty(name)) {
+                eventNameInput.setError("Required");
+                eventNameInput.requestFocus();
+                return;
+            }
+            if (selectedPosterUri == null) {
+                toast("Please select a poster image");
+                return;
+            }
+            if (endCal.before(startCal)) {
+                toast("End date cannot be before start date");
+                return;
+            }
 
-        if (startDate == null) {
-            Toast.makeText(this, "Please select a start date", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (endDate == null) {
-            Toast.makeText(this, "Please select an end date", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Validate dates
-        if (endDate.before(startDate)) {
-            Toast.makeText(this, "End date must be after start date", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Validate max entrants (optional)
-        Integer maxEntrants = null;
-        if (!TextUtils.isEmpty(maxEntrantsStr)) {
-            try {
-                maxEntrants = Integer.parseInt(maxEntrantsStr);
-                if (maxEntrants <= 0) {
-                    maxEntrantsInput.setError("Must be greater than 0");
+            int maxEntrants = 0;
+            if (!TextUtils.isEmpty(maxStr)) {
+                try {
+                    maxEntrants = Integer.parseInt(maxStr);
+                    if (maxEntrants < 0) throw new NumberFormatException();
+                } catch (NumberFormatException e) {
+                    maxEntrantsInput.setError("Invalid number");
                     maxEntrantsInput.requestFocus();
                     return;
                 }
-            } catch (NumberFormatException e) {
-                maxEntrantsInput.setError("Invalid number");
-                maxEntrantsInput.requestFocus();
+            }
+
+            createEventButton.setEnabled(false);
+
+            // Encode image -> data URI (Firestore safe)
+            String dataUri = encodeImageUriToDataUri(selectedPosterUri);
+            if (dataUri == null) {
+                createEventButton.setEnabled(true);
+                toast("Could not read image");
                 return;
             }
-        }
 
-        // Create Event object
-        Event event = new Event(
-                name,
-                description,
-                location,
-                new Timestamp(startDate),
-                new Timestamp(endDate),
-                maxEntrants,
-                geolocationSwitch.isChecked(),
-                null, // Will be set after image upload
-                null, // Will be set by FirebaseManager
-                null  // Will be set by FirebaseManager
-        );
+            String organizer = (auth.getCurrentUser() != null)
+                    ? auth.getCurrentUser().getUid()
+                    : "anonymous";
 
-        // Upload and create event
-        Log.d("CreateEventActivity", "Validation passed — creating event...");
-        createEvent(event);
-    }
+            Event ev = new Event();
+            ev.setName(name);
+            ev.setDescription(desc);
+            ev.setLocation(loc);
+            ev.setPosterImageUrl(dataUri);
+            ev.setOrganizerId(organizer);
+            if (auth.getCurrentUser() != null && auth.getCurrentUser().getDisplayName() != null) {
+                ev.setOrganizerName(auth.getCurrentUser().getDisplayName());
+            }
+            ev.setStartDate(new Timestamp(startCal.getTime()));
+            Calendar endCopy = (Calendar) endCal.clone();
+            endCopy.set(Calendar.HOUR_OF_DAY, 23);
+            endCopy.set(Calendar.MINUTE, 59);
+            endCopy.set(Calendar.SECOND, 59);
+            endCopy.set(Calendar.MILLISECOND, 999);
+            ev.setEndDate(new Timestamp(endCopy.getTime()));
+            ev.setMaxEntrants(maxEntrants);
+            ev.setRequireGeolocation(requireGeo);
+            ev.setCreatedAt(Timestamp.now());
 
-    /**
-     * Creates an event using FirebaseManager.
-     * @param event The event to be created.
-     */
-    private void createEvent(Event event) {
-        progressDialog.show();
-
-        FirebaseManager.getInstance().uploadImageAndCreateEvent(
-                selectedImageUri,
-                event,
-                new FirebaseManager.CreateEventCallback() {
-                    @Override
-                    public void onSuccess(Event createdEvent) {
-                        progressDialog.dismiss();
-                        Toast.makeText(CreateEventActivity.this,
-                                "Event created successfully!",
-                                Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        progressDialog.dismiss();
-                        Toast.makeText(CreateEventActivity.this,
-                                "Error creating event: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show();
-                    }
-                },
-                progress -> progressDialog.setMessage("Uploading image... " + progress + "%")
-        );
-    }
-
-    private void uploadPosterAndSave(Event event) {
-        if (selectedImageUri == null) {
-            saveEventToFirestore(event, null);
-            return;
-        }
-
-        StorageReference ref = storage.getReference()
-                .child("event_posters/" + System.currentTimeMillis() + ".jpg");
-
-        UploadTask uploadTask = ref.putFile(selectedImageUri);
-
-        uploadTask.addOnProgressListener(snapshot -> {
-            double progress = (100.0 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
-            progressDialog.setMessage("Uploading image... " + (int) progress + "%");
-        }).addOnSuccessListener(taskSnapshot ->
-                ref.getDownloadUrl().addOnSuccessListener(uri ->
-                        saveEventToFirestore(event, uri.toString())
-                )
-        ).addOnFailureListener(e -> {
-            progressDialog.dismiss();
-            Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        });
-    }
-
-    private void saveEventToFirestore(Event event, String imageUrl) {
-        if (imageUrl != null) event.setPosterImageUrl(imageUrl);
-
-        FirebaseUser user = auth.getCurrentUser();
-        if (user != null) {
-            event.setOrganizerId(user.getUid());
-            event.setOrganizerName(user.getDisplayName() != null ?
-                    user.getDisplayName() : "Anonymous");
-        }
-
-        // Use a LinkedHashMap to preserve insertion order.
-        Map<String, Object> eventData = event.toMap();
-
-        // After getting the map with good order, add the map to Firestore instead of the 'event' object
-        db.collection("events")
-                .add(eventData) // Use the map here
-                .addOnSuccessListener(doc -> {
-                    progressDialog.dismiss();
-                    Toast.makeText(this, "Event created successfully!", Toast.LENGTH_SHORT).show();
+            // Firestore write via your FirebaseManager
+            FirebaseManager.getInstance().createEvent(ev, new FirebaseManager.CreateEventCallback() {
+                @Override public void onSuccess(String docId) {
+                    toast("Event created!");
                     finish();
-                })
-                .addOnFailureListener(e -> {
-                    progressDialog.dismiss();
-                    Toast.makeText(this, "Error creating event: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+                }
+
+                @Override
+                public void onSuccess(Event event) {
+                    toast("Event created!");
+                    finish();
+                }
+
+                @Override public void onFailure(Exception e) {
+                    Log.e(TAG, "Firestore createEvent failed", e);
+                    createEventButton.setEnabled(true);
+                    toast("Firestore error: " + (e != null ? e.getMessage() : "unknown"));
+                }
+            });
+
+        } catch (SecurityException se) {
+            Log.e(TAG, "SecurityException", se);
+            createEventButton.setEnabled(true);
+            toast("No permission to read image. Try another source.");
+        } catch (OutOfMemoryError oom) {
+            Log.e(TAG, "OutOfMemoryError", oom);
+            createEventButton.setEnabled(true);
+            toast("Image too large. Pick a smaller one.");
+        } catch (FileNotFoundException fnf) {
+            Log.e(TAG, "FileNotFound", fnf);
+            createEventButton.setEnabled(true);
+            toast("Image not found. Reselect it.");
+        } catch (Exception e) {
+            Log.e(TAG, "Unexpected error", e);
+            createEventButton.setEnabled(true);
+            toast("Error: " + e.getMessage());
+        }
+    }
+
+    private static String textOf(TextInputEditText et) {
+        return et.getText() == null ? "" : et.getText().toString().trim();
+    }
+
+    // --- Robust inline Base64 encoder with memory guards and byte budget ---
+    private String encodeImageUriToDataUri(Uri uri) throws Exception {
+        final int MAX_DOC_BYTES = 900 * 1024; // keep doc under 1 MiB
+        final int MAX_DIMENSION = 1280;      // cap long edge
+        final int MIN_JPEG_QUALITY = 40;
+
+        ContentResolver cr = getContentResolver();
+
+        // Pass 1: bounds
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        try (InputStream is = cr.openInputStream(uri)) {
+            if (is == null) throw new FileNotFoundException("Null input stream");
+            BitmapFactory.decodeStream(is, null, bounds);
+        }
+
+        int w = bounds.outWidth;
+        int h = bounds.outHeight;
+        if (w <= 0 || h <= 0) throw new IllegalArgumentException("Unsupported or corrupt image");
+
+        int inSample = 1;
+        while (w / inSample > MAX_DIMENSION || h / inSample > MAX_DIMENSION) {
+            inSample *= 2;
+        }
+
+        // Pass 2: decode with sample + low-memory config
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inSampleSize = Math.max(1, inSample);
+        opts.inPreferredConfig = Bitmap.Config.RGB_565; // reduce memory vs ARGB_8888
+
+        Bitmap bitmap;
+        try (InputStream is2 = cr.openInputStream(uri)) {
+            if (is2 == null) throw new FileNotFoundException("Null input stream");
+            bitmap = BitmapFactory.decodeStream(is2, null, opts);
+        }
+        if (bitmap == null) throw new IllegalArgumentException("Unable to decode image");
+
+        // Extra scale if still too large
+        int bw = bitmap.getWidth();
+        int bh = bitmap.getHeight();
+        if (bw > MAX_DIMENSION || bh > MAX_DIMENSION) {
+            float scale = Math.min(
+                    MAX_DIMENSION / (float) bw,
+                    MAX_DIMENSION / (float) bh
+            );
+            int nw = Math.max(1, Math.round(bw * scale));
+            int nh = Math.max(1, Math.round(bh * scale));
+            bitmap = Bitmap.createScaledBitmap(bitmap, nw, nh, true);
+        }
+
+        // Compress loop
+        int quality = 85;
+        byte[] jpg;
+        while (true) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, bos);
+            jpg = bos.toByteArray();
+            if (jpg.length <= MAX_DOC_BYTES || quality <= MIN_JPEG_QUALITY) break;
+            quality -= 5;
+        }
+
+        String b64 = android.util.Base64.encodeToString(jpg, android.util.Base64.NO_WRAP);
+        String mime = guessMime(cr, uri);
+        return "data:" + mime + ";base64," + b64;
+    }
+
+    private String guessMime(ContentResolver cr, Uri uri) {
+        String t = cr.getType(uri);
+        if (t == null || t.trim().isEmpty()) t = "image/jpeg";
+        return t;
+    }
+
+    @SuppressWarnings("unused")
+    private String getDisplayName(Uri uri) {
+        String name = null;
+        try (android.database.Cursor c = getContentResolver().query(uri, null, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                int idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (idx >= 0) name = c.getString(idx);
+            }
+        }
+        return name;
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 }
