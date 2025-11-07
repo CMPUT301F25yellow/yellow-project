@@ -163,24 +163,45 @@ public class WaitingFragment extends Fragment {
     private void runDraw(int count) {
         if (eventId == null) return;
 
+        if (currentWaitingEntrants.isEmpty()) {
+            Toast.makeText(getContext(), "No entrants in waiting list.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        //shuffle the waiting list and take the specified number of entrants
         List<String> entrantsCopy = new ArrayList<>(currentWaitingEntrants);
         Collections.shuffle(entrantsCopy);
-        List<String> selected = entrantsCopy.subList(0, count);
+        List<String> selected = entrantsCopy.subList(0, Math.min(count, entrantsCopy.size()));
 
-        for (String id : selected) {
+        for (String userId : selected) {
+            //create a record for the selected entrant
             Map<String, Object> data = new HashMap<>();
-            data.put("userId", id);
+            data.put("userId", userId);
             data.put("selected", true);
-            data.put("timestamp", System.currentTimeMillis());
+            data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
 
             db.collection("events").document(eventId)
                     .collection("selected")
-                    .document(id)
-                    .set(data);
+                    .document(userId)
+                    .set(data)
+                    .addOnSuccessListener(aVoid -> {
+                        //once added to "selected", remove the entrant from the waiting list
+                        db.collection("events").document(eventId)
+                                .collection("waitingList")
+                                .document(userId)
+                                .delete()
+                                .addOnSuccessListener(unused -> {
+                                    //remove from the local cache and refresh the view
+                                    currentWaitingEntrants.remove(userId);
+                                    loadWaitingEntrants();
+                                });
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(), "Error selecting entrant: " + e.getMessage(), Toast.LENGTH_SHORT).show());
         }
 
         Toast.makeText(getContext(),
-                "Selected " + selected.size() + " entrants!",
+                "Selected " + selected.size() + " entrants.",
                 Toast.LENGTH_SHORT).show();
     }
 
