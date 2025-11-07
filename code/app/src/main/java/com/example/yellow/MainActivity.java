@@ -4,6 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
@@ -14,7 +18,9 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.bumptech.glide.Glide;
 import com.example.yellow.organizers.CreateEventActivity;
+import com.example.yellow.organizers.Event;
 import com.example.yellow.ui.HistoryFragment;
 import com.example.yellow.ui.MyEventsFragment;
 import com.example.yellow.ui.NotificationFragment;
@@ -22,6 +28,8 @@ import com.example.yellow.ui.ProfileUserFragment;
 import com.example.yellow.ui.QrScanFragment;
 import com.example.yellow.users.WaitingListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -129,14 +137,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //joins waiting room
-        Button join1 = findViewById(R.id.join_waiting_room_1);
-        if (join1 != null) {
-            join1.setOnClickListener(v -> {
-                String eventId = "4AHZ0xJWF2kEsxQTpcpN"; // <-- real event ID
-                openWaitingRoom(eventId);
-            });
-        }
+        loadEventsFromFirestore();
+
     }
 
     // ---------- Helpers ----------
@@ -219,5 +221,54 @@ public class MainActivity extends AppCompatActivity {
 
         // full screen → hide everything including bottom nav
         openFragment(fragment, "WAITING_ROOM", /*keepBottomNavVisible=*/false);
+    }
+
+    private void loadEventsFromFirestore() {
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        LinearLayout eventsContainer = findViewById(R.id.eventsContainer);
+
+        db.collection("events")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+
+                    eventsContainer.removeAllViews(); // clear old views
+
+                    for (DocumentSnapshot doc : querySnapshot) {
+
+                        Event event = doc.toObject(Event.class);
+                        if (event == null) continue;
+
+                        View card = getLayoutInflater()
+                                .inflate(R.layout.item_event_card, eventsContainer, false);
+
+
+                        ImageView img     = card.findViewById(R.id.eventImage);
+                        TextView title    = card.findViewById(R.id.eventTitle);
+                        TextView details  = card.findViewById(R.id.eventDetails);
+                        Button joinButton = card.findViewById(R.id.eventButton);
+
+                        title.setText(event.getName());
+                        details.setText(event.getFormattedDateAndLocation());
+
+                        if (event.getPosterImageUrl() != null && !event.getPosterImageUrl().isEmpty()) {
+                            Glide.with(MainActivity.this)
+                                    .load(event.getPosterImageUrl())
+                                    .into(img);
+                        } else {
+                            img.setImageResource(R.drawable.my_image);
+                        }
+
+                        joinButton.setOnClickListener(v -> {
+                            String eventId = doc.getId();
+                            openWaitingRoom(eventId);
+                        });
+
+                        eventsContainer.addView(card);
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load events", Toast.LENGTH_SHORT).show()
+                );
     }
 }
