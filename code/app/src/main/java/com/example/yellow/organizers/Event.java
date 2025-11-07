@@ -152,4 +152,24 @@ public class Event {
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
+    public String getFormattedDateAndLocation() {
+        StringBuilder sb = new StringBuilder();
+
+        // Format date
+        if (startDate != null) {
+            Date date = startDate.toDate();
+            java.text.SimpleDateFormat sdf =
+                    new java.text.SimpleDateFormat("MMM dd, yyyy · h:mm a", java.util.Locale.getDefault());
+            sb.append(sdf.format(date));
+        }
+
+        // Add location
+        if (location != null && !location.isEmpty()) {
+            if (sb.length() > 0) sb.append(" · ");
+            sb.append(location);
+        }
+
+        return sb.toString();
+    }
 }
