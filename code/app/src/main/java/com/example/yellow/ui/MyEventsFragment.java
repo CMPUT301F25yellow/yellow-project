@@ -15,6 +15,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -50,11 +53,19 @@ public class MyEventsFragment extends Fragment {
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
 
+        View spacer = v.findViewById(R.id.statusBarSpacer);
+        ViewCompat.setOnApplyWindowInsetsListener(v, (view, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            ViewGroup.LayoutParams lp = spacer.getLayoutParams();
+            if (lp.height != bars.top) {
+                lp.height = bars.top;
+                spacer.setLayoutParams(lp);
+            }
+            return insets;
+        });
+
         myEventsContainer = v.findViewById(R.id.myEventsContainer);
         tvEventCount = v.findViewById(R.id.tvEventCount);
-
-        // Clear container before reloading
-        myEventsContainer.removeAllViews();
 
         // Initialize Firebase
         FirebaseFirestore db = FirebaseFirestore.getInstance();

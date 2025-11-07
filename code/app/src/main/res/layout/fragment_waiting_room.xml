@@ -3,48 +3,54 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
+    android:background="@color/background_black"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="0dp">
 
+        <!-- Status bar spacer -->
         <View
             android:id="@+id/statusBarSpacer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:background="@android:color/transparent"/>
+            android:background="@color/surface_dark" />
 
         <!-- Top App Bar -->
-        <LinearLayout
+        <RelativeLayout
+            android:id="@+id/waitingRoomHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingVertical="8dp">
+            android:background="@color/surface_dark"
+            android:paddingVertical="12dp"
+            android:paddingHorizontal="16dp">
 
+            <!-- Back Arrow -->
             <ImageView
                 android:id="@+id/backArrow"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:src="@drawable/ic_arrow_back"
                 android:contentDescription="Back"
-                android:layout_marginEnd="12dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
                 android:clickable="true"
                 android:focusable="true" />
 
+            <!-- Centered Title -->
             <TextView
                 android:id="@+id/eventTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Summer Music Festival"
-                android:textColor="@android:color/white"
-                android:textSize="18sp"
-                android:fontFamily="sans-serif-medium" />
-        </LinearLayout>
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_centerInParent="true" />
+        </RelativeLayout>
 
         <!-- Banner -->
         <ImageView
@@ -62,9 +68,10 @@
             android:orientation="vertical"
             android:background="#1E1E1E"
             android:padding="16dp"
+            android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="20dp"
-            android:clipToOutline="true"
-            android:elevation="2dp">
+            android:elevation="2dp"
+            android:clipToOutline="true">
 
             <!-- Date Row -->
             <LinearLayout
@@ -77,14 +84,14 @@
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:src="@drawable/my_image"
+                    android:src="@drawable/ic_clock"
                     android:layout_marginEnd="8dp" />
 
                 <TextView
                     android:text="Oct 20, 2025 at 6:00 PM"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/white"
                     android:textSize="14sp" />
             </LinearLayout>
 
@@ -98,14 +105,14 @@
                 <ImageView
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:src="@drawable/my_image"
+                    android:src="@drawable/ic_pin"
                     android:layout_marginEnd="8dp" />
 
                 <TextView
                     android:text="Central Park"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
+                    android:textColor="@color/white"
                     android:textSize="14sp" />
             </LinearLayout>
         </LinearLayout>
@@ -115,7 +122,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_gravity="center_horizontal"
-            android:src="@drawable/my_image"
+            android:src="@drawable/ic_clock"
             app:tint="@color/white"
             android:layout_marginBottom="12dp" />
 
@@ -125,7 +132,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAlignment="center"
-            android:textColor="@android:color/white"
+            android:textColor="@color/white"
             android:textSize="16sp"
             android:fontFamily="sans-serif-medium"
             android:layout_marginBottom="4dp" />
@@ -147,6 +154,7 @@
             android:orientation="horizontal"
             android:background="#1E1E1E"
             android:padding="12dp"
+            android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="24dp"
             android:gravity="center_vertical"
             android:elevation="2dp">
@@ -154,7 +162,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/my_image"
+                android:src="@drawable/ic_person"
                 app:tint="@color/white"
                 android:layout_marginEnd="8dp" />
 
@@ -163,7 +171,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textColor="@android:color/white"
+                android:textColor="@color/white"
                 android:textSize="14sp" />
 
             <TextView
@@ -171,7 +179,7 @@
                 android:text="12"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/white"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -182,8 +190,10 @@
             android:text="Leave Waiting List"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="#8B0000"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:backgroundTint="@color/danger_red"
             android:textColor="@android:color/white"
+            android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="16dp" />
 
     </LinearLayout>
