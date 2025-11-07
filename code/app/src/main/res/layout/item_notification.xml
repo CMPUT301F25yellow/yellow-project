@@ -72,6 +72,6 @@
             android:textStyle="bold"
             android:textSize="13sp"
             android:textColor="@color/brand_primary"
-            tools:text="@string/view_details"/>
+            tools:text="view_details"/>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
