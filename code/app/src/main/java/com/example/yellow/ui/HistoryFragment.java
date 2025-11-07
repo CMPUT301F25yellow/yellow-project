@@ -14,9 +14,19 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
-
+/**
+ * Fragment that displays the user's event history.
+ */
 public class HistoryFragment extends Fragment {
 
+    /**
+     * Inflates the history layout.
+     *
+     * @param inflater LayoutInflater used to inflate the view.
+     * @param container Optional parent container.
+     * @param savedInstanceState Previously saved state, if any.
+     * @return The root view for this fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -25,6 +35,12 @@ public class HistoryFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_history, container, false);
     }
 
+    /**
+     * Sets up the UI and adjusts the status bar and top spacer for layout consistency.
+     *
+     * @param v The root view of the fragment.
+     * @param savedInstanceState Previously saved state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);

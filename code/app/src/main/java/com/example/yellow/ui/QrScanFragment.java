@@ -15,8 +15,19 @@ import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
 
+/**
+ * Fragment that handles the QR code scanning screen layout and appearance.
+ */
 public class QrScanFragment extends Fragment {
 
+    /**
+     * Inflates the QR scan layout.
+     *
+     * @param inflater LayoutInflater used to inflate the view.
+     * @param container Optional parent container.
+     * @param savedInstanceState Previously saved state, if any.
+     * @return The root view for this fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -25,6 +36,12 @@ public class QrScanFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_qrscan, container, false);
     }
 
+    /**
+     * Sets up UI adjustments such as the status bar color and insets.
+     *
+     * @param v The root view of the fragment.
+     * @param savedInstanceState Previously saved state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);

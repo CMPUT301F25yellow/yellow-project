@@ -24,6 +24,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.WriteBatch;
 
+/**
+ * Admin screen for viewing and removing user profiles.
+ * Displays all profiles in real-time from Firestore and allows deletion.
+ */
 public class ManageProfilesFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -32,6 +36,14 @@ public class ManageProfilesFragment extends Fragment {
     private View spacer;
     private ListenerRegistration liveReg;
 
+    /**
+     * Creates and returns the Manage Profiles layout.
+     *
+     * @param inflater  Layout inflater.
+     * @param container Optional parent container.
+     * @param savedInstanceState Saved state, if any.
+     * @return The root view for this fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -40,6 +52,12 @@ public class ManageProfilesFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_manage_profiles, container, false);
     }
 
+    /**
+     * Sets up UI elements, window insets, and starts listening to profile updates.
+     *
+     * @param v The root view.
+     * @param savedInstanceState Saved state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -79,6 +97,9 @@ public class ManageProfilesFragment extends Fragment {
         startLiveProfilesListener();
     }
 
+    /**
+     * Removes Firestore listener and clears references when the view is destroyed.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -88,6 +109,10 @@ public class ManageProfilesFragment extends Fragment {
         spacer = null;
     }
 
+    /**
+     * Starts listening for real-time updates to the "profiles" collection
+     * and displays them dynamically.
+     */
     private void startLiveProfilesListener() {
         liveReg = db.collection("profiles")
                 //.orderBy("fullName")  // enable if you store a name and want sorting
@@ -134,6 +159,12 @@ public class ManageProfilesFragment extends Fragment {
                 });
     }
 
+    /**
+     * Shows a confirmation dialog before removing a profile.
+     *
+     * @param uid      The user ID of the profile.
+     * @param display  The name or fallback label of the user.
+     */
     private void confirmAndRemove(@NonNull String uid, @NonNull String display) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Remove user?")
@@ -144,9 +175,10 @@ public class ManageProfilesFragment extends Fragment {
     }
 
     /**
-     * Deletes the user's profile document (and optionally their roles doc).
-     * This does NOT delete Firebase Auth. The user can still sign in; they'll just
-     * see an empty profile and must re-enter details.
+     * Deletes a user’s profile and role documents from Firestore.
+     * Does not delete their Firebase Auth account.
+     *
+     * @param uid The user ID to remove.
      */
     private void removeProfileDocs(@NonNull String uid) {
         WriteBatch batch = db.batch();
@@ -161,6 +193,12 @@ public class ManageProfilesFragment extends Fragment {
                         Toast.makeText(getContext(), "Remove failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
+    /**
+     * Safely trims a string or returns an empty string if null.
+     *
+     * @param s Input string.
+     * @return The trimmed string or empty string.
+     */
     private static String safe(@Nullable String s) {
         return s == null ? "" : s.trim();
     }
