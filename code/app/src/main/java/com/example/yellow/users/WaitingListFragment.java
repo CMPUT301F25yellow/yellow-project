@@ -12,6 +12,9 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.MainActivity;
@@ -38,30 +41,43 @@ public class WaitingListFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_waiting_room, container, false);
+        return inflater.inflate(R.layout.fragment_waiting_room, container, false);
+    }
 
-        // ----- Firestore -----
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // ✅ 1. STATUS BAR SPACER
+        View spacer = view.findViewById(R.id.statusBarSpacer);
+
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v2, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            ViewGroup.LayoutParams lp = spacer.getLayoutParams();
+            lp.height = bars.top;  // push content below the notch/status bar
+            spacer.setLayoutParams(lp);
+            return insets;
+        });
+
+        // ✅ Firestore + User
         db   = FirebaseFirestore.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user == null) {
             Toast.makeText(getContext(), "Not logged in", Toast.LENGTH_SHORT).show();
             requireActivity().onBackPressed();
-            return view;
+            return;
         }
 
         userId = user.getUid();
         eventId = getArguments().getString("eventId");
 
-        // ----- UI Components -----
+        // ✅ UI
         Button leaveButton   = view.findViewById(R.id.leaveButton);
         ImageView backArrow  = view.findViewById(R.id.backArrow);
         TextView userCount   = view.findViewById(R.id.userCount);
 
-        // ============================================================
-        // ✅ REAL-TIME USER COUNT LISTENER
-        // ============================================================
-
+        // ✅ Real-time waiting list count
         db.collection("events")
                 .document(eventId)
                 .collection("waitingList")
@@ -71,27 +87,18 @@ public class WaitingListFragment extends Fragment {
                     }
                 });
 
-        // ============================================================
-        // ✅ AUTOMATICALLY JOIN WAITING ROOM IF NOT JOINED
-        // ============================================================
+        // ✅ Auto-join waiting list
         joinWaitingRoom();
 
-        // ============================================================
-        // ✅ LEAVE BUTTON HANDLER
-        // ============================================================
+        // ✅ Leave waiting room
         leaveButton.setOnClickListener(v -> leaveWaitingRoom());
 
-        // ============================================================
-        // ✅ BACK ARROW HANDLER
-        // ============================================================
+        // ✅ Back arrow: go back but stay in waiting list
         backArrow.setOnClickListener(v -> {
-            // Just go back — don't remove from waiting room
             requireActivity().getSupportFragmentManager().popBackStack();
         });
 
-        // ============================================================
-        // ✅ SYSTEM BACK BUTTON HANDLER
-        // ============================================================
+        // ✅ System back: LEAVE waiting list
         requireActivity().getOnBackPressedDispatcher().addCallback(
                 getViewLifecycleOwner(),
                 new OnBackPressedCallback(true) {
@@ -101,15 +108,10 @@ public class WaitingListFragment extends Fragment {
                     }
                 }
         );
-
-        return view;
     }
 
-    // =====================================================================
-    // ✅ JOIN WAITING ROOM
-    // =====================================================================
+    // ✅ Join waiting list
     private void joinWaitingRoom() {
-
         DocumentReference ref = db.collection("events")
                 .document(eventId)
                 .collection("waitingList")
@@ -117,24 +119,21 @@ public class WaitingListFragment extends Fragment {
 
         ref.get().addOnSuccessListener(doc -> {
             if (!doc.exists()) {
-
                 WaitingUser entry = new WaitingUser(userId, eventId);
 
-                // Add user to waiting list
                 ref.set(entry).addOnSuccessListener(unused -> {
-
-                    // Increment waitlisted count
                     db.collection("events")
                             .document(eventId)
                             .update("waitlisted", FieldValue.increment(1));
 
-                    Toast.makeText(getContext(), "Joined waiting room", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(),
+                            "Joined waiting room", Toast.LENGTH_SHORT).show();
                 });
             }
         });
     }
 
-    // Model class for Firestore
+    // ✅ Waiting user model
     public static class WaitingUser {
         public String userId;
         public String eventId;
@@ -148,11 +147,8 @@ public class WaitingListFragment extends Fragment {
         }
     }
 
-    // =====================================================================
-    // ✅ LEAVE WAITING ROOM
-    // =====================================================================
+    // ✅ Leave waiting room
     private void leaveWaitingRoom() {
-
         db.collection("events")
                 .document(eventId)
                 .collection("waitingList")
@@ -164,9 +160,9 @@ public class WaitingListFragment extends Fragment {
                             .document(eventId)
                             .update("waitlisted", FieldValue.increment(-1));
 
-                    Toast.makeText(getContext(), "You left the waiting room", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(),
+                            "You left the waiting room", Toast.LENGTH_SHORT).show();
 
-                    // restore main UI (header, scroll, bottom nav)
                     if (requireActivity() instanceof MainActivity) {
                         ((MainActivity) requireActivity()).showHomeUI(true);
                     }
