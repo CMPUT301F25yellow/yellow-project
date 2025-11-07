@@ -1,42 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_my_events"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
-    android:padding="16dp">
+    android:background="@color/background_black">
 
-    <LinearLayout
-        android:id="@+id/myEventsContainer"
-        android:layout_width="match_parent"
+    <!-- STATUS BAR SPACER -->
+    <View
+        android:id="@+id/statusBarSpacer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/surface_dark"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- HEADER BAR (Same style as History) -->
+    <RelativeLayout
+        android:id="@+id/myEventsHeader"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:background="@color/surface_dark"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintTop_toBottomOf="@id/statusBarSpacer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <View
-            android:id="@+id/statusBarSpacer"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:background="@android:color/transparent"/>
-
-        <!-- Header -->
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/tvMyEventsTitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
             android:text="My Events"
             android:textColor="@color/white"
             android:textSize="22sp"
-            android:fontFamily="sans-serif-medium"
-            android:layout_marginBottom="8dp"/>
+            android:fontFamily="sans-serif-medium" />
 
-        <TextView
-            android:id="@+id/tvEventCount"
+    </RelativeLayout>
+
+    <!-- CONTENT SCROLL AREA -->
+    <ScrollView
+        android:id="@+id/scrollMyEvents"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="16dp"
+        android:fillViewport="true"
+        android:background="@color/background_black"
+        app:layout_constraintTop_toBottomOf="@id/myEventsHeader"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/myEventsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading..."
-            android:textColor="@color/hinty"
-            android:textSize="14sp"
-            android:layout_marginBottom="12dp"/>
+            android:orientation="vertical">
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tvEventCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Loading..."
+                android:textColor="@color/hinty"
+                android:textSize="14sp"
+                android:layout_marginBottom="12dp" />
 
-</ScrollView>
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
