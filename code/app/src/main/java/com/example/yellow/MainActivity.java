@@ -30,6 +30,7 @@ import com.example.yellow.users.WaitingListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
     private View header;
     private View scrollContent;
     private View fragmentContainer;
+
+    // NEW: listener handle for live events
+    private ListenerRegistration eventsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
         scrollContent      = findViewById(R.id.scrollContent);
         bottomNav          = findViewById(R.id.bottomNavigationView);
         fragmentContainer  = findViewById(R.id.fragmentContainer);
-
 
         // ---- Header icons ----
         View iconProfile = findViewById(R.id.iconProfile);
@@ -126,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // ---- Modern back handling (Android 13–16 compatible) ----
+        // ---- Modern back handling ----
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
@@ -137,8 +140,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        loadEventsFromFirestore();
+        // Start live events feed
+        startLiveEventsListener();
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up Firestore listener to avoid leaks
+        if (eventsListener != null) {
+            eventsListener.remove();
+            eventsListener = null;
+        }
     }
 
     // ---------- Helpers ----------
@@ -149,22 +162,18 @@ public class MainActivity extends AppCompatActivity {
 
     /** Centralized open method: choose if bottom nav stays visible. */
     private void openFragment(Fragment fragment, String tag, boolean keepBottomNavVisible) {
-        // Hide header + scroll
         if (header != null) header.setVisibility(View.GONE);
         if (scrollContent != null) scrollContent.setVisibility(View.GONE);
 
-        // Fragment container visible
         if (fragmentContainer != null) {
             fragmentContainer.setVisibility(View.VISIBLE);
             fragmentContainer.bringToFront();
         }
 
-        // Decide bottom nav visibility per screen
         if (bottomNav != null) {
             bottomNav.setVisibility(keepBottomNavVisible ? View.VISIBLE : View.GONE);
         }
 
-        // Navigate
         getSupportFragmentManager()
                 .beginTransaction()
                 .setReorderingAllowed(true)
@@ -183,66 +192,74 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------- Screens ----------
 
-    // Profile: no bottom nav
     private void openProfile() {
-        // Optional: prevent item checks while in a full-screen fragment
         if (bottomNav != null) bottomNav.getMenu().setGroupCheckable(0, false, true);
         openFragment(new ProfileUserFragment(), "Profile", /*keepBottomNavVisible=*/false);
     }
 
-    // Notifications: no bottom nav
     private void openNotifications() {
         openFragment(new NotificationFragment(), "Notifications", /*keepBottomNavVisible=*/false);
     }
 
-    // QR Scan: keep bottom nav
     private void openQrScan() {
         openFragment(new QrScanFragment(), "QR_SCAN", /*keepBottomNavVisible=*/true);
     }
 
-    // History: keep bottom nav
     private void openHistory() {
         openFragment(new HistoryFragment(), "History", /*keepBottomNavVisible=*/true);
     }
 
-    // My Events: keep bottom nav
     private void openMyEvents() {
         openFragment(new MyEventsFragment(), "MyEvents", /*keepBottomNavVisible=*/true);
     }
-    // ------Join waiting list---------
 
-
-    //waiting list
     public void openWaitingRoom(String eventId) {
         WaitingListFragment fragment = new WaitingListFragment();
-
         Bundle args = new Bundle();
         args.putString("eventId", eventId);
         fragment.setArguments(args);
-
-        // full screen → hide everything including bottom nav
         openFragment(fragment, "WAITING_ROOM", /*keepBottomNavVisible=*/false);
     }
 
-    private void loadEventsFromFirestore() {
+    // ---------- Live Events (auto-updating) ----------
 
+    private void startLiveEventsListener() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         LinearLayout eventsContainer = findViewById(R.id.eventsContainer);
 
-        db.collection("events")
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+        // Remove any existing listener before attaching a new one
+        if (eventsListener != null) {
+            eventsListener.remove();
+            eventsListener = null;
+        }
 
-                    eventsContainer.removeAllViews(); // clear old views
+        eventsListener = db.collection("events")
+                // .orderBy("startTime") // uncomment if you store a sortable field
+                .addSnapshotListener((querySnapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(this, "Listen failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (querySnapshot == null || eventsContainer == null) return;
 
-                    for (DocumentSnapshot doc : querySnapshot) {
+                    eventsContainer.removeAllViews();
 
+                    if (querySnapshot.isEmpty()) {
+                        TextView empty = new TextView(this);
+                        empty.setText("No events yet.");
+                        empty.setTextColor(getResources().getColor(R.color.white));
+                        empty.setAlpha(0.7f);
+                        empty.setPadding(dp(8), dp(16), dp(8), 0);
+                        eventsContainer.addView(empty);
+                        return;
+                    }
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         Event event = doc.toObject(Event.class);
                         if (event == null) continue;
 
                         View card = getLayoutInflater()
                                 .inflate(R.layout.item_event_card, eventsContainer, false);
-
 
                         ImageView img     = card.findViewById(R.id.eventImage);
                         TextView title    = card.findViewById(R.id.eventTitle);
@@ -267,9 +284,6 @@ public class MainActivity extends AppCompatActivity {
 
                         eventsContainer.addView(card);
                     }
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to load events", Toast.LENGTH_SHORT).show()
-                );
+                });
     }
 }

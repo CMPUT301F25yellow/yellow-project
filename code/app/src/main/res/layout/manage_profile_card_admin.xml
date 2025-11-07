@@ -21,9 +21,10 @@
             android:layout_height="48dp"
             android:src="@drawable/ic_person"
             android:padding="8dp"
+            android:contentDescription="@string/app_name"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <!-- Text block -->
         <LinearLayout
@@ -33,9 +34,9 @@
             android:orientation="vertical"
             android:layout_marginStart="12dp"
             app:layout_constraintStart_toEndOf="@id/avatar"
+            app:layout_constraintEnd_toStartOf="@+id/btnDeleteUser"
             app:layout_constraintTop_toTopOf="@id/avatar"
-            app:layout_constraintBottom_toBottomOf="@id/avatar"
-            app:layout_constraintEnd_toStartOf="@+id/actions">
+            app:layout_constraintBottom_toBottomOf="@id/avatar">
 
             <TextView
                 android:id="@+id/name"
@@ -46,7 +47,7 @@
                 android:textSize="15sp"
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
-                android:ellipsize="end"/>
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/email"
@@ -57,47 +58,23 @@
                 android:alpha="0.85"
                 android:textSize="13sp"
                 android:maxLines="1"
-                android:ellipsize="end"/>
+                android:ellipsize="end" />
         </LinearLayout>
 
-        <!-- Actions -->
-        <LinearLayout
-            android:id="@+id/actions"
+        <!-- Single Remove button (aligned to the TEXTS block) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeleteUser"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="end"
+            android:paddingHorizontal="16dp"
+            android:textAllCaps="true"
+            android:text="Remove"
+            android:backgroundTint="@color/danger_red"
+            android:textColor="@color/danger_red_on"
+            android:textSize="13sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnViewProfile"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:minWidth="140dp"
-                android:paddingHorizontal="16dp"
-                android:textAllCaps="false"
-                android:text="View Profile"
-                android:backgroundTint="@color/white"
-                android:textColor="@color/black"
-                android:textSize="13sp"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDeleteUser"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:minWidth="140dp"
-                android:paddingHorizontal="16dp"
-                android:layout_marginTop="6dp"
-                android:textAllCaps="false"
-                android:text="Remove"
-                android:backgroundTint="@color/danger_red"
-                android:textColor="@color/danger_red_on"
-                android:textSize="13sp"/>
-        </LinearLayout>
-
+            app:layout_constraintTop_toTopOf="@id/texts"
+            app:layout_constraintBottom_toBottomOf="@id/texts" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>
