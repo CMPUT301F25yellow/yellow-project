@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.example.yellow"},{"l":"com.example.yellow.admin"},{"l":"com.example.yellow.organizers"},{"l":"com.example.yellow.ui"},{"l":"com.example.yellow.ui.ManageEntrants"},{"l":"com.example.yellow.ui.ViewEvent"},{"l":"com.example.yellow.users"},{"l":"com.example.yellow.utils"}];updateSearchResults();
