@@ -1,7 +1,6 @@
 package com.example.yellow.ui.ManageEntrants;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -19,13 +18,16 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class WaitingFragment extends Fragment {
@@ -33,7 +35,8 @@ public class WaitingFragment extends Fragment {
     private FirebaseFirestore db;
     private LinearLayout container;
     private String eventId;
-    private List<String> currentWaitingEntrants = new ArrayList<>();
+    private final List<String> currentWaitingEntrants = new ArrayList<>();
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
     @Nullable
     @Override
@@ -64,7 +67,7 @@ public class WaitingFragment extends Fragment {
     }
 
     /**
-     * Loads all waiting entrants and displays them
+     * Loads all waiting entrants and displays their profile info
      */
     private void loadWaitingEntrants() {
         container.removeAllViews();
@@ -83,14 +86,28 @@ public class WaitingFragment extends Fragment {
                     }
 
                     for (QueryDocumentSnapshot doc : snapshot) {
-                        String name = doc.getString("fullName");
-                        String email = doc.getString("email");
-                        String joinDate = doc.getString("updatedAt"); // or format Firestore timestamp
-                        if (joinDate == null) joinDate = "Unknown date";
-                        if (name == null) name = doc.getId();
-                        if (email == null) email = "No email";
+                        String userId = doc.getString("userId");
+                        currentWaitingEntrants.add(userId);
 
-                        addEntrantCard(name, email, joinDate, "Waiting");
+                        // Fetch user profile from /profiles/{userId}
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profileDoc -> {
+                                    String name = profileDoc.getString("fullName");
+                                    String email = profileDoc.getString("email");
+                                    String joinDate = "Unknown date";
+                                    if (doc.getTimestamp("timestamp") != null) {
+                                        joinDate = dateFormat.format(doc.getTimestamp("timestamp").toDate());
+                                    }
+
+                                    if (name == null) name = "Unnamed User";
+                                    if (email == null) email = "No email";
+
+                                    addEntrantCard(name, email, joinDate, "Waiting");
+                                })
+                                .addOnFailureListener(e -> {
+                                    addEntrantCard("Unknown User", "Error loading email", "N/A", "Waiting");
+                                });
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -152,7 +169,7 @@ public class WaitingFragment extends Fragment {
 
         for (String id : selected) {
             Map<String, Object> data = new HashMap<>();
-            data.put("selected", true);
+            data.put("userId", id);
             data.put("timestamp", System.currentTimeMillis());
 
             db.collection("events").document(eventId)
@@ -166,13 +183,15 @@ public class WaitingFragment extends Fragment {
                 Toast.LENGTH_SHORT).show();
     }
 
-
+    /**
+     * Adds an entrant card to the layout
+     */
     private void addEntrantCard(String name, String email, String joinDate, String status) {
         View card = LayoutInflater.from(getContext())
                 .inflate(R.layout.item_entrant_card, container, false);
 
-        TextView tvName = card.findViewById(R.id.tvName);
-        TextView tvEmail = card.findViewById(R.id.tvEmail);
+        TextView tvName = card.findViewById(R.id.tvEntrantName);
+        TextView tvEmail = card.findViewById(R.id.tvEntrantEmail);
         TextView tvJoinDate = card.findViewById(R.id.tvJoinDate);
         TextView tvStatus = card.findViewById(R.id.tvStatus);
 
@@ -190,16 +209,15 @@ public class WaitingFragment extends Fragment {
                 colorRes = R.color.green_400;
                 break;
             case "cancelled":
-                colorRes = R.color.grey;
+                colorRes = R.color.danger_red;
                 break;
             case "waiting":
             default:
-                colorRes = R.color.danger_red;
+                colorRes = R.color.gold;
                 break;
         }
         tvStatus.getBackground().setTint(getResources().getColor(colorRes));
 
         container.addView(card);
     }
-
 }
