@@ -211,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
     }
     // ------Join waiting list---------
 
+
     //waiting list
     public void openWaitingRoom(String eventId) {
         WaitingListFragment fragment = new WaitingListFragment();

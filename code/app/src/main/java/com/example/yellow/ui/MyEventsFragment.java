@@ -121,6 +121,7 @@ public class MyEventsFragment extends Fragment {
                         // Simple button functionality (customize later)
                         button.setOnClickListener(view -> {
                             Intent intent = new Intent(getContext(), ViewEventActivity.class);
+                            intent.putExtra("eventId", event.getId());
                             intent.putExtra("eventName", event.getName());
                             intent.putExtra("eventDate", formatEventDetails(event));
                             startActivity(intent);
