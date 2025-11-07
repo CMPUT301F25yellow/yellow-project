@@ -39,6 +39,12 @@ public class WaitingListFragment extends Fragment {
 
     public WaitingListFragment() {}
 
+    /**
+     * @param inflater  LayoutInflater used to inflate the layout.
+     * @param container Parent view that this fragment will attach to.
+     * @param savedInstanceState Previously saved state, if any.
+     * @return Root view for this fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -48,11 +54,15 @@ public class WaitingListFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_waiting_room, container, false);
     }
 
+    /**
+     * @param view Root view of this fragment.
+     * @param savedInstanceState Previously saved instance state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // ✅ 1. STATUS BAR SPACER
+        // status bar spacer
         View spacer = view.findViewById(R.id.statusBarSpacer);
 
         ViewCompat.setOnApplyWindowInsetsListener(view, (v2, insets) -> {
@@ -63,7 +73,7 @@ public class WaitingListFragment extends Fragment {
             return insets;
         });
 
-        // ✅ Firestore + User
+        // Firestore + User
         db   = FirebaseFirestore.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -76,18 +86,18 @@ public class WaitingListFragment extends Fragment {
         userId = user.getUid();
         eventId = getArguments().getString("eventId");
 
-        // ✅ UI
+        // UI
         Button leaveButton   = view.findViewById(R.id.leaveButton);
         ImageView backArrow  = view.findViewById(R.id.backArrow);
         TextView userCount   = view.findViewById(R.id.userCount);
 
-        // ✅ Bind event header UI
+        // Bind event header UI
         titleText    = view.findViewById(R.id.eventTitle);
         dateText     = view.findViewById(R.id.eventDateTime);
         locationText = view.findViewById(R.id.eventLocation);
         loadEventDetails();
 
-        // ✅ Real-time waiting list count
+        // Real-time waiting list count
         db.collection("events")
                 .document(eventId)
                 .collection("waitingList")
@@ -97,18 +107,18 @@ public class WaitingListFragment extends Fragment {
                     }
                 });
 
-        // ✅ Auto-join waiting list
+        // Auto-join waiting list
         joinWaitingRoom();
 
-        // ✅ Leave waiting room
+        // Leave waiting room
         leaveButton.setOnClickListener(v -> leaveWaitingRoom());
 
-        // ✅ Back arrow: go back but stay in waiting list
+        // Back arrow: go back but stay in waiting list
         backArrow.setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager().popBackStack();
         });
 
-        // ✅ System back: LEAVE waiting list
+        // System back: LEAVE waiting list
         requireActivity().getOnBackPressedDispatcher().addCallback(
                 getViewLifecycleOwner(),
                 new OnBackPressedCallback(true) {
@@ -144,7 +154,7 @@ public class WaitingListFragment extends Fragment {
                 );
     }
 
-    // ✅ Join waiting list
+    // Join waiting list
     private void joinWaitingRoom() {
         DocumentReference ref = db.collection("events")
                 .document(eventId)
@@ -167,7 +177,11 @@ public class WaitingListFragment extends Fragment {
         });
     }
 
-    // ✅ Waiting user model
+    /**
+     * @param userId  ID of the user joining the queue.
+     * @param eventId ID of the event.
+     */
+    // Waiting user model
     public static class WaitingUser {
         public String userId;
         public String eventId;
@@ -181,7 +195,7 @@ public class WaitingListFragment extends Fragment {
         }
     }
 
-    // ✅ Leave waiting room
+    // Leave waiting room
     private void leaveWaitingRoom() {
         db.collection("events")
                 .document(eventId)
