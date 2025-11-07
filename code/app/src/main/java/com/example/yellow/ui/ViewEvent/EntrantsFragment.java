@@ -1,6 +1,5 @@
 package com.example.yellow.ui.ViewEvent;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
-import com.google.android.material.button.MaterialButton;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -22,6 +21,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * shows all entrants for an event
+ * combines waiting, selected, enrolled, and cancelled lists
+ * useful for organizers who want a quick overview of all participants
+ */
 public class EntrantsFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -29,6 +33,7 @@ public class EntrantsFragment extends Fragment {
     private LinearLayout entrantsContainer;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
+    /** inflates the layout for the entrants list screen */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -37,15 +42,14 @@ public class EntrantsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_entrants, container, false);
     }
 
+    /** sets up Firestore and loads entrants for the given event */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        MaterialButton manageButton = view.findViewById(R.id.manageEntrantsButton);
         entrantsContainer = view.findViewById(R.id.entrantsContainer);
         db = FirebaseFirestore.getInstance();
 
-        // Retrieve eventId from arguments
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");
         }
@@ -55,64 +59,74 @@ public class EntrantsFragment extends Fragment {
             return;
         }
 
-        loadEntrants();
-
-        manageButton.setOnClickListener(v -> {
-            if (getActivity() == null) return;
-
-            Intent intent = new Intent(getActivity(), com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity.class);
-            intent.putExtra("eventId", eventId);
-            startActivity(intent);
-        });
+        loadAllEntrants();
     }
 
-    private void loadEntrants() {
+    /** loads entrants from all four subcollections under the event */
+    private void loadAllEntrants() {
         entrantsContainer.removeAllViews();
 
-        db.collection("events")
-                .document(eventId)
-                .collection("waitingList")
+        loadEntrantsFromSubcollection("waitingList", "Waiting");
+        loadEntrantsFromSubcollection("selected", "Selected");
+        loadEntrantsFromSubcollection("cancelled", "Cancelled");
+        loadEntrantsFromSubcollection("enrolled", "Enrolled");
+    }
+
+    /**
+     * loads entrants from a specific subcollection
+     * pulls each user's profile and shows them on screen
+     *
+     * @param subcollection name of the Firestore subcollection (waitingList, selected, etc)
+     * @param status label to display on each entrant card
+     */
+    private void loadEntrantsFromSubcollection(String subcollection, String status) {
+        db.collection("events").document(eventId)
+                .collection(subcollection)
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    if (snapshot.isEmpty()) {
-                        TextView empty = new TextView(getContext());
-                        empty.setText("No entrants yet.");
-                        empty.setTextColor(getResources().getColor(R.color.hinty));
-                        entrantsContainer.addView(empty);
-                        return;
-                    }
+                    if (snapshot.isEmpty()) return;
 
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         String userId = doc.getString("userId");
-                        Date joinedAt = doc.getDate("timestamp");
+                        if (userId == null || userId.isEmpty()) continue;
 
-                        if (userId != null) {
-                            // Fetch profile info for each user
-                            db.collection("profiles").document(userId)
-                                    .get()
-                                    .addOnSuccessListener(profileDoc -> {
-                                        String name = profileDoc.getString("fullName");
-                                        String email = profileDoc.getString("email");
-                                        String joinDate = (joinedAt != null)
-                                                ? dateFormat.format(joinedAt)
-                                                : "Unknown date";
+                        // fetch from /profiles/{userId}
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    String name = profile.getString("fullName");
+                                    String email = profile.getString("email");
+                                    if (name == null) name = "Unnamed Entrant";
+                                    if (email == null) email = "No email";
 
-                                        if (name == null) name = "Unnamed User";
-                                        if (email == null) email = "No email";
+                                    String joined = "Unknown date";
+                                    Object ts = doc.get("timestamp");
+                                    if (ts instanceof Timestamp) {
+                                        joined = dateFormat.format(((Timestamp) ts).toDate());
+                                    } else if (ts instanceof Long) {
+                                        joined = dateFormat.format(new Date((Long) ts));
+                                    }
 
-                                        addEntrantCard(name, email, joinDate, "Waiting");
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        addEntrantCard("Unknown User", "Error loading email", "N/A", "Waiting");
-                                    });
-                        }
+                                    addEntrantCard(name, email, joined, status);
+                                })
+                                .addOnFailureListener(e ->
+                                        addEntrantCard("Unknown", "Error loading profile", "N/A", status)
+                                );
                     }
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Error loading entrants: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                        Toast.makeText(getContext(), "Error loading " + status + " entrants", Toast.LENGTH_SHORT).show()
+                );
     }
 
-
+    /**
+     * adds one entrant card to the UI
+     *
+     * @param name entrant full name
+     * @param email entrant email
+     * @param joinDate formatted date they joined or were updated
+     * @param status entrant status (waiting, selected, enrolled, cancelled)
+     */
     private void addEntrantCard(String name, String email, String joinDate, String status) {
         View card = LayoutInflater.from(getContext())
                 .inflate(R.layout.item_entrant_card, entrantsContainer, false);
@@ -129,9 +143,15 @@ public class EntrantsFragment extends Fragment {
 
         int colorRes;
         switch (status.toLowerCase()) {
-            case "selected": colorRes = R.color.brand_primary; break;
-            case "enrolled": colorRes = R.color.green_400; break;
-            case "cancelled": colorRes = R.color.danger_red; break;
+            case "selected":
+                colorRes = R.color.brand_primary;
+                break;
+            case "enrolled":
+                colorRes = R.color.green_400;
+                break;
+            case "cancelled":
+                colorRes = R.color.danger_red;
+                break;
             case "waiting":
             default:
                 colorRes = R.color.gold;
@@ -142,3 +162,4 @@ public class EntrantsFragment extends Fragment {
         entrantsContainer.addView(card);
     }
 }
+

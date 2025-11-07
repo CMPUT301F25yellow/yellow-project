@@ -29,18 +29,25 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * shows all events created by the logged-in organizer
+ * updates live when events are added or removed
+ */
 public class MyEventsFragment extends Fragment {
 
+    private ListenerRegistration registration;
     private LinearLayout myEventsContainer;
     private TextView tvEventCount;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
+    /** inflates the layout for the my events screen */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -49,6 +56,7 @@ public class MyEventsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_my_events, container, false);
     }
 
+    /** sets up the view, loads events, and listens for live updates */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -67,28 +75,39 @@ public class MyEventsFragment extends Fragment {
         myEventsContainer = v.findViewById(R.id.myEventsContainer);
         tvEventCount = v.findViewById(R.id.tvEventCount);
 
-        // Initialize Firebase
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         FirebaseAuth auth = FirebaseAuth.getInstance();
-
         FirebaseUser currentUser = auth.getCurrentUser();
+
         if (currentUser == null) {
             Toast.makeText(getContext(), "Please log in to see your events", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Load events created by this user
-        db.collection("events")
-                .whereEqualTo("organizerId", currentUser.getUid())
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    int count = querySnapshot.size();
-                    tvEventCount.setText(count + " events");
+        // remove any previous listener to avoid duplicate updates
+        if (registration != null) {
+            registration.remove();
+        }
 
-                    if (count == 0) {
+        // listen for real-time updates to this user’s events
+        registration = db.collection("events")
+                .whereEqualTo("organizerId", currentUser.getUid())
+                .addSnapshotListener((querySnapshot, e) -> {
+                    if (e != null) {
+                        Toast.makeText(getContext(), "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (querySnapshot == null || querySnapshot.isEmpty()) {
+                        myEventsContainer.removeAllViews();
+                        tvEventCount.setText("0 events");
                         Toast.makeText(getContext(), "You haven't created any events yet", Toast.LENGTH_SHORT).show();
                         return;
                     }
+
+                    myEventsContainer.removeAllViews();
+                    int count = querySnapshot.size();
+                    tvEventCount.setText(count + " events");
 
                     LayoutInflater inflater = LayoutInflater.from(getContext());
 
@@ -96,7 +115,6 @@ public class MyEventsFragment extends Fragment {
                         Event event = doc.toObject(Event.class);
                         if (event == null) continue;
 
-                        // Inflate your home-style card layout
                         View card = inflater.inflate(R.layout.item_event_card, myEventsContainer, false);
 
                         TextView title = card.findViewById(R.id.eventTitle);
@@ -107,7 +125,6 @@ public class MyEventsFragment extends Fragment {
                         title.setText(event.getName());
                         details.setText(formatEventDetails(event));
 
-                        // Load image if available
                         if (event.getPosterImageUrl() != null && !event.getPosterImageUrl().isEmpty()) {
                             Glide.with(this)
                                     .load(event.getPosterImageUrl())
@@ -118,7 +135,6 @@ public class MyEventsFragment extends Fragment {
                             image.setImageResource(R.drawable.my_image);
                         }
 
-                        // Simple button functionality (customize later)
                         button.setText("View Event");
                         button.setOnClickListener(view -> {
                             Intent intent = new Intent(getContext(), ViewEventActivity.class);
@@ -127,15 +143,23 @@ public class MyEventsFragment extends Fragment {
                             intent.putExtra("eventDate", formatEventDetails(event));
                             startActivity(intent);
                         });
-                        // Add to container
+
                         myEventsContainer.addView(card);
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
+    /** stops the Firestore listener when the fragment is not visible */
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (registration != null) {
+            registration.remove();
+            registration = null;
+        }
+    }
+
+    /** loads all events created by the current user */
     private void loadMyEvents() {
         String userId = FirebaseAuth.getInstance().getCurrentUser() != null
                 ? FirebaseAuth.getInstance().getCurrentUser().getUid()
@@ -152,7 +176,7 @@ public class MyEventsFragment extends Fragment {
                 myEventsContainer.removeAllViews();
 
                 if (documents.isEmpty()) {
-                    tvEventCount.setText("No events found.");
+                    tvEventCount.setText("No events found");
                     return;
                 }
 
@@ -171,10 +195,14 @@ public class MyEventsFragment extends Fragment {
         });
     }
 
+    /**
+     * adds one event card to the list
+     *
+     * @param event the event object to display
+     */
     private void addEventCard(Event event) {
         if (getContext() == null) return;
 
-        // Card container
         CardView card = new CardView(getContext());
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -184,12 +212,10 @@ public class MyEventsFragment extends Fragment {
         card.setCardElevation(6);
         card.setCardBackgroundColor(getResources().getColor(R.color.surface_dark));
 
-        // Inner layout
         LinearLayout inner = new LinearLayout(getContext());
         inner.setOrientation(LinearLayout.VERTICAL);
         inner.setPadding(24, 24, 24, 24);
 
-        // Event name
         TextView nameView = new TextView(getContext());
         nameView.setText(event.getName());
         nameView.setTextColor(Color.WHITE);
@@ -197,7 +223,6 @@ public class MyEventsFragment extends Fragment {
         nameView.setTypeface(null, android.graphics.Typeface.BOLD);
         inner.addView(nameView);
 
-        // Date and location
         String dateText = "";
         if (event.getStartDate() != null) {
             Date date = event.getStartDate().toDate();
@@ -217,6 +242,12 @@ public class MyEventsFragment extends Fragment {
         myEventsContainer.addView(card);
     }
 
+    /**
+     * formats the event date and location for display
+     *
+     * @param event the event object
+     * @return formatted string like "Nov 10, 2025 · Edmonton"
+     */
     private String formatEventDetails(Event event) {
         if (event.getStartDate() == null || event.getLocation() == null)
             return "";
