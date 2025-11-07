@@ -39,6 +39,12 @@ public class WaitingListFragment extends Fragment {
 
     public WaitingListFragment() {}
 
+    /**
+     * @param inflater  LayoutInflater used to inflate the layout.
+     * @param container Parent view that this fragment will attach to.
+     * @param savedInstanceState Previously saved state, if any.
+     * @return Root view for this fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -48,6 +54,10 @@ public class WaitingListFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_waiting_room, container, false);
     }
 
+    /**
+     * @param view Root view of this fragment.
+     * @param savedInstanceState Previously saved instance state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -167,6 +177,10 @@ public class WaitingListFragment extends Fragment {
         });
     }
 
+    /**
+     * @param userId  ID of the user joining the queue.
+     * @param eventId ID of the event.
+     */
     // Waiting user model
     public static class WaitingUser {
         public String userId;
