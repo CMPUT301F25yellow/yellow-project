@@ -87,7 +87,7 @@ public class ProfileUserFragment extends Fragment {
         // Make sure we have a user (anonymous is fine), then load & toggle admin button
         ensureSignedIn(() -> {
             loadProfile();
-            toggleAdminButtonFromFirestore();   // <-- ADDED
+            toggleAdminButtonFromFirestore();
         });
 
         // Save

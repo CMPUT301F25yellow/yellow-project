@@ -72,11 +72,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Temporary placeholders -->
-            <include layout="@layout/manage_profile_card_admin"/>
-            <include layout="@layout/manage_profile_card_admin"/>
-            <include layout="@layout/manage_profile_card_admin"/>
-
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
