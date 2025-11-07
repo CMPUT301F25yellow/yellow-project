@@ -3,6 +3,11 @@ package com.example.yellow;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
@@ -13,12 +18,19 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.bumptech.glide.Glide;
 import com.example.yellow.organizers.CreateEventActivity;
+import com.example.yellow.organizers.Event;
 import com.example.yellow.ui.HistoryFragment;
+import com.example.yellow.ui.MyEventsFragment;
 import com.example.yellow.ui.NotificationFragment;
 import com.example.yellow.ui.ProfileUserFragment;
 import com.example.yellow.ui.QrScanFragment;
+import com.example.yellow.users.WaitingListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
     private View header;
     private View scrollContent;
     private View fragmentContainer;
+
+    // NEW: listener handle for live events
+    private ListenerRegistration eventsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(new Intent(MainActivity.this, CreateEventActivity.class));
                     return true;
                 } else if (id == R.id.nav_my_events) {
-                    // TODO: replace with your MyEvents fragment when ready
+                    openMyEvents();
                     return true;
                 } else if (id == R.id.nav_scan) {
                     openQrScan();
@@ -114,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // ---- Modern back handling (Android 13–16 compatible) ----
+        // ---- Modern back handling ----
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
@@ -124,6 +139,19 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Start live events feed
+        startLiveEventsListener();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up Firestore listener to avoid leaks
+        if (eventsListener != null) {
+            eventsListener.remove();
+            eventsListener = null;
+        }
     }
 
     // ---------- Helpers ----------
@@ -134,22 +162,18 @@ public class MainActivity extends AppCompatActivity {
 
     /** Centralized open method: choose if bottom nav stays visible. */
     private void openFragment(Fragment fragment, String tag, boolean keepBottomNavVisible) {
-        // Hide header + scroll
         if (header != null) header.setVisibility(View.GONE);
         if (scrollContent != null) scrollContent.setVisibility(View.GONE);
 
-        // Fragment container visible
         if (fragmentContainer != null) {
             fragmentContainer.setVisibility(View.VISIBLE);
             fragmentContainer.bringToFront();
         }
 
-        // Decide bottom nav visibility per screen
         if (bottomNav != null) {
             bottomNav.setVisibility(keepBottomNavVisible ? View.VISIBLE : View.GONE);
         }
 
-        // Navigate
         getSupportFragmentManager()
                 .beginTransaction()
                 .setReorderingAllowed(true)
@@ -158,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
     }
 
-    private void showHomeUI(boolean show) {
+    public void showHomeUI(boolean show) {
         int visible = show ? View.VISIBLE : View.GONE;
         if (header != null) header.setVisibility(visible);
         if (scrollContent != null) scrollContent.setVisibility(visible);
@@ -168,25 +192,98 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------- Screens ----------
 
-    // Profile: no bottom nav
     private void openProfile() {
-        // Optional: prevent item checks while in a full-screen fragment
         if (bottomNav != null) bottomNav.getMenu().setGroupCheckable(0, false, true);
         openFragment(new ProfileUserFragment(), "Profile", /*keepBottomNavVisible=*/false);
     }
 
-    // Notifications: no bottom nav
     private void openNotifications() {
         openFragment(new NotificationFragment(), "Notifications", /*keepBottomNavVisible=*/false);
     }
 
-    // QR Scan: keep bottom nav
     private void openQrScan() {
         openFragment(new QrScanFragment(), "QR_SCAN", /*keepBottomNavVisible=*/true);
     }
 
-    // History: keep bottom nav
     private void openHistory() {
         openFragment(new HistoryFragment(), "History", /*keepBottomNavVisible=*/true);
+    }
+
+    private void openMyEvents() {
+        openFragment(new MyEventsFragment(), "MyEvents", /*keepBottomNavVisible=*/true);
+    }
+
+    public void openWaitingRoom(String eventId) {
+        WaitingListFragment fragment = new WaitingListFragment();
+        Bundle args = new Bundle();
+        args.putString("eventId", eventId);
+        fragment.setArguments(args);
+        openFragment(fragment, "WAITING_ROOM", /*keepBottomNavVisible=*/false);
+    }
+
+    // ---------- Live Events (auto-updating) ----------
+
+    private void startLiveEventsListener() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        LinearLayout eventsContainer = findViewById(R.id.eventsContainer);
+
+        // Remove any existing listener before attaching a new one
+        if (eventsListener != null) {
+            eventsListener.remove();
+            eventsListener = null;
+        }
+
+        eventsListener = db.collection("events")
+                // .orderBy("startTime") // uncomment if you store a sortable field
+                .addSnapshotListener((querySnapshot, error) -> {
+                    if (error != null) {
+                        Toast.makeText(this, "Listen failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (querySnapshot == null || eventsContainer == null) return;
+
+                    eventsContainer.removeAllViews();
+
+                    if (querySnapshot.isEmpty()) {
+                        TextView empty = new TextView(this);
+                        empty.setText("No events yet.");
+                        empty.setTextColor(getResources().getColor(R.color.white));
+                        empty.setAlpha(0.7f);
+                        empty.setPadding(dp(8), dp(16), dp(8), 0);
+                        eventsContainer.addView(empty);
+                        return;
+                    }
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        Event event = doc.toObject(Event.class);
+                        if (event == null) continue;
+
+                        View card = getLayoutInflater()
+                                .inflate(R.layout.item_event_card, eventsContainer, false);
+
+                        ImageView img     = card.findViewById(R.id.eventImage);
+                        TextView title    = card.findViewById(R.id.eventTitle);
+                        TextView details  = card.findViewById(R.id.eventDetails);
+                        Button joinButton = card.findViewById(R.id.eventButton);
+
+                        title.setText(event.getName());
+                        details.setText(event.getFormattedDateAndLocation());
+
+                        if (event.getPosterImageUrl() != null && !event.getPosterImageUrl().isEmpty()) {
+                            Glide.with(MainActivity.this)
+                                    .load(event.getPosterImageUrl())
+                                    .into(img);
+                        } else {
+                            img.setImageResource(R.drawable.my_image);
+                        }
+
+                        joinButton.setOnClickListener(v -> {
+                            String eventId = doc.getId();
+                            openWaitingRoom(eventId);
+                        });
+
+                        eventsContainer.addView(card);
+                    }
+                });
     }
 }

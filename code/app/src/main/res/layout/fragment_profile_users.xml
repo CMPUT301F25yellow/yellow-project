@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_profile"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -17,8 +18,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-
-    <!-- Header (Back + centered title) sits directly under topBarFill -->
+    <!-- Header (Back + centered title) -->
     <RelativeLayout
         android:id="@+id/profileHeader"
         android:layout_width="0dp"
@@ -54,7 +54,7 @@
             android:fontFamily="sans-serif-medium" />
     </RelativeLayout>
 
-    <!-- Content starts below the header -->
+    <!-- Scrollable content -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/profileScroll"
         android:layout_width="0dp"
@@ -62,6 +62,7 @@
         android:fillViewport="true"
         android:padding="24dp"
         android:clipToPadding="false"
+        android:background="@color/background_black"
         app:layout_constraintTop_toBottomOf="@id/profileHeader"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -72,6 +73,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <!-- Admin Dashboard button (above profile icon) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAdminDashboard"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Admin Dashboard"
+                android:textColor="@color/black"
+                android:backgroundTint="@color/white"
+                android:layout_marginBottom="20dp"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <!-- Profile icon -->
             <ImageView
                 android:id="@+id/profileAvatar"
                 android:layout_width="96dp"
@@ -81,6 +96,7 @@
                 android:contentDescription="@string/profile_avatar_desc"
                 android:layout_marginBottom="16dp" />
 
+            <!-- Full name -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -93,6 +109,7 @@
                     android:textColor="@color/white" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Email -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -107,6 +124,7 @@
                     android:textColor="@color/white" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Phone -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -121,6 +139,7 @@
                     android:textColor="@color/white" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Save button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSave"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -131,6 +150,7 @@
                 android:backgroundTint="@color/white"
                 android:textColor="@color/black" />
 
+            <!-- Delete profile -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDeleteProfile"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"

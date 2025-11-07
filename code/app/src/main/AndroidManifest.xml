@@ -25,7 +25,26 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".admin.AdminDashboardActivity" />
         <activity android:name=".organizers.CreateEventActivity" />
+        <activity android:name=".ui.ManageEntrants.ManageEntrantsActivity"/>
+
+        <activity
+            android:name=".organizers.ViewEventActivity"
+            android:exported="true">
+
+            <!-- Deep link: yellow://event/<docId> -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="yellow"
+                    android:host="event" />
+            </intent-filter>
+        </activity>
+
+
 
     </application>
 

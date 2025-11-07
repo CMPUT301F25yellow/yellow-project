@@ -16,8 +16,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.yellow.R;
 
+/**
+ * Fragment that displays app notifications for the user.
+ */
 public class NotificationFragment extends Fragment {
 
+    /**
+     * Inflates the notification layout.
+     *
+     * @param inflater LayoutInflater used to inflate the view.
+     * @param container Optional parent container.
+     * @param savedInstanceState Previously saved state, if any.
+     * @return The root view for this fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -26,6 +37,12 @@ public class NotificationFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_notification, container, false);
     }
 
+    /**
+     * Sets up the UI, status bar color, and navigation behavior.
+     *
+     * @param v The root view of the fragment.
+     * @param savedInstanceState Previously saved state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);

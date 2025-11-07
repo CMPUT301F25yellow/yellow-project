@@ -1,5 +1,6 @@
 package com.example.yellow.ui;
 
+import android.content.Intent; // <-- ADDED
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -28,6 +29,10 @@ import com.google.firebase.firestore.SetOptions;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Profile screen for users to add/view/edit/delete their profile.
+ */
+
 public class ProfileUserFragment extends Fragment {
 
     private TextInputEditText inputFullName, inputEmail, inputPhone;
@@ -36,6 +41,14 @@ public class ProfileUserFragment extends Fragment {
     private FirebaseAuth auth;
     private FirebaseFirestore db;
 
+    /**
+     * Creates and returns the layout for the profile screen.
+     *
+     * @param inflater  the LayoutInflater used to inflate views
+     * @param container the parent view that the fragment's UI will attach to
+     * @param savedInstanceState any saved instance data
+     * @return the root View for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(
@@ -44,9 +57,13 @@ public class ProfileUserFragment extends Fragment {
             @Nullable Bundle savedInstanceState
     ) {
         return inflater.inflate(R.layout.fragment_profile_users, container, false);
-        // ^ If your fragment layout file is different, change this to that file (NOT the host layout).
     }
-
+    /**
+     * Sets up buttons, Firebase, and loads user profile information.
+     *
+     * @param v the root view
+     * @param savedInstanceState the saved state, if any
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -56,7 +73,7 @@ public class ProfileUserFragment extends Fragment {
         inputEmail    = v.findViewById(R.id.inputEmail);
         inputPhone    = v.findViewById(R.id.inputPhone);
         btnSave       = v.findViewById(R.id.btnSave);
-        btnDeleteProfile     = v.findViewById(R.id.btnDeleteProfile);
+        btnDeleteProfile = v.findViewById(R.id.btnDeleteProfile);
 
         requireActivity().getWindow().setStatusBarColor(
                 ContextCompat.getColor(requireContext(), R.color.surface_dark)
@@ -84,12 +101,14 @@ public class ProfileUserFragment extends Fragment {
         auth = FirebaseAuth.getInstance();
         db   = FirebaseFirestore.getInstance();
 
-        // Make sure we have a user (anonymous is fine), then load
-        ensureSignedIn(() -> loadProfile());
+        // Make sure we have a user (anonymous is fine), then load & toggle admin button
+        ensureSignedIn(() -> {
+            loadProfile();
+            toggleAdminButtonFromFirestore();
+        });
 
         // Save
         btnSave.setOnClickListener(v1 -> saveProfile());
-
 
         // Optional: delete profile document
         if (btnDeleteProfile != null) {
@@ -98,8 +117,15 @@ public class ProfileUserFragment extends Fragment {
     }
 
     // ----- Auth -----
+    /** Callback to run after sign-in. */
     private interface AfterLogin { void go(); }
 
+    /**
+     * Ensures there is a signed-in user.
+     * If no user is currently signed in, this method signs them in anonymously.
+     *
+     * @param afterLogin runs once the user is confirmed signed in
+     */
     private void ensureSignedIn(@NonNull AfterLogin afterLogin) {
         FirebaseUser cur = auth.getCurrentUser();
         if (cur != null) {
@@ -116,12 +142,18 @@ public class ProfileUserFragment extends Fragment {
                 });
     }
 
+    /**
+     * Returns the current user's UID or null if not signed in.
+     *
+     * @return UID string or null.
+     */
     private String uidOrNull() {
         FirebaseUser u = auth.getCurrentUser();
         return (u == null) ? null : u.getUid();
     }
 
     // ----- Load -----
+    /** Loads profile from Firestore. */
     private void loadProfile() {
         String uid = uidOrNull();
         if (uid == null) return;
@@ -133,6 +165,11 @@ public class ProfileUserFragment extends Fragment {
                 .addOnFailureListener(e -> toast("Load failed: " + e.getMessage()));
     }
 
+    /**
+     * Writes the Firestore document values into the input fields.
+     *
+     * @param doc Profile document snapshot.
+     */
     private void bindDocToUi(DocumentSnapshot doc) {
         if (doc != null && doc.exists()) {
             String name  = doc.getString("fullName");
@@ -151,6 +188,10 @@ public class ProfileUserFragment extends Fragment {
     }
 
     // ----- Save -----
+
+    /**
+     * Saves the current inputs to Firestore (merge).
+     */
     private void saveProfile() {
         String uid = uidOrNull();
         if (uid == null) {
@@ -181,6 +222,9 @@ public class ProfileUserFragment extends Fragment {
                 .addOnFailureListener(e -> toast("Save failed: " + e.getMessage()));
     }
 
+    /**
+     * Deletes the user's profile document from Firestore and clears inputs.
+     */
     private void deleteProfile() {
         String uid = uidOrNull();
         if (uid == null) return;
@@ -197,11 +241,64 @@ public class ProfileUserFragment extends Fragment {
                 .addOnFailureListener(e -> toast("Delete failed: " + e.getMessage()));
     }
 
+    // ----- Admin toggle (NEW) -----
+    /**
+     * Shows or hides the Admin Dashboard button based on the user's role.
+     * Listens to changes on roles/{uid}.
+     */
+    private void toggleAdminButtonFromFirestore() {
+        View btnAdmin = getView() != null ? getView().findViewById(R.id.btnAdminDashboard) : null;
+        if (btnAdmin == null) return;
+
+        String uid = uidOrNull();
+        if (uid == null) { btnAdmin.setVisibility(View.GONE); return; }
+
+        // Start hidden until we confirm admin
+        btnAdmin.setVisibility(View.GONE);
+
+        db.collection("roles").document(uid)
+                .addSnapshotListener((doc, err) -> {
+                    if (err != null) {
+                        android.util.Log.e("ADMIN", "roles read error: " + err.getMessage(), err);
+                        // Do NOT force-hide again on error; just keep current state
+                        return;
+                    }
+                    if (doc == null || !doc.exists()) {
+                        android.util.Log.d("ADMIN", "roles/" + uid + " missing");
+                        btnAdmin.setVisibility(View.GONE);
+                        btnAdmin.setOnClickListener(null);
+                        return;
+                    }
+                    String role = doc.getString("role");
+                    android.util.Log.d("ADMIN", "role=" + role);
+                    boolean isAdmin = "admin".equals(role);
+                    btnAdmin.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+                    if (isAdmin) {
+                        btnAdmin.setOnClickListener(v ->
+                                startActivity(new android.content.Intent(
+                                        requireContext(), com.example.yellow.admin.AdminDashboardActivity.class)));
+                    } else {
+                        btnAdmin.setOnClickListener(null);
+                    }
+                });
+    }
+
     // ----- Helpers -----
+    /**
+     * Returns trimmed text from an input or an empty string if null.
+     *
+     * @param et Input field.
+     * @return Trimmed string (never null).
+     */
     private String safe(TextInputEditText et) {
         return et.getText() == null ? "" : et.getText().toString().trim();
     }
 
+    /**
+     * Shows a short toast message if the context is available.
+     *
+     * @param msg Message to display.
+     */
     private void toast(String msg) {
         if (getContext() != null) {
             Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface_dark"
+    android:padding="16dp">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:overScrollMode="ifContentScrolls">
+
+        <LinearLayout
+            android:id="@+id/entrantsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/manageEntrantsButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Manage Entrants"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:cornerRadius="30dp"
+        app:backgroundTint="@color/pink_bg"
+        app:elevation="4dp"
+        android:layout_marginTop="12dp" />
+
+</LinearLayout>
