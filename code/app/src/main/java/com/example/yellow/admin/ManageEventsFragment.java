@@ -30,6 +30,9 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.Date;
 
+/**
+ * Admin screen to browse all events as a list and allow deleting an event.
+ */
 public class ManageEventsFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -37,6 +40,14 @@ public class ManageEventsFragment extends Fragment {
     private View spacer, scroll;
     private ListenerRegistration reg;
 
+    /**
+     * Creates and returns the Manage Events layout.
+     *
+     * @param inflater  Layout inflater.
+     * @param container Optional parent view.
+     * @param savedInstanceState Saved state, if any.
+     * @return The root view for this fragment.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -45,6 +56,12 @@ public class ManageEventsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_manage_events, container, false);
     }
 
+    /**
+     * Binds views, applies window insets, sets back navigation, and starts listening to events.
+     *
+     * @param v The fragment root view.
+     * @param savedInstanceState Saved state, if any.
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -85,6 +102,9 @@ public class ManageEventsFragment extends Fragment {
         listenForEvents();
     }
 
+    /**
+     * Cleans up the Firestore listener and view refs.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -92,6 +112,9 @@ public class ManageEventsFragment extends Fragment {
         spacer = null; scroll = null; listContainer = null;
     }
 
+    /**
+     * Subscribes to the "events" collection and rebuilds the list on changes.
+     */
     private void listenForEvents() {
         reg = db.collection("events")
                 // .orderBy("startDate") // optional (add Firestore index if prompted)
@@ -158,6 +181,13 @@ public class ManageEventsFragment extends Fragment {
                 });
     }
 
+    /**
+     * Shows a confirmation dialog before deleting the event (and poster if present).
+     *
+     * @param eventId  The Firestore document ID of the event.
+     * @param title    The event name (used for dialog text).
+     * @param posterUrl The download URL of the poster image (may be empty).
+     */
     private void confirmDelete(@NonNull String eventId,
                                @NonNull String title,
                                @NonNull String posterUrl) {
@@ -170,6 +200,12 @@ public class ManageEventsFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * Deletes the event document and then attempts to delete its poster in Firebase Storage.
+     *
+     * @param eventId  The Firestore document ID to delete.
+     * @param posterUrl The download URL of the poster image (may be empty).
+     */
     private void deleteEventAndPoster(@NonNull String eventId, @NonNull String posterUrl) {
         db.collection("events").document(eventId)
                 .delete()
@@ -190,11 +226,24 @@ public class ManageEventsFragment extends Fragment {
                 .addOnFailureListener(e -> toast("Delete failed: " + e.getMessage()));
     }
 
+    /**
+     * Safely reads a string field from a document.
+     *
+     * @param d   The source document.
+     * @param key The field name.
+     * @return The trimmed string value or an empty string.
+     */
     private String str(DocumentSnapshot d, String key) {
         String s = d.getString(key);
         return s == null ? "" : s.trim();
     }
 
+    /**
+     * Formats a Firestore field as a "date • time" label.
+     *
+     * @param raw The raw field value (Timestamp or String).
+     * @return A formatted date-time label, or an empty string if not available.
+     */
     private String formatDateField(Object raw) {
         if (raw instanceof Timestamp) {
             Date dt = ((Timestamp) raw).toDate();
@@ -206,6 +255,11 @@ public class ManageEventsFragment extends Fragment {
         return "";
     }
 
+    /**
+     * Shows a short toast if the fragment is attached.
+     *
+     * @param m Message to display.
+     */
     private void toast(String m) {
         if (!isAdded()) return;
         android.widget.Toast.makeText(getContext(), m, android.widget.Toast.LENGTH_SHORT).show();

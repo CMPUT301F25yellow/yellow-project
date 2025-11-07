@@ -20,8 +20,18 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Activity that provides access to admin tools and management features.
+ * Only users with the "admin" role in Firestore can access this dashboard.
+ */
 public class AdminDashboardActivity extends AppCompatActivity {
 
+    /**
+     * Called when the activity is created.
+     * Verifies whether the signed-in user has admin privileges.
+     *
+     * @param savedInstanceState Previously saved state, if any.
+     */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +61,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Sets up the admin interface, including buttons and layout adjustments.
+     */
     private void setupAdminUI() {
         // ---- Step 2: Inflate layout ----
         setContentView(R.layout.activity_admin_dashboard);
