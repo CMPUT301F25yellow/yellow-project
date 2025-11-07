@@ -63,7 +63,9 @@ public class WaitingFragment extends Fragment {
         drawButton.setOnClickListener(v -> showDrawDialog());
     }
 
-    /** Loads all waiting entrants and displays them */
+    /**
+     * Loads all waiting entrants and displays them
+     */
     private void loadWaitingEntrants() {
         container.removeAllViews();
         currentWaitingEntrants.clear();
@@ -81,15 +83,14 @@ public class WaitingFragment extends Fragment {
                     }
 
                     for (QueryDocumentSnapshot doc : snapshot) {
-                        String name = doc.getString("userName");
+                        String name = doc.getString("fullName");
+                        String email = doc.getString("email");
+                        String joinDate = doc.getString("updatedAt"); // or format Firestore timestamp
+                        if (joinDate == null) joinDate = "Unknown date";
                         if (name == null) name = doc.getId();
-                        currentWaitingEntrants.add(doc.getId());
+                        if (email == null) email = "No email";
 
-                        TextView tv = new TextView(getContext());
-                        tv.setText(name);
-                        tv.setTextColor(getResources().getColor(R.color.white));
-                        tv.setPadding(0, 8, 0, 8);
-                        container.addView(tv);
+                        addEntrantCard(name, email, joinDate, "Waiting");
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -97,7 +98,9 @@ public class WaitingFragment extends Fragment {
                 });
     }
 
-    /** Opens dialog to ask how many users to draw */
+    /**
+     * Opens dialog to ask how many users to draw
+     */
     private void showDrawDialog() {
         if (currentWaitingEntrants.isEmpty()) {
             Toast.makeText(getContext(), "No entrants to draw from.", Toast.LENGTH_SHORT).show();
@@ -137,7 +140,9 @@ public class WaitingFragment extends Fragment {
                 .show();
     }
 
-    /** Randomly select users from the waiting list and move them to selected list */
+    /**
+     * Randomly select users from the waiting list and move them to selected list
+     */
     private void runDraw(int count) {
         if (eventId == null) return;
 
@@ -160,4 +165,41 @@ public class WaitingFragment extends Fragment {
                 "Selected " + selected.size() + " entrants!",
                 Toast.LENGTH_SHORT).show();
     }
+
+
+    private void addEntrantCard(String name, String email, String joinDate, String status) {
+        View card = LayoutInflater.from(getContext())
+                .inflate(R.layout.item_entrant_card, container, false);
+
+        TextView tvName = card.findViewById(R.id.tvName);
+        TextView tvEmail = card.findViewById(R.id.tvEmail);
+        TextView tvJoinDate = card.findViewById(R.id.tvJoinDate);
+        TextView tvStatus = card.findViewById(R.id.tvStatus);
+
+        tvName.setText(name);
+        tvEmail.setText(email);
+        tvJoinDate.setText("Joined: " + joinDate);
+        tvStatus.setText(status);
+
+        int colorRes;
+        switch (status.toLowerCase()) {
+            case "selected":
+                colorRes = R.color.brand_primary;
+                break;
+            case "enrolled":
+                colorRes = R.color.green_400;
+                break;
+            case "cancelled":
+                colorRes = R.color.grey;
+                break;
+            case "waiting":
+            default:
+                colorRes = R.color.danger_red;
+                break;
+        }
+        tvStatus.getBackground().setTint(getResources().getColor(colorRes));
+
+        container.addView(card);
+    }
+
 }

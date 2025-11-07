@@ -7,16 +7,6 @@
     android:background="@color/surface_dark"
     android:padding="16dp">
 
-    <TextView
-        android:id="@+id/entrantsTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Waiting List"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="12dp" />
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="580dp">
