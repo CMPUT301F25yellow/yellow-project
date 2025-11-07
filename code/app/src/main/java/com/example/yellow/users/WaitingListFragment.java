@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.yellow.MainActivity;
 import com.example.yellow.R;
+import com.example.yellow.organizers.Event;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -32,6 +33,9 @@ public class WaitingListFragment extends Fragment {
 
     private String eventId;
     private String userId;
+    private TextView titleText;
+    private TextView dateText;
+    private TextView locationText;
 
     public WaitingListFragment() {}
 
@@ -77,6 +81,12 @@ public class WaitingListFragment extends Fragment {
         ImageView backArrow  = view.findViewById(R.id.backArrow);
         TextView userCount   = view.findViewById(R.id.userCount);
 
+        // ✅ Bind event header UI
+        titleText    = view.findViewById(R.id.eventTitle);
+        dateText     = view.findViewById(R.id.eventDateTime);
+        locationText = view.findViewById(R.id.eventLocation);
+        loadEventDetails();
+
         // ✅ Real-time waiting list count
         db.collection("events")
                 .document(eventId)
@@ -108,6 +118,30 @@ public class WaitingListFragment extends Fragment {
                     }
                 }
         );
+    }
+
+    private void loadEventDetails() {
+        db.collection("events")
+                .document(eventId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+
+                    Event event = doc.toObject(Event.class);
+                    if (event == null) return;
+
+                    // ✅ Set event title
+                    titleText.setText(event.getName());
+
+                    // ✅ Set formatted date and location
+                    dateText.setText(event.getFormattedDateAndLocation());
+
+                    // ✅ Set location separately (optional)
+                    locationText.setText(event.getLocation());
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(), "Failed to load event info", Toast.LENGTH_SHORT).show()
+                );
     }
 
     // ✅ Join waiting list
