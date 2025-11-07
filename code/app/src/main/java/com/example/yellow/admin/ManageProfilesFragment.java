@@ -44,13 +44,12 @@ public class ManageProfilesFragment extends Fragment {
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
 
-        // ---- Grab views
         spacer        = v.findViewById(R.id.statusBarSpacer);
         View btnBack  = v.findViewById(R.id.btnBack);
         scroll        = v.findViewById(R.id.scroll);
         listContainer = v.findViewById(R.id.listContainer);
 
-        // ---- Insets: top spacer + bottom padding on scroll
+        // Insets: top spacer + bottom padding on scroll
         ViewCompat.setOnApplyWindowInsetsListener(v, (view, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             if (spacer != null) {
@@ -61,7 +60,6 @@ public class ManageProfilesFragment extends Fragment {
                 }
             }
             if (scroll != null) {
-                // keep existing left/top/right paddings, add bottom inset
                 int ps = scroll.getPaddingStart();
                 int pt = scroll.getPaddingTop();
                 int pe = scroll.getPaddingEnd();
@@ -71,14 +69,12 @@ public class ManageProfilesFragment extends Fragment {
             return insets;
         });
 
-        // ---- Back button
         if (btnBack != null) {
             btnBack.setOnClickListener(x ->
                     requireActivity().getSupportFragmentManager().popBackStack()
             );
         }
 
-        // ---- Firestore live list
         db = FirebaseFirestore.getInstance();
         startLiveProfilesListener();
     }
@@ -94,7 +90,7 @@ public class ManageProfilesFragment extends Fragment {
 
     private void startLiveProfilesListener() {
         liveReg = db.collection("profiles")
-                //.orderBy("fullName") // uncomment if you store fullName
+                //.orderBy("fullName")  // enable if you store a name and want sorting
                 .addSnapshotListener((snap, err) -> {
                     if (!isAdded()) return;
 
@@ -104,10 +100,9 @@ public class ManageProfilesFragment extends Fragment {
                     }
                     if (snap == null || listContainer == null) return;
 
-                    // Rebuild the list each time (simple & fine for admin)
                     listContainer.removeAllViews();
-
                     LayoutInflater inflater = LayoutInflater.from(getContext());
+
                     for (DocumentSnapshot d : snap.getDocuments()) {
                         String uid   = d.getId();
                         String name  = safe(d.getString("fullName"));
@@ -122,12 +117,12 @@ public class ManageProfilesFragment extends Fragment {
                         tvName.setText(name.isEmpty() ? "(no name)" : name);
                         tvEmail.setText(email);
 
-                        btnRemove.setOnClickListener(v -> confirmAndRemove(uid, name));
+                        btnRemove.setOnClickListener(v ->
+                                confirmAndRemove(uid, name.isEmpty() ? uid : name));
 
                         listContainer.addView(card);
                     }
 
-                    // Optional: empty state
                     if (snap.isEmpty()) {
                         TextView empty = new TextView(getContext());
                         empty.setText("No profiles found.");
@@ -139,25 +134,29 @@ public class ManageProfilesFragment extends Fragment {
                 });
     }
 
-    private void confirmAndRemove(@NonNull String uid, @NonNull String name) {
-        String who = name.isEmpty() ? uid : name;
+    private void confirmAndRemove(@NonNull String uid, @NonNull String display) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Remove user?")
-                .setMessage("This will delete " + who + " from profiles and roles.")
-                .setPositiveButton("Remove", (d, w) -> removeUser(uid))
+                .setMessage("This will delete the profile for: " + display)
+                .setPositiveButton("Remove", (d, w) -> removeProfileDocs(uid))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void removeUser(@NonNull String uid) {
-        WriteBatch b = db.batch();
-        b.delete(db.collection("profiles").document(uid));
-        b.delete(db.collection("roles").document(uid));
-        // Add additional user-owned docs here if needed (events, uploads, etc.)
+    /**
+     * Deletes the user's profile document (and optionally their roles doc).
+     * This does NOT delete Firebase Auth. The user can still sign in; they'll just
+     * see an empty profile and must re-enter details.
+     */
+    private void removeProfileDocs(@NonNull String uid) {
+        WriteBatch batch = db.batch();
+        batch.delete(db.collection("profiles").document(uid));
+        // Optional: also clear role assignment
+        batch.delete(db.collection("roles").document(uid));
 
-        b.commit()
+        batch.commit()
                 .addOnSuccessListener(unused ->
-                        Toast.makeText(getContext(), "User removed.", Toast.LENGTH_SHORT).show())
+                        Toast.makeText(getContext(), "Profile removed.", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e ->
                         Toast.makeText(getContext(), "Remove failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
