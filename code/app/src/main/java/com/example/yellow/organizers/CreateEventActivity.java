@@ -449,7 +449,7 @@ public class CreateEventActivity extends AppCompatActivity {
      * @return a string like {@code data:image/jpeg;base64,AAAA...}
      * @throws Exception if the image cannot be opened, decoded, or processed
      */
-    private String encodeImageUriToDataUri(Uri uri) throws Exception {
+    public String encodeImageUriToDataUri(Uri uri) throws Exception {
         final int MAX_DOC_BYTES = 900 * 1024;
         final int MAX_DIMENSION = 1280;
         final int MIN_JPEG_QUALITY = 40;

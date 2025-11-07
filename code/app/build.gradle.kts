@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.example.yellow"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -30,9 +30,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    testOptions{
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
+    implementation(files("C:\\Users\\User\\AppData\\Local\\Android\\Sdk\\platforms\\android-36\\android.jar"))
     implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
@@ -62,6 +66,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.test:core:1.5.0")
+    testImplementation("androidx.annotation:annotation:1.8.0")
 
     // Android instrumented tests
     androidTestImplementation("androidx.test:runner:1.5.2")
