@@ -1,10 +1,12 @@
 package com.example.yellow.ui.ViewEvent;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,7 +36,7 @@ public class EntrantsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        Button manageButton = view.findViewById(R.id.manageEntrantsButton);
         entrantsContainer = view.findViewById(R.id.entrantsContainer);
         db = FirebaseFirestore.getInstance();
 
@@ -49,6 +51,25 @@ public class EntrantsFragment extends Fragment {
         }
 
         loadEntrants();
+
+        manageButton.setOnClickListener(v -> {
+            if (getContext() == null || getActivity() == null) return;
+
+            // Retrieve event details
+            String eventId = getArguments() != null ? getArguments().getString("eventId") : null;
+            String eventName = getArguments() != null ? getArguments().getString("eventName") : "Event";
+
+            if (eventId == null) {
+                Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Launch ManageEntrantsActivity
+            Intent intent = new Intent(getActivity(), com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity.class);
+            intent.putExtra("eventId", eventId);
+            intent.putExtra("eventName", eventName);
+            startActivity(intent);
+        });
     }
 
     private void loadEntrants() {
