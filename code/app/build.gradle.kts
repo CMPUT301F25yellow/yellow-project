@@ -36,7 +36,6 @@ android {
 }
 
 dependencies {
-    implementation(files("C:\\Users\\User\\AppData\\Local\\Android\\Sdk\\platforms\\android-36\\android.jar"))
     implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
