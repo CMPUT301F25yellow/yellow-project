@@ -61,7 +61,8 @@ public class ViewEventActivity extends AppCompatActivity {
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.viewPager);
 
-        ViewEventPageAdapter adapter = new ViewEventPageAdapter(this);
+        String eventId = getIntent().getStringExtra("eventId");
+        ViewEventPageAdapter adapter = new ViewEventPageAdapter(this, eventId);
         viewPager.setAdapter(adapter);
 
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {

@@ -206,7 +206,9 @@ public class MainActivity extends AppCompatActivity {
     // My Events: keep bottom nav
     private void openMyEvents() {
         openFragment(new MyEventsFragment(), "MyEvents", /*keepBottomNavVisible=*/true);
+    }
     // ------Join waiting list---------
+
 
     //waiting list
     public void openWaitingRoom(String eventId) {
