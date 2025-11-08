@@ -1,7 +1,14 @@
 package com.example.yellow.ui.ManageEntrants;
 
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.InputType;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,23 +19,30 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-
 import com.example.yellow.R;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
+/**
+ * shows all entrants who were selected for an event
+ * lets the organizer send a notification to all selected users
+ */
 public class SelectedFragment extends Fragment {
 
     private FirebaseFirestore db;
     private LinearLayout container;
     private String eventId;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy · h:mm a", Locale.getDefault());
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
+    /** inflates the layout for the selected entrants screen */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -37,12 +51,16 @@ public class SelectedFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_selected_list, container, false);
     }
 
+    /** sets up Firestore, loads entrants, and binds the send notification button */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         db = FirebaseFirestore.getInstance();
         container = view.findViewById(R.id.selectedContainer);
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
+
+        Button btnNotify = view.findViewById(R.id.btnSendNotification);
 
         if (eventId == null) {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -50,21 +68,26 @@ public class SelectedFragment extends Fragment {
         }
 
         loadSelectedEntrants();
+        btnNotify.setOnClickListener(v -> showNotificationDialog());
     }
 
-    /**
-     * Load all selected entrants from Firestore and display them
-     */
+    /** loads all selected entrants in real time from Firestore */
     private void loadSelectedEntrants() {
         container.removeAllViews();
 
         db.collection("events").document(eventId)
                 .collection("selected")
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    if (snapshot.isEmpty()) {
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null) {
+                        Toast.makeText(getContext(), "Error loading entrants", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    container.removeAllViews();
+
+                    if (snapshot == null || snapshot.isEmpty()) {
                         TextView empty = new TextView(getContext());
-                        empty.setText("No selected entrants yet.");
+                        empty.setText("No selected entrants yet");
                         empty.setTextColor(getResources().getColor(R.color.hinty));
                         empty.setPadding(16, 24, 16, 24);
                         container.addView(empty);
@@ -73,11 +96,8 @@ public class SelectedFragment extends Fragment {
 
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         String userId = doc.getString("userId");
-                        if (userId == null || userId.isEmpty()) {
-                            continue;
-                        }
+                        if (userId == null || userId.isEmpty()) continue;
 
-                        // Fetch profile info for each selected user
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
@@ -86,9 +106,8 @@ public class SelectedFragment extends Fragment {
                                     if (name == null) name = "Unnamed Entrant";
                                     if (email == null) email = "No email";
 
-                                    // Handle timestamp (works for both Firestore Timestamp and Long)
-                                    Object ts = doc.get("timestamp");
                                     String dateSelected = "Unknown date";
+                                    Object ts = doc.get("timestamp");
                                     if (ts instanceof Timestamp) {
                                         dateSelected = dateFormat.format(((Timestamp) ts).toDate());
                                     } else if (ts instanceof Long) {
@@ -97,19 +116,69 @@ public class SelectedFragment extends Fragment {
 
                                     addEntrantCard(name, email, dateSelected, "Selected");
                                 })
-                                .addOnFailureListener(e -> {
-                                    addEntrantCard("Unknown", "Error loading profile", "N/A", "Selected");
-                                });
+                                .addOnFailureListener(err ->
+                                        addEntrantCard("Unknown", "Error loading profile", "N/A", "Selected"));
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Failed to load selected entrants", Toast.LENGTH_SHORT).show();
                 });
     }
 
-    /**
-     * Inflate and populate a single entrant card
-     */
+    /** shows a dialog to write a custom message or use a default one */
+    private void showNotificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Send Notification");
+
+        final EditText input = new EditText(getContext());
+        input.setHint("Enter custom message (optional)");
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        input.setMinLines(3);
+        builder.setView(input);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String message = input.getText().toString().trim();
+            if (message.isEmpty()) {
+                message = "You’ve been selected! Please sign up for the event.";
+            }
+            sendNotificationToAllSelected(message);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+
+    /** sends a notification to all users in the selected list */
+    private void sendNotificationToAllSelected(String message) {
+        db.collection("events").document(eventId)
+                .collection("selected")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.isEmpty()) {
+                        Toast.makeText(getContext(), "No selected entrants to notify", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    for (DocumentSnapshot doc : snapshot) {
+                        String userId = doc.getString("userId");
+                        if (userId == null || userId.isEmpty()) continue;
+
+                        Map<String, Object> notification = new HashMap<>();
+                        notification.put("message", message);
+                        notification.put("eventId", eventId);
+                        notification.put("timestamp", FieldValue.serverTimestamp());
+                        notification.put("read", false);
+
+                        db.collection("notifications")
+                                .document(userId)
+                                .collection("messages")
+                                .add(notification);
+                    }
+
+                    Toast.makeText(getContext(), "Notification sent to all selected entrants", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(), "Failed to send notifications", Toast.LENGTH_SHORT).show());
+    }
+
+    /** builds and adds one entrant card to the screen */
     private void addEntrantCard(String name, String email, String joinDate, String status) {
         View card = LayoutInflater.from(getContext())
                 .inflate(R.layout.item_entrant_card, container, false);
@@ -121,7 +190,7 @@ public class SelectedFragment extends Fragment {
 
         tvName.setText(name);
         tvEmail.setText(email);
-        tvJoinDate.setText("Selected: " + joinDate);
+        tvJoinDate.setText("Joined: " + joinDate);
         tvStatus.setText(status);
 
         int colorRes;
@@ -139,8 +208,8 @@ public class SelectedFragment extends Fragment {
                 colorRes = R.color.gold;
                 break;
         }
-        tvStatus.getBackground().setTint(getResources().getColor(colorRes));
 
+        tvStatus.getBackground().setTint(getResources().getColor(colorRes));
         container.addView(card);
     }
 }
