@@ -25,6 +25,8 @@
     <color name="danger_red">#E35D5D</color>
     <color name="danger_red_on">#FFFFFF</color>
 
+    <color name="yellow_400">#F7B500</color>
+    <color name="red_400">#E53935</color>
     <color name="green_400">#34C759</color>
 
     <color name="ripple_light">#1FFFFFFF</color>  <!-- white @ 12% -->

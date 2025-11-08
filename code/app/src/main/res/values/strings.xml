@@ -50,5 +50,8 @@
     <string name="description">Description</string>
     <string name="max_entrants">Maximum Entrants</string>
 
+    <string name="notifications">Notifications</string>
+
+
     <string name="qr_code">QR Code</string>
 </resources>
