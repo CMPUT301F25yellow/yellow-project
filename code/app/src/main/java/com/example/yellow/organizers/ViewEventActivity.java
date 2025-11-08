@@ -67,7 +67,7 @@ public class ViewEventActivity extends AppCompatActivity {
                 && !data.getPathSegments().isEmpty()) {
             eventId = data.getPathSegments().get(data.getPathSegments().size() - 1);
         }
-        if (eventId == null || eventId.trim().isEmpty()) {
+        if (eventId != null && !eventId.trim().isEmpty()) {
             loadEventAndRender(eventId);
         }
         Log.d("DeepLink", "eventId = " + eventId);
