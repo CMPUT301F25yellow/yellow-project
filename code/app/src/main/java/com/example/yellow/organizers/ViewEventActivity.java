@@ -22,7 +22,7 @@ import android.util.Log;
 public class ViewEventActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
-    private ViewPager2 viewPager;
+    private ViewPager2 viewPager; //entrants fragment, mapfragment, settingsfragment, notifyfragment, qrfragment
     private Event currentEvent;
 
     @Override
