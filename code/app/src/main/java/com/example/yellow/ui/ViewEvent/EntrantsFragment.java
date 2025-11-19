@@ -60,12 +60,6 @@ public class EntrantsFragment extends Fragment {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
             return;
         }
-        MaterialButton manageButton = view.findViewById(R.id.manageEntrantsButton);
-        manageButton.setOnClickListener(v -> {
-            Intent intent = new Intent(getContext(), com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity.class);
-            intent.putExtra("eventId", eventId);
-            startActivity(intent);
-        });
 
         loadAllEntrants();
     }
