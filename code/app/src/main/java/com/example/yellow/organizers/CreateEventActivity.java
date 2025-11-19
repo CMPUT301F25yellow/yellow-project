@@ -354,10 +354,15 @@ public class CreateEventActivity extends AppCompatActivity {
                         String docId = event.getId();
 
                         // 1) Build deep link
-                        String deepLink = "yellow://event/" + docId;
+                        String deepLink = "https://yellow-app.com/event/" + docId;
 
                         // 2) Generate QR bitmap
                         Bitmap qrBmp = com.example.yellow.utils.QrUtils.makeQr(deepLink, 768);
+
+                        if (qrCard != null && qrImagePreview != null){
+                            qrImagePreview.setImageBitmap(qrBmp);
+                            qrCard.setVisibility(View.VISIBLE);
+                        }
 
                         // 3) Convert to Base64 PNG data URI
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -378,7 +383,7 @@ public class CreateEventActivity extends AppCompatActivity {
                                      */
                                     @Override public void onSuccess() {
                                         toast("Event created successfully!");
-                                        finish();
+                                        new android.os.Handler().postDelayed(() -> finish(), 1500); //allows user to see qr code before finishing
                                     }
 
                                     /**
