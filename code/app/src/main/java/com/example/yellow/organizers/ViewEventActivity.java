@@ -1,7 +1,9 @@
 package com.example.yellow.organizers;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -12,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.yellow.R;
+import com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -25,13 +28,15 @@ public class ViewEventActivity extends AppCompatActivity {
     private ViewPager2 viewPager; //entrants fragment, mapfragment, settingsfragment, notifyfragment, qrfragment
     private Event currentEvent;
 
+    private String eventId;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_event);
 
         Uri data = getIntent().getData();
-        String eventId = null;
+        eventId = null;
 
         // Case 1 — Deep link "yellow://event/<id>"
         /*
@@ -136,6 +141,15 @@ public class ViewEventActivity extends AppCompatActivity {
                 case 4: tab.setText("QR Code"); break;
             }
         }).attach();
+
+        Button manageBtn = findViewById(R.id.btnManageEntrants);
+
+        manageBtn.setOnClickListener(v -> {
+            Intent i = new Intent(ViewEventActivity.this, ManageEntrantsActivity.class);
+            i.putExtra("eventId", eventId);
+            i.putExtra("eventName", tvEventName.getText().toString());
+            startActivity(i);
+        });
     }
 
 
