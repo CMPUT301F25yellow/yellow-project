@@ -1,5 +1,6 @@
 package com.example.yellow.ui.ViewEvent;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -58,6 +60,12 @@ public class EntrantsFragment extends Fragment {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
             return;
         }
+        MaterialButton manageButton = view.findViewById(R.id.manageEntrantsButton);
+        manageButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity.class);
+            intent.putExtra("eventId", eventId);
+            startActivity(intent);
+        });
 
         loadAllEntrants();
     }
