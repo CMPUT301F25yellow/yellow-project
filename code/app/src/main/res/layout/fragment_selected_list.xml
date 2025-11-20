@@ -8,19 +8,39 @@
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="615dp">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
-            android:id="@+id/selectedContainer"
+            android:id="@+id/scrollContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical">
+
+            <!-- Entrants list -->
+            <LinearLayout
+                android:id="@+id/selectedContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- Notify button INSIDE the scroll content -->
+            <Button
+                android:id="@+id/btnSendNotification"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="24dp"
+                android:padding="12dp"
+                android:text="Notify Selected Entrants"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/brand_primary"
+                android:fontFamily="@font/sfpro_semibold"
+                android:gravity="center"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/rounded_button_purple"/>
+        </LinearLayout>
+
     </ScrollView>
 
-    <Button
-        android:id="@+id/btnSendNotification"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Send Notification"
-        android:layout_margin="16dp"/>
 </LinearLayout>
