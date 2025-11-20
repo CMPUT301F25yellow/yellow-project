@@ -4,9 +4,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,11 +18,14 @@ import androidx.fragment.app.Fragment;
 import com.example.yellow.R;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class CancelledFragment extends Fragment {
 
@@ -35,7 +41,7 @@ public class CancelledFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         // Reuse SAME layout as Selected tab
-        return inflater.inflate(R.layout.fragment_selected_list, container, false);
+        return inflater.inflate(R.layout.fragment_cancelled_list, container, false);
     }
 
     @Override
@@ -43,19 +49,17 @@ public class CancelledFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         db = FirebaseFirestore.getInstance();
-        container = view.findViewById(R.id.selectedContainer);
+        container = view.findViewById(R.id.cancelledContainer);
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
-
-        // REMOVE BUTTON — Cancelled tab should NOT have notify button
-        View btn = view.findViewById(R.id.btnSendNotification);
-        if (btn != null) btn.setVisibility(View.GONE);
 
         if (eventId == null) {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
             return;
         }
-
         loadCancelledEntrants();
+
+        Button btnNotify = view.findViewById(R.id.btnNotifyCancelled);
+        btnNotify.setOnClickListener(v -> showNotificationDialog());
     }
 
     private void loadCancelledEntrants() {
@@ -89,8 +93,50 @@ public class CancelledFragment extends Fragment {
                                 });
                     }
                 });
-    }
 
+    }
+    private void showNotificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Notify Cancelled Entrants");
+
+        final android.widget.EditText input = new android.widget.EditText(getContext());
+        input.setHint("Enter message");
+        builder.setView(input);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String message = input.getText().toString().trim();
+            if (message.isEmpty()) {
+                message = "Event update from organizer.";
+            }
+            sendNotificationToCancelled(message);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+    private void sendNotificationToCancelled(String message) {
+        db.collection("events").document(eventId)
+                .collection("cancelled")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    for (DocumentSnapshot doc : snapshot) {
+                        String userId = doc.getString("userId");
+                        if (userId == null) continue;
+
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("message", message);
+                        data.put("eventId", eventId);
+                        data.put("timestamp", FieldValue.serverTimestamp());
+                        data.put("read", false);
+
+                        db.collection("profiles").document(userId)
+                                .collection("notifications")
+                                .add(data);
+                    }
+
+                    Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
+                });
+    }
     private String extractTimestamp(DocumentSnapshot doc) {
         Object ts = doc.get("timestamp");
 
