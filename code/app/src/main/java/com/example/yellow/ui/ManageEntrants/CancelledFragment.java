@@ -4,16 +4,119 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
 import com.example.yellow.R;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class CancelledFragment extends Fragment {
+
+    private FirebaseFirestore db;
+    private LinearLayout container;
+    private String eventId;
+    private final SimpleDateFormat dateFormat =
+            new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_placeholder, container, false);
+        // Reuse SAME layout as Selected tab
+        return inflater.inflate(R.layout.fragment_selected_list, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        db = FirebaseFirestore.getInstance();
+        container = view.findViewById(R.id.selectedContainer);
+        eventId = getArguments() != null ? getArguments().getString("eventId") : null;
+
+        // REMOVE BUTTON — Cancelled tab should NOT have notify button
+        View btn = view.findViewById(R.id.btnSendNotification);
+        if (btn != null) btn.setVisibility(View.GONE);
+
+        if (eventId == null) {
+            Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        loadCancelledEntrants();
+    }
+
+    private void loadCancelledEntrants() {
+        container.removeAllViews();
+
+        db.collection("events").document(eventId)
+                .collection("cancelled")
+                .addSnapshotListener((snapshot, e) -> {
+                    container.removeAllViews();
+
+                    if (e != null || snapshot == null || snapshot.isEmpty()) {
+                        TextView empty = new TextView(getContext());
+                        empty.setText("No cancelled entrants");
+                        empty.setTextColor(getResources().getColor(R.color.hinty));
+                        empty.setPadding(16, 24, 16, 24);
+                        container.addView(empty);
+                        return;
+                    }
+
+                    for (DocumentSnapshot doc : snapshot) {
+                        String userId = doc.getString("userId");
+
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    String name = profile.getString("fullName");
+                                    String email = profile.getString("email");
+                                    String date = extractTimestamp(doc);
+
+                                    addEntrantCard(name, email, date, "Cancelled");
+                                });
+                    }
+                });
+    }
+
+    private String extractTimestamp(DocumentSnapshot doc) {
+        Object ts = doc.get("timestamp");
+
+        if (ts instanceof Timestamp) {
+            return dateFormat.format(((Timestamp) ts).toDate());
+        } else if (ts instanceof Long) {
+            return dateFormat.format(new Date((Long) ts));
+        }
+
+        return "Unknown";
+    }
+
+    private void addEntrantCard(String name, String email, String date, String status) {
+        View card = LayoutInflater.from(getContext())
+                .inflate(R.layout.item_entrant_card, container, false);
+
+        ((TextView) card.findViewById(R.id.tvEntrantName)).setText(name);
+        ((TextView) card.findViewById(R.id.tvEntrantEmail)).setText(email);
+        ((TextView) card.findViewById(R.id.tvJoinDate)).setText("Updated: " + date);
+        ((TextView) card.findViewById(R.id.tvStatus)).setText(status);
+
+        // STATUS COLOR = red
+        card.findViewById(R.id.tvStatus)
+                .getBackground()
+                .setTint(getResources().getColor(R.color.danger_red));
+
+        container.addView(card);
     }
 }
