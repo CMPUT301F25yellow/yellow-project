@@ -31,7 +31,7 @@ public class ViewEventActivity extends AppCompatActivity {
     private ViewPager2 viewPager;
     private TextView tvEventName;
     private TextView tvEventDate;
-    private ImageView btnSettings;
+    private Button btnUpdatePoster;
     private Button btnManageEntrants;
     private Event currentEvent; // This will hold the loaded event data
     private String eventId;
@@ -48,7 +48,7 @@ public class ViewEventActivity extends AppCompatActivity {
             viewPager = findViewById(R.id.viewPager);
             tvEventName = findViewById(R.id.tvEventName);
             tvEventDate = findViewById(R.id.tvEventDate);
-            btnSettings = findViewById(R.id.btnEventSettings);
+            btnUpdatePoster = findViewById(R.id.btnEventSettings);
             btnManageEntrants = findViewById(R.id.btnManageEntrants);
             ImageView btnBack = findViewById(R.id.btnBack);
             btnBack.setOnClickListener(v -> finish());
@@ -127,7 +127,7 @@ public class ViewEventActivity extends AppCompatActivity {
         }).attach(); // The .attach() call makes the tabs appear.
 
         // --- Set up Click Listeners ---
-        btnSettings.setOnClickListener(v -> {
+        btnUpdatePoster.setOnClickListener(v -> {
             EventPosterUpdateFragment dialog = EventPosterUpdateFragment.newInstance(event.getId());
             dialog.show(getSupportFragmentManager(), "EventSettingsFragment");
         });
