@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="24dp"
-    android:background="@color/surface_dark"
+    android:background="@color/black"
     tools:context="com.example.yellow.ui.QrFragmentAfterCreateEvent">
 
     <!-- Title Text -->

@@ -4,10 +4,22 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface_dark"
+    android:background="@color/black"
     android:padding="16dp">
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnManageEntrants"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@color/black"
+        android:text="@string/manage_entrants"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:backgroundTint="@color/pink_bg"
+        app:elevation="4dp"/>
+
     <ScrollView
+        android:paddingTop="10dp"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

@@ -32,7 +32,7 @@ public class ViewEventActivity extends AppCompatActivity {
     private TextView tvEventName;
     private TextView tvEventDate;
     private Button btnUpdatePoster;
-    private Button btnManageEntrants;
+
     private Event currentEvent; // This will hold the loaded event data
     private String eventId;
     private EventViewModel eventViewModel;
@@ -49,7 +49,6 @@ public class ViewEventActivity extends AppCompatActivity {
             tvEventName = findViewById(R.id.tvEventName);
             tvEventDate = findViewById(R.id.tvEventDate);
             btnUpdatePoster = findViewById(R.id.btnEventSettings);
-            btnManageEntrants = findViewById(R.id.btnManageEntrants);
             ImageView btnBack = findViewById(R.id.btnBack);
             btnBack.setOnClickListener(v -> finish());
 
@@ -132,12 +131,6 @@ public class ViewEventActivity extends AppCompatActivity {
             dialog.show(getSupportFragmentManager(), "EventSettingsFragment");
         });
 
-        btnManageEntrants.setOnClickListener(v -> {
-            Intent i = new Intent(ViewEventActivity.this, ManageEntrantsActivity.class);
-            i.putExtra("eventId", event.getId());
-            i.putExtra("eventName", event.getName()); // Corrected from event.getName()
-            startActivity(i);
-        });
     }
     private void extractEventId() {
         Uri data = getIntent().getData();
