@@ -58,16 +58,6 @@
                 android:maxLines="1"
                 android:ellipsize="end"/>
 
-            <TextView
-                android:id="@+id/organizer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="By x"
-                android:textColor="@color/white"
-                android:alpha="0.65"
-                android:textSize="12sp"
-                android:maxLines="1"
-                android:ellipsize="end"/>
         </LinearLayout>
 
         <!-- Delete button only -->
