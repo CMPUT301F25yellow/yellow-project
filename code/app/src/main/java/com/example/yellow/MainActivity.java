@@ -274,7 +274,8 @@ public class MainActivity extends AppCompatActivity {
                                     .load(event.getPosterImageUrl())
                                     .into(img);
                         } else {
-                            img.setImageResource(R.drawable.my_image);
+                            img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                            img.setImageResource(R.drawable.ic_image_icon);
                         }
 
                         joinButton.setOnClickListener(v -> {
