@@ -84,66 +84,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/my_image" />
-
-                <!-- Interests -->
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:hint="All Interests"
-                    app:boxStrokeColor="@color/white"
-                    app:hintTextColor="@color/white"
-                    android:theme="@style/ThemeOverlay.MaterialComponents.Dark">
-
-                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                        android:id="@+id/dropdown_interests"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@android:color/transparent"
-                        android:inputType="none"
-                        android:popupBackground="@color/black"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/hinty"
-                        android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/my_image" />
-
-                <!-- Dates -->
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:layout_weight="1"
-                    android:hint="All Dates"
-                    app:boxStrokeColor="@color/white"
-                    app:hintTextColor="@color/white"
-                    android:theme="@style/ThemeOverlay.MaterialComponents.Dark">
-
-                    <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                        android:id="@+id/dropdown_dates"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@android:color/transparent"
-                        android:inputType="none"
-                        android:popupBackground="@color/black"
-                        android:textColor="@color/white"
-                        android:textColorHint="@color/hinty"
-                        android:theme="@style/ThemeOverlay.MaterialComponents.Dark" />
-                </com.google.android.material.textfield.TextInputLayout>
-            </LinearLayout>
+                android:orientation="horizontal"/>
 
             <!-- Search bar -->
             <EditText
@@ -152,7 +93,7 @@
                 android:layout_marginBottom="16dp"
                 android:drawableStart="@android:drawable/ic_menu_search"
                 android:drawablePadding="8dp"
-                android:hint="Search events or organizers"
+                android:hint="Search for Interests"
                 android:padding="12dp"
                 android:textColor="@color/white"
                 android:textColorHint="@color/hinty" />
