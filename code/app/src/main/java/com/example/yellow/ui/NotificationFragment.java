@@ -25,6 +25,7 @@ import com.google.firebase.firestore.Query;
 import com.example.yellow.R;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -90,6 +91,18 @@ public class NotificationFragment extends Fragment {
         rv.setAdapter(adapter);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        adapter.setActionListener(new NotificationAdapter.ActionListener() {
+            @Override
+            public void onAccept(String eventId) {
+                acceptSelection(eventId);
+            }
+
+            @Override
+            public void onDecline(String eventId) {
+                declineSelection(eventId);
+            }
+        });
+
         String uid = FirebaseAuth.getInstance().getUid();
         if(uid ==null)return;
 
@@ -111,5 +124,44 @@ public class NotificationFragment extends Fragment {
                     adapter.setList(list);
                 });
 
+    }
+    private void acceptSelection(String eventId) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Remove user from selected
+        db.collection("events").document(eventId)
+                .collection("selected").document(uid)
+                .delete();
+
+        // Add to enrolled
+        db.collection("events").document(eventId)
+                .collection("enrolled").document(uid)
+                .set(new HashMap<String, Object>() {{
+                    put("userId", uid);
+                    put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+                }});
+    }
+
+    private void declineSelection(String eventId) {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Remove user from selected
+        db.collection("events").document(eventId)
+                .collection("selected").document(uid)
+                .delete();
+
+        // Add to cancelled
+        db.collection("events").document(eventId)
+                .collection("cancelled").document(uid)
+                .set(new HashMap<String, Object>() {{
+                    put("userId", uid);
+                    put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+                }});
     }
 }
