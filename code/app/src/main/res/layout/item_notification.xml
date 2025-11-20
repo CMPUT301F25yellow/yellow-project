@@ -62,6 +62,40 @@
             android:textColor="@color/on_surface_muted"
             tools:text="Congratulations! You have been selected to attend Festival Name on Oct 20, 2025." />
 
+        <LinearLayout
+            android:id="@+id/actionButtons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/btnAccept"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sign Up"
+                android:textSize="12sp"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/green_400"
+                android:paddingHorizontal="14dp"/>
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:id="@+id/btnDecline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:backgroundTint="@color/danger_red"
+                android:paddingHorizontal="14dp"/>
+        </LinearLayout>
+
         <!-- Optional action link -->
         <TextView
             android:id="@+id/tvAction"

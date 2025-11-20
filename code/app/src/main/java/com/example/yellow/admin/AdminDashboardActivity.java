@@ -143,7 +143,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         if (btnViewImages != null) {
             btnViewImages.setOnClickListener(v ->
-                    Toast.makeText(this, "Open Manage Images (TODO)", Toast.LENGTH_SHORT).show()
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(android.R.id.content, new ManageImagesFragment())
+                            .addToBackStack(null)
+                            .commit()
             );
         }
 

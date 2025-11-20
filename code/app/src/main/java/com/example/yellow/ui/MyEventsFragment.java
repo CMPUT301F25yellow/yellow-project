@@ -132,7 +132,8 @@ public class MyEventsFragment extends Fragment {
                                     .placeholder(R.drawable.my_image)
                                     .into(image);
                         } else {
-                            image.setImageResource(R.drawable.my_image);
+                            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                            image.setImageResource(R.drawable.ic_image_icon);
                         }
 
                         button.setText("View Event");
