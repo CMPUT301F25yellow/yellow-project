@@ -6,13 +6,11 @@
     android:background="@color/surface_dark">
 
     <!-- Header -->
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/headerContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical">
+        android:padding="16dp">
 
         <!-- Back button -->
         <ImageView
@@ -20,14 +18,18 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_arrow_back"
-            android:contentDescription="Back"
-            android:layout_marginEnd="16dp" />
+            android:contentDescription="@string/back"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true" />
 
         <!-- Event info -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_toEndOf="@id/btnBack"
+            android:layout_marginStart="16dp"
+            android:layout_centerVertical="true">
 
             <TextView
                 android:id="@+id/tvEventName"
@@ -44,9 +46,21 @@
                 android:textColor="@color/hinty"
                 android:textSize="14sp" />
         </LinearLayout>
-    </LinearLayout>
 
-    <!-- Tabs -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEventSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="@string/event_poster_update"
+            android:textColor="@color/pink_bg"
+            style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+
+    </RelativeLayout>
+
+    <!-- Tabs (No changes here) -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
@@ -56,18 +70,19 @@
         app:tabSelectedTextColor="@color/white"
         app:tabTextColor="@color/hinty" />
 
-    <!-- Pager -->
+    <!-- Pager (No changes here) -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
 
+    <!-- Manage Entrants Button (No changes here) -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnManageEntrants"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:text="Manage Entrants"
+        android:text="@string/manage_entrants"
         android:textColor="@color/white"
         android:textSize="16sp"
         app:backgroundTint="@color/pink_bg"

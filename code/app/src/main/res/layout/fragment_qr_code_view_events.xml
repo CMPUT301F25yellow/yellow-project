@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="@color/surface_dark"
+    tools:context="com.example.yellow.ui.QrFragmentAfterCreateEvent">
+
+    <!-- Title Text -->
+    <TextView
+        android:id="@+id/tvQrTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/qr_code"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <!-- Subtitle / Helper Text -->
+    <TextView
+        android:id="@+id/tvQrSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/qr_code_manual"
+        android:textColor="@color/hinty"
+        android:textAlignment="center"
+        android:textSize="16sp" />
+
+    <!-- QR Code in a CardView for a nice background and shadow -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp"
+        app:strokeWidth="0dp"
+        app:cardBackgroundColor="@color/white">
+
+        <ImageView
+            android:id="@+id/qrImage"
+            android:layout_width="280dp"
+            android:layout_height="280dp"
+            android:padding="16dp"
+            android:contentDescription="@string/qr_code"
+            tools:src="@tools:sample/avatars" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Deep Link URL Text (Clickable) -->
+    <TextView
+        android:id="@+id/tvDeepLink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:textColorLink="@color/pink_bg"
+        android:textColor="@color/hinty"
+        android:autoLink="web"
+        android:textSize="14sp"
+        tools:text="https://yellow-app.com/event/xyz123" />
+
+    <!-- Action Button (Optional but recommended) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnShareQr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:icon="@drawable/ic_share"
+        android:text="@string/share_qr_code"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        />
+
+</LinearLayout>

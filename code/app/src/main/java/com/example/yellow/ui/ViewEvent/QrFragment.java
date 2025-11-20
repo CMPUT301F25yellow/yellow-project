@@ -1,4 +1,4 @@
-package com.example.yellow.ui;
+package com.example.yellow.ui.ViewEvent;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -37,7 +37,7 @@ public class QrFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_qr_code, container, false);
+        View view = inflater.inflate(R.layout.fragment_qr_code_view_events, container, false);
         qrImage = view.findViewById(R.id.qrImage);
 
         // Try loading immediately (in case event was already loaded before fragment creation)

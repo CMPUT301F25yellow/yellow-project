@@ -1,221 +1,182 @@
 package com.example.yellow.organizers;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.yellow.R;
+import com.example.yellow.organizers.fragments.EventPosterUpdateFragment;
 import com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
-import android.net.Uri;
-import android.widget.Toast;
-import android.util.Log;
-
 public class ViewEventActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
-    private ViewPager2 viewPager; //entrants fragment, mapfragment, settingsfragment, notifyfragment, qrfragment
-    private Event currentEvent;
-
+    private ViewPager2 viewPager;
+    private TextView tvEventName;
+    private TextView tvEventDate;
+    private Button btnUpdatePoster;
+    private Button btnManageEntrants;
+    private Event currentEvent; // This will hold the loaded event data
     private String eventId;
+    private EventViewModel eventViewModel;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_event);
 
+        // --- 1. Bind all UI components ---
+        try {
+            tabLayout = findViewById(R.id.tabLayout);
+            viewPager = findViewById(R.id.viewPager);
+            tvEventName = findViewById(R.id.tvEventName);
+            tvEventDate = findViewById(R.id.tvEventDate);
+            btnUpdatePoster = findViewById(R.id.btnEventSettings);
+            btnManageEntrants = findViewById(R.id.btnManageEntrants);
+            ImageView btnBack = findViewById(R.id.btnBack);
+            btnBack.setOnClickListener(v -> finish());
+
+            if (tabLayout == null || viewPager == null) {
+                throw new IllegalStateException("TabLayout or ViewPager not found. Check activity_view_event.xml IDs.");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to bind views. Check your layout file.", e);
+            Toast.makeText(this, "UI Error: Layout is broken.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        // --- 2. Standard setup ---
+        setupWindowInsets();
+        extractEventId();
+        eventViewModel = new ViewModelProvider(this).get(EventViewModel.class);
+        setupObservers();
+
+        // --- 3. Trigger initial data load ---
+        if (eventId != null && !eventId.trim().isEmpty()) {
+            eventViewModel.loadEvent(eventId);
+        } else {
+            Toast.makeText(this, "Error: Event ID is missing.", Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+
+    private void setupObservers() {
+        // This is the magic. This block will run whenever the event data changes.
+        eventViewModel.getEvent().observe(this, event -> {
+            if (event == null) {
+                // This will be triggered if the event fails to load or is not found.
+                Toast.makeText(this, "Failed to load event data.", Toast.LENGTH_LONG).show();
+                // Optionally finish();
+                return;
+            }
+
+            // Data is ready, set up the entire UI
+            updateUiWithEvent(event);
+        });
+    }
+
+    /**
+     * This method is responsible for setting or resetting ALL UI elements that depend on the event.
+     */
+    private void updateUiWithEvent(Event event) {
+        // Set the current event object for fragments to access
+        this.currentEvent = event;
+
+        // Allow fragments to auto-refresh the event data any time the event reloads
+        Bundle result = new Bundle();
+        result.putString("eventId", event.getId());
+        getSupportFragmentManager().setFragmentResult("eventLoaded", result);
+
+        // --- Populate Header ---
+        tvEventName.setText(event.getName()); // Corrected from event.getName()
+        if (event.getStartDate() != null) {
+            android.text.format.DateFormat df = new android.text.format.DateFormat();
+            tvEventDate.setText(df.format("MMM dd, yyyy", event.getStartDate().toDate()));
+        }
+
+        // --- Set up ViewPager Adapter ---
+        ViewEventPageAdapter adapter = new ViewEventPageAdapter(this, event.getId());
+        viewPager.setAdapter(adapter);
+
+        // This will connect the tabs to the view pager.
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            switch (position) {
+                case 0: tab.setText("Entrants"); break;
+                case 1: tab.setText("Map"); break;
+                case 2: tab.setText("Notify"); break;
+                case 3: tab.setText("QR Code"); break;
+            }
+        }).attach(); // The .attach() call makes the tabs appear.
+
+        // --- Set up Click Listeners ---
+        btnUpdatePoster.setOnClickListener(v -> {
+            EventPosterUpdateFragment dialog = EventPosterUpdateFragment.newInstance(event.getId());
+            dialog.show(getSupportFragmentManager(), "EventSettingsFragment");
+        });
+
+        btnManageEntrants.setOnClickListener(v -> {
+            Intent i = new Intent(ViewEventActivity.this, ManageEntrantsActivity.class);
+            i.putExtra("eventId", event.getId());
+            i.putExtra("eventName", event.getName()); // Corrected from event.getName()
+            startActivity(i);
+        });
+    }
+    private void extractEventId() {
         Uri data = getIntent().getData();
         eventId = null;
 
-        // Case 1 — Deep link "yellow://event/<id>"
-        /*
-        checks if intent contains a uri
-        verifies its yellow
-        verifies host is event
-        takes last part of path which is actual event id
-         */
-        if (data != null
-                && "yellow".equalsIgnoreCase(data.getScheme())
-                && "event".equalsIgnoreCase(data.getHost())
-                && data.getPathSegments() != null
-                && !data.getPathSegments().isEmpty()) {
-
-            eventId = data.getPathSegments()
-                    .get(data.getPathSegments().size() - 1);
+        if (data != null && "yellow".equalsIgnoreCase(data.getScheme()) && "event".equalsIgnoreCase(data.getHost()) && data.getPathSegments() != null && !data.getPathSegments().isEmpty()) {
+            eventId = data.getPathSegments().get(data.getPathSegments().size() - 1);
         }
-
-        String passedId = getIntent().getStringExtra("eventId"); //extract eventid from normal intent
 
         if (eventId == null) {
-            eventId = passedId;
+            eventId = getIntent().getStringExtra("eventId");
         }
 
-        //DEBUGGING using toast
-        Log.d("DeepLink", "FINAL eventId = " + eventId);
-        Toast.makeText(this, "eventId=" + eventId, Toast.LENGTH_SHORT).show();
+        Log.d("ViewEventActivity", "Final Event ID: " + eventId);
+    }
 
-        //load event from firestore
-        if (eventId != null && !eventId.trim().isEmpty()) {
-            loadEventAndRender(eventId);
-        }
-
-
-        // ---- Temporary QR popup for testing ----
-        String finalEventId = eventId;
-        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
-            try {
-                if (finalEventId != null && !finalEventId.trim().isEmpty()) {
-                    String deepLink = "yellow://event/" + finalEventId;
-
-                    android.graphics.Bitmap bmp =
-                            com.example.yellow.utils.QrUtils.makeQr(deepLink, 768);
-
-                    android.widget.ImageView iv = new android.widget.ImageView(this);
-                    iv.setAdjustViewBounds(true);
-                    iv.setPadding(48, 48, 48, 48);
-                    iv.setImageBitmap(bmp);
-
-                    new androidx.appcompat.app.AlertDialog.Builder(this)
-                            .setTitle("QR for " + finalEventId)
-                            .setView(iv)
-                            .setPositiveButton("OK", null)
-                            .show();
-                }
-            } catch (Throwable t) {
-                Log.e("DeepLink", "QR error", t);
-                Toast.makeText(this,
-                        "QR error: " + t.getMessage(),
-                        Toast.LENGTH_LONG).show();
-            }
-        });
-
-
-        // ---- Insets padding ----
-        View root = findViewById(android.R.id.content);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            v.setPadding(0, topInset, 0, 0);
-            v.setBackgroundResource(R.color.surface_dark);
-            return insets;
-        });
-
-
-        // ---- Header ----
+    private void setupHeader() {
         ImageView btnBack = findViewById(R.id.btnBack);
         TextView tvEventName = findViewById(R.id.tvEventName);
         TextView tvEventDate = findViewById(R.id.tvEventDate);
 
         btnBack.setOnClickListener(v -> finish());
 
-        String eventName = getIntent().getStringExtra("eventName");
-        String eventDate = getIntent().getStringExtra("eventDate");
+        // We will populate these from the loaded event object later
+    }
 
-        if (eventName != null) tvEventName.setText(eventName);
-        if (eventDate != null) tvEventDate.setText(eventDate);
-
-
-        // ---- Tabs + Pager ----
-        tabLayout = findViewById(R.id.tabLayout);
-        viewPager = findViewById(R.id.viewPager);
-
-        ViewEventPageAdapter adapter = new ViewEventPageAdapter(this, eventId);
-        viewPager.setAdapter(adapter);
-
-        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-            switch (position) {
-                case 0: tab.setText("Entrants"); break;
-                case 1: tab.setText("Map"); break;
-                case 2: tab.setText("Settings"); break;
-                case 3: tab.setText("Notify"); break;
-                case 4: tab.setText("QR Code"); break;
-            }
-        }).attach();
-
-        Button manageBtn = findViewById(R.id.btnManageEntrants);
-
-        manageBtn.setOnClickListener(v -> {
-            Intent i = new Intent(ViewEventActivity.this, ManageEntrantsActivity.class);
-            i.putExtra("eventId", eventId);
-            i.putExtra("eventName", tvEventName.getText().toString());
-            startActivity(i);
+    private void setupWindowInsets() {
+        View root = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            v.setPadding(0, topInset, 0, 0);
+            return insets;
         });
     }
 
-
-    // -----------------------------------------------------------------
-    // Load event + notify fragments
-    // -----------------------------------------------------------------
-    private void loadEventAndRender(String eventId) {
-
-        com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("events")
-                .document(eventId)
-                .get()
-                .addOnSuccessListener(snap -> {
-
-                    if (!snap.exists()) {
-                        Toast.makeText(this, "Event not found", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-
-                    currentEvent = snap.toObject(Event.class);
-
-                    // Notify QrFragment & others
-                    getSupportFragmentManager().setFragmentResult(
-                            "eventLoaded",
-                            new Bundle()
-                    );
-
-                    if (currentEvent == null) {
-                        Toast.makeText(this, "Malformed event", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-
-                    Event ev = currentEvent;
-
-                    // Title + Desc
-                    TextView title = findViewById(R.id.eventTitle);
-                    TextView desc  = findViewById(R.id.descriptionInput);
-                    if (title != null) title.setText(ev.getName());
-                    if (desc  != null) desc.setText(ev.getDescription());
-
-                    // Poster (Base64)
-                    ImageView poster = findViewById(R.id.posterImageView);
-                    setImageFromDataUri(poster, ev.getPosterUrl());
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Load failed: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show()
-                );
-    }
-
-    private void setImageFromDataUri(@Nullable ImageView view,
-                                     @Nullable String dataUri) {
-        if (view == null || dataUri == null || dataUri.isEmpty()) return;
-        try {
-            String base64 = dataUri.startsWith("data:")
-                    ? dataUri.substring(dataUri.indexOf(',') + 1)
-                    : dataUri;
-
-            byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
-            android.graphics.Bitmap bmp =
-                    android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-
-            if (bmp != null) view.setImageBitmap(bmp);
-        } catch (Exception ignored) {}
-    }
-
+    /**
+     * This public getter allows fragments to safely access the loaded event object.
+     * It is guaranteed to be non-null when fragments are created.
+     */
     public Event getEvent() {
         return currentEvent;
     }

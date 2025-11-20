@@ -3,7 +3,6 @@ package com.example.yellow;
 import android.content.Intent;
 import android.net.Uri;
 
-import com.example.yellow.R;
 import com.example.yellow.organizers.CreateEventActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import org.junit.Before;
@@ -18,7 +17,7 @@ import java.util.Calendar;
 import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
-public class CreateEventActivityRobolectricTest {
+public class CreateEventActivityTest {
 
     private CreateEventActivity activity;
 

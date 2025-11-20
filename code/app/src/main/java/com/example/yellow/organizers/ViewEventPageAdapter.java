@@ -7,7 +7,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import com.example.yellow.ui.QrFragment;
+import com.example.yellow.ui.QrFragmentAfterCreateEvent;
 import com.example.yellow.ui.ViewEvent.EntrantsFragment;
 import com.example.yellow.ui.ViewEvent.MapFragment;
 import com.example.yellow.ui.ViewEvent.SettingsFragment;
@@ -33,15 +33,14 @@ public class ViewEventPageAdapter extends FragmentStateAdapter {
                 entrantsFragment.setArguments(args);
                 return entrantsFragment;
             case 1: return new MapFragment();
-            case 2: return new SettingsFragment();
-            case 3: return new NotifyFragment();
-            case 4: return new QrFragment();
+            case 2: return new NotifyFragment();
+            case 3: return new QrFragmentAfterCreateEvent();
             default: return new EntrantsFragment();
         }
     }
 
     @Override
     public int getItemCount() {
-        return 5;
+        return 4;
     }
 }
