@@ -20,6 +20,7 @@ import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 
 import com.example.yellow.R;
 import com.example.yellow.organizers.Event;
@@ -79,7 +80,6 @@ public class CreateEventActivity extends AppCompatActivity {
     private SwitchMaterial geolocationSwitch;
     private MaterialButton createEventButton;
 
-    // Optional preview area for a generated QR (present only if added in XML)
     private MaterialCardView qrCard;
     private ImageView qrImagePreview;
 
@@ -173,7 +173,6 @@ public class CreateEventActivity extends AppCompatActivity {
             geolocationSwitch = requireView(R.id.geolocationSwitch, "geolocationSwitch");
             createEventButton = requireView(R.id.createEventButton, "createEventButton");
 
-            // Optional QR preview (only if present in layout)
             qrCard = findViewById(R.id.qrCard);
             qrImagePreview = findViewById(R.id.qrImage);
 
@@ -372,8 +371,8 @@ public class CreateEventActivity extends AppCompatActivity {
 
                         // 4) Save QR info back to this event doc (null-safe patch)
                         Map<String, Object> patch = new HashMap<>();
-                        if (deepLink != null && !deepLink.isEmpty()) patch.put("qrDeepLink", deepLink);
-                        if (qrDataUri != null && !qrDataUri.isEmpty()) patch.put("qrImagePng", qrDataUri);
+                        patch.put("qrDeepLink", deepLink);
+                        patch.put("qrImagePng", qrDataUri);
 
                         FirebaseManager.getInstance()
                                 .updateEvent(docId, patch, new FirebaseManager.SimpleCallback() {
@@ -383,7 +382,7 @@ public class CreateEventActivity extends AppCompatActivity {
                                      */
                                     @Override public void onSuccess() {
                                         toast("Event created successfully!");
-                                        new android.os.Handler().postDelayed(() -> finish(), 1500); //allows user to see qr code before finishing
+                                        showQrDialog(qrBmp);
                                     }
 
                                     /**
@@ -554,5 +553,37 @@ public class CreateEventActivity extends AppCompatActivity {
      */
     private void toast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * Shows the generated QR code in a pop-up dialog.
+     * The activity will only finish after the user closes the dialog.
+     */
+    private void showQrDialog(Bitmap qrBmp) {
+        if (qrBmp == null) {
+            toast("Event created, but QR could not be displayed.");
+            finish();
+            return;
+        }
+
+        // Create an ImageView to hold the QR bitmap
+        ImageView imageView = new ImageView(this);
+        imageView.setImageBitmap(qrBmp);
+
+        int padding = (int) (24 * getResources().getDisplayMetrics().density);
+        imageView.setPadding(padding, padding, padding, padding);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Event QR Code")
+                .setMessage("Ask attendees to scan this code to view the event.")
+                .setView(imageView)
+                .setPositiveButton("Done", (dialog, which) -> {
+                    dialog.dismiss();
+                    // Now we finally close this Activity
+                    finish();
+                })
+                // If the user cancels by tapping outside / back button
+                .setOnCancelListener(dialog -> finish())
+                .show();
     }
 }
