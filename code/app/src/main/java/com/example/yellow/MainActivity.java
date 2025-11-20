@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
     private View scrollContent;
     private View fragmentContainer;
 
-    // NEW: listener handle for live events
     private ListenerRegistration eventsListener;
 
     @Override

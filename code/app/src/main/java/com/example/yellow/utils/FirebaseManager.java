@@ -189,6 +189,62 @@ public class FirebaseManager {
     }
 
     /**
+     * Updates the poster for a specific event. It uploads the new image and then
+     * updates the 'posterImageUrl' field in the corresponding Firestore document.
+     *
+     * @param eventId           The ID of the event document to update.
+     * @param newImageUri       The local URI of the new poster image.
+     * @param callback          A simple callback for success or failure.
+     * @param progressCallback  Optional callback for upload progress.
+     */
+    public void updateEventPoster(@NonNull String eventId, @NonNull Uri newImageUri,
+                                  @NonNull SimpleCallback callback,
+                                  @NonNull UploadProgressCallback progressCallback) {
+
+        String filename = UUID.randomUUID().toString() + ".jpg";
+        StorageReference imageRef = storage.getReference()
+                .child(STORAGE_EVENTS_PATH)
+                .child(filename);
+
+        UploadTask uploadTask = imageRef.putFile(newImageUri);
+
+        // 1. Handle Progress (Optional but good practice)
+        uploadTask.addOnProgressListener(taskSnapshot -> {
+            if (progressCallback != null) {
+                double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                progressCallback.onProgress((int) progress);
+            }
+        });
+
+        // 2. Chain the upload to get the URL
+        uploadTask.continueWithTask(task -> {
+            if (!task.isSuccessful()) {
+                throw task.getException();
+            }
+            return imageRef.getDownloadUrl();
+        }).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                // 3. Once we have the new URL, update the Firestore document
+                Uri downloadUri = task.getResult();
+                db.collection(EVENTS_COLLECTION).document(eventId)
+                        .update("posterImageUrl", downloadUri.toString())
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d(TAG, "Event poster updated successfully for event: " + eventId);
+                            callback.onSuccess();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Failed to update poster URL in Firestore.", e);
+                            callback.onFailure(e);
+                        });
+            } else {
+                // This handles failures in the upload or getDownloadUrl steps
+                Log.e(TAG, "Image upload or URL retrieval failed.", task.getException());
+                callback.onFailure(task.getException());
+            }
+        });
+    }
+
+    /**
      * Callback for event creation.
      */
     public interface CreateEventCallback {
