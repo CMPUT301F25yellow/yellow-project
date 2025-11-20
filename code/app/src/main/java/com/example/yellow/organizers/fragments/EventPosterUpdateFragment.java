@@ -24,16 +24,14 @@ import androidx.fragment.app.DialogFragment; // CHANGED FROM FRAGMENT
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.yellow.R;
-import com.example.yellow.organizers.Event;
 import com.example.yellow.organizers.EventViewModel;
-import com.example.yellow.organizers.ViewEventActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-public class EventSettingsFragment extends DialogFragment {
+public class EventPosterUpdateFragment extends DialogFragment {
 
     private ImageView posterImageView;
     private Button btnChangePoster;
@@ -41,8 +39,8 @@ public class EventSettingsFragment extends DialogFragment {
     private EventViewModel eventViewModel;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
 
-    public static EventSettingsFragment newInstance(String eventId) {
-        EventSettingsFragment fragment = new EventSettingsFragment();
+    public static EventPosterUpdateFragment newInstance(String eventId) {
+        EventPosterUpdateFragment fragment = new EventPosterUpdateFragment();
         Bundle args = new Bundle();
         args.putString("eventId", eventId);
         fragment.setArguments(args);
@@ -63,7 +61,7 @@ public class EventSettingsFragment extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_event_settings, container, false);
+        View view = inflater.inflate(R.layout.fragment_event_poster_update, container, false);
 
         posterImageView = view.findViewById(R.id.posterImageView);
         btnChangePoster = view.findViewById(R.id.btnChangePoster);
@@ -79,7 +77,7 @@ public class EventSettingsFragment extends DialogFragment {
         eventViewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
             if (event != null) {
                 // When the dialog opens, this sets the current poster from the single source of truth.
-                setImageFromDataUri(posterImageView, event.getPosterUrl());
+                setImageFromDataUri(posterImageView, event.getPosterImageUrl());
             }
         });
 

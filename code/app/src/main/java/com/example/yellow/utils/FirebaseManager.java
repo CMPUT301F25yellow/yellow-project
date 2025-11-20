@@ -315,4 +315,14 @@ public class FirebaseManager {
          */
         void onFailure(Exception e);
     }
+    public String getNewEventId() {
+        return db.collection("events").document().getId();
+    }
+
+    public void setEvent(String eventId, Event event, SimpleCallback callback) {
+        db.collection("events").document(eventId)
+                .set(event)
+                .addOnSuccessListener(aVoid -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onFailure(e));
+    }
 }

@@ -12,13 +12,9 @@ import java.util.Map;
 
 /**
  * This class represents an Event object that is stored in Firestore.
- * <p>
- * It holds all event information such as name, date, location, and poster.
- * The fields are made null-safe so the app doesn’t crash when Firestore sends null values.
  */
 public class Event {
 
-    /** Firestore document ID (auto-generated). */
     @DocumentId
     private String id;
 
@@ -26,163 +22,97 @@ public class Event {
     private String description;
     private String location;
 
-    private String posterUrl;
+    private String posterImageUrl; // This is the single source of truth for the poster.
+
     private String organizerId;
-    private String organizerName; // optional display name
+    private String organizerName;
 
     private Timestamp startDate;
     private Timestamp endDate;
 
-    // Use boxed types so Firestore can handle null values
-    private Integer maxEntrants;        // was int
-    private Boolean requireGeolocation; // was boolean
+    private Integer maxEntrants;
+    private Boolean requireGeolocation;
 
     private Timestamp createdAt;
 
     private String qrDeepLink;
     private String qrImagePng;
 
-    /** Empty constructor required by Firestore. */
+    /**
+     * No-argument constructor required for Firebase deserialization.
+     */
     public Event() {}
+
+    /**
+     * Full constructor for creating a complete Event object.
+     */
+    public Event(String id, String name, String description, String location,
+                 Timestamp startDate, Timestamp endDate, String posterImageUrl,
+                 int maxEntrants, String organizerId, String organizerName,
+                 boolean requireGeolocation, String qrDeepLink, String qrImagePng) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.location = location;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.posterImageUrl = posterImageUrl; // Correctly sets the single poster field
+        this.maxEntrants = maxEntrants;
+        this.organizerId = organizerId;
+        this.organizerName = organizerName;
+        this.requireGeolocation = requireGeolocation;
+        this.qrDeepLink = qrDeepLink;
+        this.qrImagePng = qrImagePng;
+    }
 
     // -------------------- Getters and Setters --------------------
 
-    /**
-     * @return the event document ID
-     */
     public String getId() { return id; }
-
-    /**
-     * @param id sets the event document ID
-     */
     public void setId(String id) { this.id = id; }
 
-    /**
-     * @return the event name
-     */
+    public String getEventName() { return name; } // Aliased for consistency
+    public void setEventName(String name) { this.name = name; }
     public String getName() { return name; }
-
-    /**
-     * @param name sets the event name
-     */
     public void setName(String name) { this.name = name; }
 
-    /**
-     * @return the event description
-     */
     public String getDescription() { return description; }
-
-    /**
-     * @param description sets the event description
-     */
     public void setDescription(String description) { this.description = description; }
 
-    /**
-     * @return the event location
-     */
     public String getLocation() { return location; }
-
-    /**
-     * @param location sets the event location
-     */
     public void setLocation(String location) { this.location = location; }
 
-    /**
-     * @return the URL or Base64 string for the event poster
-     */
-    public String getPosterUrl() { return posterUrl; }
+    // --- CORRECTED GETTER AND SETTER FOR POSTER ---
+    public String getPosterImageUrl() { return posterImageUrl; }
+    public void setPosterImageUrl(String posterImageUrl) {
+        this.posterImageUrl = posterImageUrl; // Now correctly sets its own field
+    }
 
-    /**
-     * @param posterUrl sets the event poster URL or Base64 string
-     */
-    public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
+    // The confusing posterUrl field and its methods have been REMOVED.
 
-    /**
-     * Alias getter used by some UI adapters.
-     *
-     * @return same value as {@link #getPosterUrl()}
-     */
-    public String getPosterImageUrl() { return posterUrl; }
-
-    /**
-     * Alias setter used by some UI adapters.
-     *
-     * @param posterImageUrl sets the event poster image URL
-     */
-    public void setPosterImageUrl(String posterImageUrl) { this.posterUrl = posterImageUrl; }
-
-    /**
-     * @return the ID of the organizer who created the event
-     */
     public String getOrganizerId() { return organizerId; }
-
-    /**
-     * @param organizerId sets the organizer’s user ID
-     */
     public void setOrganizerId(String organizerId) { this.organizerId = organizerId; }
 
-    /**
-     * @return the organizer’s display name
-     */
     public String getOrganizerName() { return organizerName; }
-
-    /**
-     * @param organizerName sets the organizer’s display name
-     */
     public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
 
-    /**
-     * @return the start date and time of the event
-     */
     public Timestamp getStartDate() { return startDate; }
-
-    /**
-     * @param startDate sets the event start date and time
-     */
     public void setStartDate(Timestamp startDate) { this.startDate = startDate; }
 
-    /**
-     * @return the end date and time of the event
-     */
     public Timestamp getEndDate() { return endDate; }
-
-    /**
-     * @param endDate sets the event end date and time
-     */
     public void setEndDate(Timestamp endDate) { this.endDate = endDate; }
 
-    /**
-     * @return the maximum number of people allowed (0 if not set)
-     */
     public int getMaxEntrants() { return maxEntrants == null ? 0 : maxEntrants; }
-
-    /**
-     * @param maxEntrants sets the maximum number of people allowed
-     */
     public void setMaxEntrants(Integer maxEntrants) { this.maxEntrants = maxEntrants; }
 
-    /**
-     * @return true if geolocation is required, false otherwise
-     */
     public boolean isRequireGeolocation() { return requireGeolocation != null && requireGeolocation; }
-
-    /**
-     * @param requireGeolocation sets whether geolocation is required
-     */
     public void setRequireGeolocation(Boolean requireGeolocation) { this.requireGeolocation = requireGeolocation; }
 
-    /**
-     * @return the timestamp when the event was created
-     */
     public Timestamp getCreatedAt() { return createdAt; }
-
-    /**
-     * @param createdAt sets the creation timestamp
-     */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
     public String getQrDeepLink() { return qrDeepLink; }
     public void setQrDeepLink(String qrDeepLink) { this.qrDeepLink = qrDeepLink; }
+
     public String getQrImagePng() { return qrImagePng; }
     public void setQrImagePng(String qrImagePng) { this.qrImagePng = qrImagePng; }
 
@@ -222,7 +152,6 @@ public class Event {
         m.put("name", name);
         m.put("description", description);
         m.put("location", location);
-        m.put("posterUrl", posterUrl);
         m.put("organizerId", organizerId);
         if (organizerName != null) m.put("organizerName", organizerName);
         m.put("startDate", startDate);

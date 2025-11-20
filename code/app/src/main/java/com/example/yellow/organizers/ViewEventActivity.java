@@ -1,5 +1,7 @@
 package com.example.yellow.organizers;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,16 +20,19 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.yellow.R;
-import com.example.yellow.organizers.fragments.EventSettingsFragment;
+import com.example.yellow.organizers.fragments.EventPosterUpdateFragment;
 import com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 public class ViewEventActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
+    private TextView tvEventName;
+    private TextView tvEventDate;
+    private ImageView btnSettings;
+    private Button btnManageEntrants;
     private Event currentEvent; // This will hold the loaded event data
     private String eventId;
     private EventViewModel eventViewModel;
@@ -37,29 +42,39 @@ public class ViewEventActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_event);
 
-        // Set up:
-        viewPager = findViewById(R.id.viewPager);
-        extractEventId();
+        // --- 1. Bind all UI components ---
+        try {
+            tabLayout = findViewById(R.id.tabLayout);
+            viewPager = findViewById(R.id.viewPager);
+            tvEventName = findViewById(R.id.tvEventName);
+            tvEventDate = findViewById(R.id.tvEventDate);
+            btnSettings = findViewById(R.id.btnEventSettings);
+            btnManageEntrants = findViewById(R.id.btnManageEntrants);
+            ImageView btnBack = findViewById(R.id.btnBack);
+            btnBack.setOnClickListener(v -> finish());
 
+            if (tabLayout == null || viewPager == null) {
+                throw new IllegalStateException("TabLayout or ViewPager not found. Check activity_view_event.xml IDs.");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to bind views. Check your layout file.", e);
+            Toast.makeText(this, "UI Error: Layout is broken.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        // --- 2. Standard setup ---
         setupWindowInsets();
-        setupHeader();
-
-        // ---- Event ID Extraction (No changes needed) ----
         extractEventId();
-
-        // Initialize the ViewModel
         eventViewModel = new ViewModelProvider(this).get(EventViewModel.class);
-
-        // Set up the observer
         setupObservers();
 
-        // ---- Load Event Data ----
+        // --- 3. Trigger initial data load ---
         if (eventId != null && !eventId.trim().isEmpty()) {
-            // This method now handles setting up the pager AFTER data is loaded.
             eventViewModel.loadEvent(eventId);
         } else {
             Toast.makeText(this, "Error: Event ID is missing.", Toast.LENGTH_LONG).show();
-            finish(); // Exit if no ID is found
+            finish();
         }
     }
 
@@ -82,31 +97,45 @@ public class ViewEventActivity extends AppCompatActivity {
      * This method is responsible for setting or resetting ALL UI elements that depend on the event.
      */
     private void updateUiWithEvent(Event event) {
+        // Set the current event object for fragments to access
+        this.currentEvent = event;
+
+        // Allow fragments to auto-refresh the event data any time the event reloads
+        Bundle result = new Bundle();
+        result.putString("eventId", event.getId());
+        getSupportFragmentManager().setFragmentResult("eventLoaded", result);
+
         // --- Populate Header ---
-        TextView tvEventName = findViewById(R.id.tvEventName);
-        TextView tvEventDate = findViewById(R.id.tvEventDate);
-        tvEventName.setText(event.getName());
-        // You can format the date here if you want
+        tvEventName.setText(event.getName()); // Corrected from event.getName()
+        if (event.getStartDate() != null) {
+            android.text.format.DateFormat df = new android.text.format.DateFormat();
+            tvEventDate.setText(df.format("MMM dd, yyyy", event.getStartDate().toDate()));
+        }
 
         // --- Set up ViewPager Adapter ---
-        // This re-configures the pager system, which is safe.
         ViewEventPageAdapter adapter = new ViewEventPageAdapter(this, event.getId());
         viewPager.setAdapter(adapter);
-        // ... new TabLayoutMediator(tabLayout, viewPager, ...).attach(); ...
 
-        // --- Set up Settings Button ---
-        ImageView btnSettings = findViewById(R.id.btnEventSettings);
+        // This will connect the tabs to the view pager.
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            switch (position) {
+                case 0: tab.setText("Entrants"); break;
+                case 1: tab.setText("Map"); break;
+                case 2: tab.setText("Notify"); break;
+                case 3: tab.setText("QR Code"); break;
+            }
+        }).attach(); // The .attach() call makes the tabs appear.
+
+        // --- Set up Click Listeners ---
         btnSettings.setOnClickListener(v -> {
-            EventSettingsFragment dialog = EventSettingsFragment.newInstance(event.getId());
+            EventPosterUpdateFragment dialog = EventPosterUpdateFragment.newInstance(event.getId());
             dialog.show(getSupportFragmentManager(), "EventSettingsFragment");
         });
 
-        // --- Set up Manage Entrants Button ---
-        Button manageBtn = findViewById(R.id.btnManageEntrants);
-        manageBtn.setOnClickListener(v -> {
+        btnManageEntrants.setOnClickListener(v -> {
             Intent i = new Intent(ViewEventActivity.this, ManageEntrantsActivity.class);
             i.putExtra("eventId", event.getId());
-            i.putExtra("eventName", event.getName());
+            i.putExtra("eventName", event.getName()); // Corrected from event.getName()
             startActivity(i);
         });
     }
@@ -142,80 +171,6 @@ public class ViewEventActivity extends AppCompatActivity {
             v.setPadding(0, topInset, 0, 0);
             return insets;
         });
-    }
-
-    /**
-     *
-     * @param eventIdToLoad
-     */
-    private void loadEventAndSetupPager(String eventIdToLoad) {
-        FirebaseFirestore.getInstance().collection("events").document(eventIdToLoad).get()
-                .addOnSuccessListener(snap -> {
-                    if (!snap.exists()) {
-                        Toast.makeText(this, "Event not found", Toast.LENGTH_LONG).show();
-                        finish();
-                        return;
-                    }
-
-                    // Store the loaded event object. This is now guaranteed to be non-null for fragments.
-                    currentEvent = snap.toObject(Event.class);
-
-                    if (currentEvent == null) {
-                        Toast.makeText(this, "Error: Malformed event data.", Toast.LENGTH_LONG).show();
-                        finish();
-                        return;
-                    }
-
-                    // Populate the header with the loaded data
-                    TextView tvEventName = findViewById(R.id.tvEventName);
-                    TextView tvEventDate = findViewById(R.id.tvEventDate);
-                    tvEventName.setText(currentEvent.getName());
-
-                    ImageView btnSettings = findViewById(R.id.btnEventSettings);
-                    btnSettings.setOnClickListener(v -> {
-                        // Launch the dialog fragment
-                        EventSettingsFragment settingsFragment = EventSettingsFragment.newInstance(eventIdToLoad);
-                        settingsFragment.show(getSupportFragmentManager(), "EventSettingFragment");
-                    });
-
-                    if (currentEvent.getStartDate() != null) {
-                        // Simple date formatting, you can make this more complex
-                        android.text.format.DateFormat df = new android.text.format.DateFormat();
-                        tvEventDate.setText(df.format("MMM dd, yyyy", currentEvent.getStartDate().toDate()));
-                    }
-
-
-                    // Set up the TabLayout and ViewPager
-                    tabLayout = findViewById(R.id.tabLayout);
-                    viewPager = findViewById(R.id.viewPager);
-
-                    ViewEventPageAdapter adapter = new ViewEventPageAdapter(this, eventIdToLoad);
-                    viewPager.setAdapter(adapter);
-
-                    new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-                        switch (position) {
-                            case 0: tab.setText("Entrants"); break;
-                            case 1: tab.setText("Map"); break;
-                            case 2: tab.setText("Notify"); break;
-                            case 3: tab.setText("QR Code"); break;
-                        }
-                    }).attach();
-
-                    // Set up the Manage Entrants button
-                    Button manageBtn = findViewById(R.id.btnManageEntrants);
-                    manageBtn.setOnClickListener(v -> {
-                        Intent i = new Intent(ViewEventActivity.this, ManageEntrantsActivity.class);
-                        i.putExtra("eventId", eventIdToLoad);
-                        i.putExtra("eventName", currentEvent.getName());
-                        startActivity(i);
-                    });
-
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to load event: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    Log.e("ViewEventActivity", "Firestore load failed", e);
-                    finish();
-                });
     }
 
     /**

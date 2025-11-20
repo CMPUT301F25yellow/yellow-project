@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    tools:context=".ui.QrFragmentAfterCreateEvent">
+
+    <!-- Your descriptive text views -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/qr_code"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/qr_code_manual"
+        android:textColor="@color/hinty"
+        android:textAlignment="center"
+        android:textSize="16sp" />
+
+    <FrameLayout
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_marginTop="24dp"
+        android:background="@color/white"
+        android:padding="16dp">
+
+        <!-- The ImageView itself has a transparent background -->
+        <ImageView
+            android:id="@+id/qrImageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/qr_code" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvDeepLink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textColorLink="@color/pink_bg"
+        android:textColor="@color/hinty"
+        android:autoLink="web"
+        tools:text="https://yellow-app.com/event/xyz123" />
+
+</LinearLayout>
