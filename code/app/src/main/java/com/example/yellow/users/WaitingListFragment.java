@@ -17,6 +17,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.example.yellow.MainActivity;
 import com.example.yellow.R;
 import com.example.yellow.organizers.Event;
@@ -36,15 +37,10 @@ public class WaitingListFragment extends Fragment {
     private TextView titleText;
     private TextView dateText;
     private TextView locationText;
+    private ImageView bannerImage;   // 🆕 poster banner
 
     public WaitingListFragment() {}
 
-    /**
-     * @param inflater  LayoutInflater used to inflate the layout.
-     * @param container Parent view that this fragment will attach to.
-     * @param savedInstanceState Previously saved state, if any.
-     * @return Root view for this fragment.
-     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -54,10 +50,6 @@ public class WaitingListFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_waiting_room, container, false);
     }
 
-    /**
-     * @param view Root view of this fragment.
-     * @param savedInstanceState Previously saved instance state, if any.
-     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -83,18 +75,20 @@ public class WaitingListFragment extends Fragment {
             return;
         }
 
-        userId = user.getUid();
+        userId  = user.getUid();
         eventId = getArguments().getString("eventId");
 
         // UI
-        Button leaveButton   = view.findViewById(R.id.leaveButton);
+        Button   leaveButton = view.findViewById(R.id.leaveButton);
         ImageView backArrow  = view.findViewById(R.id.backArrow);
         TextView userCount   = view.findViewById(R.id.userCount);
 
-        // Bind event header UI
+        // Header UI
         titleText    = view.findViewById(R.id.eventTitle);
         dateText     = view.findViewById(R.id.eventDateTime);
         locationText = view.findViewById(R.id.eventLocation);
+        bannerImage  = view.findViewById(R.id.eventBanner);  // 🆕
+
         loadEventDetails();
 
         // Real-time waiting list count
@@ -140,14 +134,34 @@ public class WaitingListFragment extends Fragment {
                     Event event = doc.toObject(Event.class);
                     if (event == null) return;
 
-                    // ✅ Set event title
+                    // Title
                     titleText.setText(event.getName());
 
-                    // ✅ Set formatted date and location
-                    dateText.setText(event.getFormattedDateAndLocation());
+                    // Date WITHOUT "@ location"
+                    String dateAndLoc = event.getFormattedDateAndLocation();
+                    int atIndex = dateAndLoc.indexOf('@');
+                    String dateOnly = (atIndex >= 0)
+                            ? dateAndLoc.substring(0, atIndex).trim()
+                            : dateAndLoc;
+                    dateText.setText(dateOnly);
 
-                    // ✅ Set location separately (optional)
+                    // Location label
                     locationText.setText(event.getLocation());
+
+                    // 🆕 Poster image
+                    if (bannerImage != null) {
+                        String poster = event.getPosterImageUrl();
+                        if (poster != null && !poster.isEmpty()) {
+                            Glide.with(this)
+                                    .load(poster)
+                                    .centerCrop()
+                                    .placeholder(R.drawable.ic_image_icon)
+                                    .error(R.drawable.ic_image_icon)
+                                    .into(bannerImage);
+                        } else {
+                            bannerImage.setImageResource(R.drawable.ic_image_icon);
+                        }
+                    }
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(getContext(), "Failed to load event info", Toast.LENGTH_SHORT).show()
@@ -177,10 +191,6 @@ public class WaitingListFragment extends Fragment {
         });
     }
 
-    /**
-     * @param userId  ID of the user joining the queue.
-     * @param eventId ID of the event.
-     */
     // Waiting user model
     public static class WaitingUser {
         public String userId;

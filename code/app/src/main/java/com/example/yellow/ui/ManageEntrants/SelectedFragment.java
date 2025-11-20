@@ -163,9 +163,9 @@ public class SelectedFragment extends Fragment {
                         notification.put("timestamp", FieldValue.serverTimestamp());
                         notification.put("read", false);
 
-                        db.collection("notifications")
+                        db.collection("profiles")
                                 .document(userId)
-                                .collection("messages")
+                                .collection("notifications")
                                 .add(notification);
                     }
 

@@ -14,10 +14,10 @@
         android:layout_height="wrap_content"
         android:padding="14dp">
 
-        <!-- Event thumbnail -->
+        <!-- Image Thumbnail -->
         <ImageView
-            android:id="@+id/thumb"
-            android:layout_width="64dp"
+            android:id="@+id/posterThumb"
+            android:layout_width="100dp"
             android:layout_height="64dp"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_image_icon"
@@ -25,16 +25,16 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
-        <!-- Event title, date/time, and organizer -->
+        <!-- Text Column -->
         <LinearLayout
             android:id="@+id/texts"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginStart="12dp"
-            app:layout_constraintStart_toEndOf="@id/thumb"
-            app:layout_constraintTop_toTopOf="@id/thumb"
-            app:layout_constraintBottom_toBottomOf="@id/thumb">
+            app:layout_constraintStart_toEndOf="@id/posterThumb"
+            app:layout_constraintTop_toTopOf="@id/posterThumb"
+            app:layout_constraintBottom_toBottomOf="@id/posterThumb">
 
             <TextView
                 android:id="@+id/title"
@@ -47,22 +47,11 @@
                 android:maxLines="1"
                 android:ellipsize="end"/>
 
-            <TextView
-                android:id="@+id/date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Oct 25, 2025 • 6:00 PM"
-                android:textColor="@color/white"
-                android:alpha="0.85"
-                android:textSize="13sp"
-                android:maxLines="1"
-                android:ellipsize="end"/>
-
         </LinearLayout>
 
-        <!-- Delete button only -->
+        <!-- Delete Image Button -->
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDelete"
+            android:id="@+id/btnDeleteImage"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
@@ -70,6 +59,7 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:text="Delete"
+            android:textAllCaps="false"
             android:textColor="@color/danger_red_on"
             android:backgroundTint="@color/danger_red"
             app:cornerRadius="12dp"
@@ -77,4 +67,5 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </com.google.android.material.card.MaterialCardView>
