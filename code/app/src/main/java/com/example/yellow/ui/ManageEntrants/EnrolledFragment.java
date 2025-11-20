@@ -1,9 +1,11 @@
 package com.example.yellow.ui.ManageEntrants;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,11 +17,14 @@ import androidx.fragment.app.Fragment;
 import com.example.yellow.R;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class EnrolledFragment extends Fragment {
 
@@ -35,7 +40,7 @@ public class EnrolledFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         // Reuse SAME layout as Selected tab
-        return inflater.inflate(R.layout.fragment_selected_list, container, false);
+        return inflater.inflate(R.layout.fragment_enrolled_entrants, container, false);
     }
 
     @Override
@@ -43,7 +48,7 @@ public class EnrolledFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         db = FirebaseFirestore.getInstance();
-        container = view.findViewById(R.id.selectedContainer);
+        container = view.findViewById(R.id.enrolledContainer);
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
 
         // REMOVE BUTTON — Cancelled tab should NOT have notify button
@@ -56,6 +61,8 @@ public class EnrolledFragment extends Fragment {
         }
 
         loadEnrolledEntrants();
+        Button btnNotify = view.findViewById(R.id.btnNotifyEnrolled);
+        btnNotify.setOnClickListener(v -> showNotificationDialog());
     }
 
     private void loadEnrolledEntrants() {
@@ -88,6 +95,49 @@ public class EnrolledFragment extends Fragment {
                                     addEntrantCard(name, email, date, "Enrolled");
                                 });
                     }
+                });
+    }
+    private void showNotificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Notify Enrolled Entrants");
+
+        final android.widget.EditText input = new android.widget.EditText(getContext());
+        input.setHint("Enter message");
+        builder.setView(input);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String message = input.getText().toString().trim();
+            if (message.isEmpty()) {
+                message = "Event update from organizer.";
+            }
+            sendNotificationToEnrolled(message);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+
+    private void sendNotificationToEnrolled(String message) {
+        db.collection("events").document(eventId)
+                .collection("enrolled")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    for (DocumentSnapshot doc : snapshot) {
+                        String userId = doc.getString("userId");
+                        if (userId == null) continue;
+
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("message", message);
+                        data.put("eventId", eventId);
+                        data.put("timestamp", FieldValue.serverTimestamp());
+                        data.put("read", false);
+
+                        db.collection("profiles").document(userId)
+                                .collection("notifications")
+                                .add(data);
+                    }
+
+                    Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
                 });
     }
 
