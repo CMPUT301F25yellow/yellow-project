@@ -34,11 +34,10 @@
                 android:padding="12dp"
                 android:text="Notify Selected Entrants"
                 android:textColor="@color/white"
-                android:backgroundTint="@color/brand_primary"
+                android:backgroundTint="@color/pink_bg"
                 android:fontFamily="@font/sfpro_semibold"
                 android:gravity="center"
-                android:layout_gravity="center_horizontal"
-                android:background="@drawable/rounded_button_purple"/>
+                android:layout_gravity="center_horizontal"/>
         </LinearLayout>
 
     </ScrollView>

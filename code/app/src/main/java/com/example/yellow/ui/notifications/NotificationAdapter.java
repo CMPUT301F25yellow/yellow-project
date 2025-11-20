@@ -3,7 +3,9 @@ package com.example.yellow.ui.notifications;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -21,6 +23,17 @@ import java.util.Locale;
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotifVH> {
 
     private List<NotificationItem> list = new ArrayList<>();
+
+    public interface ActionListener {
+        void onAccept(String eventId);
+        void onDecline(String eventId);
+    }
+
+    private ActionListener listener;
+
+    public void setActionListener(ActionListener listener) {
+        this.listener = listener;
+    }
 
     public void setList(List<NotificationItem> newList) {
         list = newList;
@@ -44,10 +57,17 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.tvTime.setText(formatTime(item.timestamp));
 
         if (item.eventId != null && !item.eventId.isEmpty()) {
-            holder.tvAction.setVisibility(View.VISIBLE);
-            holder.tvAction.setText("view details");
+            holder.actionButtons.setVisibility(View.VISIBLE);
+
+            holder.btnAccept.setOnClickListener(v -> {
+                if (listener != null) listener.onAccept(item.eventId);
+            });
+
+            holder.btnDecline.setOnClickListener(v -> {
+                if (listener != null) listener.onDecline(item.eventId);
+            });
         } else {
-            holder.tvAction.setVisibility(View.GONE);
+            holder.actionButtons.setVisibility(View.GONE);
         }
     }
 
@@ -60,6 +80,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         ImageView imgType;
         TextView tvTitle, tvTime, tvMessage, tvAction;
+        LinearLayout actionButtons;
+        Button btnAccept, btnDecline;
 
         public NotifVH(@NonNull View itemView) {
             super(itemView);
@@ -68,6 +90,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             tvTime = itemView.findViewById(R.id.tvTime);
             tvMessage = itemView.findViewById(R.id.tvMessage);
             tvAction = itemView.findViewById(R.id.tvAction);
+
+            actionButtons = itemView.findViewById(R.id.actionButtons);
+            btnAccept = itemView.findViewById(R.id.btnAccept);
+            btnDecline = itemView.findViewById(R.id.btnDecline);
         }
     }
 
@@ -88,3 +114,5 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 .format(ts.toDate());
     }
 }
+
+
