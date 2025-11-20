@@ -69,7 +69,7 @@
             <ImageView
                 android:id="@+id/eventBanner"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="380dp"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="true"
                 android:src="@drawable/ic_image_icon"
@@ -137,7 +137,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="In Waiting Room"
+            android:text="In Waiting List"
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="16sp"
@@ -177,7 +177,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Total users in the waiting room"
+                android:text="Total users in the waiting list"
                 android:textColor="@color/white"
                 android:textSize="14sp" />
 
