@@ -125,11 +125,15 @@ public class ManageNotificationLogFragment extends Fragment {
                         TextView tvTimestamp = card.findViewById(R.id.timestamp);
                         TextView tvMessage = card.findViewById(R.id.message);
                         TextView tvRecipientCount = card.findViewById(R.id.recipientCount);
+                        TextView tvOrganizerName = card.findViewById(R.id.organizerName);
+                        View btnViewRecipients = card.findViewById(R.id.btnViewRecipients);
 
-                        tvEventName.setText(eventName != null ? eventName : "Unknown Event");
+                        String organizerName = d.getString("organizerName");
+                        tvEventName.setText("Event - " + (eventName != null ? eventName : "Unknown Event"));
                         tvMessage.setText(message != null ? message : "");
                         tvRecipientCount
                                 .setText("Sent to " + (recipientCount != null ? recipientCount : 0) + " recipients");
+                        tvOrganizerName.setText("Sent by: " + (organizerName != null ? organizerName : "Unknown"));
 
                         if (timestamp != null) {
                             Date date = timestamp.toDate();
@@ -139,6 +143,8 @@ public class ManageNotificationLogFragment extends Fragment {
                         } else {
                             tvTimestamp.setText("");
                         }
+
+                        btnViewRecipients.setOnClickListener(v1 -> showRecipientsDialog(d));
 
                         listContainer.addView(card);
                     }
@@ -152,5 +158,53 @@ public class ManageNotificationLogFragment extends Fragment {
                         listContainer.addView(empty);
                     }
                 });
+    }
+
+    private void showRecipientsDialog(DocumentSnapshot doc) {
+        java.util.List<String> recipientNames = (java.util.List<String>) doc.get("recipientNames");
+        Long count = doc.getLong("recipientCount");
+        int totalCount = count != null ? count.intValue() : 0;
+
+        if (recipientNames == null || recipientNames.isEmpty()) {
+            // Fallback for old logs or empty lists
+            java.util.List<String> recipientIds = (java.util.List<String>) doc.get("recipientIds");
+            if (recipientIds != null && !recipientIds.isEmpty()) {
+                // If we have IDs but no names (old logs), show IDs
+                StringBuilder sb = new StringBuilder();
+                int limit = 10;
+                for (int i = 0; i < Math.min(recipientIds.size(), limit); i++) {
+                    sb.append("• User ").append(recipientIds.get(i)).append("\n");
+                }
+                if (recipientIds.size() > limit) {
+                    sb.append("\n...and ").append(recipientIds.size() - limit).append(" more.");
+                }
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(getContext())
+                        .setTitle("Recipients (IDs only)")
+                        .setMessage(sb.toString())
+                        .setPositiveButton("Close", null)
+                        .show();
+                return;
+            }
+
+            Toast.makeText(getContext(), "No recipients recorded.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder builder = new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                getContext());
+        builder.setTitle("Recipients");
+
+        StringBuilder sb = new StringBuilder();
+        for (String name : recipientNames) {
+            sb.append("• ").append(name).append("\n");
+        }
+
+        if (totalCount > recipientNames.size()) {
+            sb.append("\n...and ").append(totalCount - recipientNames.size()).append(" more.");
+        }
+
+        builder.setMessage(sb.toString());
+        builder.setPositiveButton("Close", null);
+        builder.show();
     }
 }

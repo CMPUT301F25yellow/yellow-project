@@ -76,6 +76,29 @@
                 android:textSize="12sp"
                 android:layout_marginTop="4dp"/>
 
+            <TextView
+                android:id="@+id/organizerName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sent by: Organizer Name"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewRecipients"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View Recipients"
+                android:textColor="@color/white"
+                android:layout_marginTop="4dp"
+                android:padding="0dp"
+                android:minHeight="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:textAlignment="viewStart"/>
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

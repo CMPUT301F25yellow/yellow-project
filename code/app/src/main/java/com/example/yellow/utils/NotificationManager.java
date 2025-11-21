@@ -44,8 +44,9 @@ public class NotificationManager {
 
     private static void performSend(FirebaseFirestore db, String eventId, String eventName, String organizerId,
             String organizerName, String message, List<String> userIds, OnNotificationSentListener listener) {
-        WriteBatch batch = db.batch();
 
+        // 1. Send to individual users (write-only)
+        WriteBatch batch = db.batch();
         for (String userId : userIds) {
             Map<String, Object> data = new HashMap<>();
             data.put("message", message);
@@ -55,16 +56,56 @@ public class NotificationManager {
             batch.set(db.collection("profiles").document(userId).collection("notifications").document(), data);
         }
 
-        NotificationLog log = new NotificationLog(
-                eventId, eventName, organizerId, organizerName, message, Timestamp.now(), userIds.size());
-        batch.set(db.collection("notification_logs").document(), log);
+        // 2. Fetch names for the log (read-then-write)
+        // Limit to 10 for the log display to avoid query limits
+        List<String> toFetch = userIds.subList(0, Math.min(userIds.size(), 10));
 
-        batch.commit().addOnSuccessListener(aVoid -> {
-            if (listener != null)
-                listener.onSuccess();
-        }).addOnFailureListener(e -> {
-            if (listener != null)
-                listener.onFailure(e);
-        });
+        db.collection("profiles")
+                .whereIn(com.google.firebase.firestore.FieldPath.documentId(), toFetch)
+                .get()
+                .addOnCompleteListener(task -> {
+                    java.util.List<String> recipientNames = new java.util.ArrayList<>();
+
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        Map<String, String> nameMap = new HashMap<>();
+                        for (com.google.firebase.firestore.DocumentSnapshot doc : task.getResult()) {
+                            String name = doc.getString("fullName");
+                            if (name != null && !name.isEmpty()) {
+                                nameMap.put(doc.getId(), name);
+                            }
+                        }
+
+                        // Build the list in order of userIds
+                        for (String uid : toFetch) {
+                            String name = nameMap.get(uid);
+                            recipientNames
+                                    .add(name != null ? name : "User " + uid.substring(0, Math.min(uid.length(), 6)));
+                        }
+                    } else {
+                        // Fallback if fetch fails
+                        for (String uid : toFetch) {
+                            recipientNames.add("User " + uid.substring(0, Math.min(uid.length(), 6)));
+                        }
+                    }
+
+                    // 3. Create and save the log
+                    NotificationLog log = new NotificationLog(
+                            eventId, eventName, organizerId, organizerName, message, Timestamp.now(), userIds.size(),
+                            userIds, recipientNames);
+
+                    // We need a new batch or just write the log separately.
+                    // Since we already prepared the batch for notifications, let's add the log to
+                    // it.
+                    // Note: batch operations are atomic.
+                    batch.set(db.collection("notification_logs").document(), log);
+
+                    batch.commit().addOnSuccessListener(aVoid -> {
+                        if (listener != null)
+                            listener.onSuccess();
+                    }).addOnFailureListener(e -> {
+                        if (listener != null)
+                            listener.onFailure(e);
+                    });
+                });
     }
 }

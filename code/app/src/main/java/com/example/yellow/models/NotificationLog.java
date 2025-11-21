@@ -14,11 +14,15 @@ public class NotificationLog {
     private Timestamp timestamp;
     private int recipientCount;
 
+    private java.util.List<String> recipientIds;
+    private java.util.List<String> recipientNames;
+
     public NotificationLog() {
     }
 
     public NotificationLog(String eventId, String eventName, String organizerId, String organizerName, String message,
-            Timestamp timestamp, int recipientCount) {
+            Timestamp timestamp, int recipientCount, java.util.List<String> recipientIds,
+            java.util.List<String> recipientNames) {
         this.eventId = eventId;
         this.eventName = eventName;
         this.organizerId = organizerId;
@@ -26,6 +30,8 @@ public class NotificationLog {
         this.message = message;
         this.timestamp = timestamp;
         this.recipientCount = recipientCount;
+        this.recipientIds = recipientIds;
+        this.recipientNames = recipientNames;
     }
 
     public String getId() {
@@ -90,5 +96,21 @@ public class NotificationLog {
 
     public void setRecipientCount(int recipientCount) {
         this.recipientCount = recipientCount;
+    }
+
+    public java.util.List<String> getRecipientIds() {
+        return recipientIds;
+    }
+
+    public void setRecipientIds(java.util.List<String> recipientIds) {
+        this.recipientIds = recipientIds;
+    }
+
+    public java.util.List<String> getRecipientNames() {
+        return recipientNames;
+    }
+
+    public void setRecipientNames(java.util.List<String> recipientNames) {
+        this.recipientNames = recipientNames;
     }
 }
