@@ -16,12 +16,10 @@
 ## Key Features
 
 - [Feature 1]: Brief description
-- [Feature 2]: Brief description
-- [Feature 3]: Brief description
 
 ## Setup Instructions
 
-[Setup Guide](https://github.com/CMPUT301F25yellow/yellow-project/wiki/Setup-Guide)
+* [Setup Instructions](https://github.com/CMPUT301F25yellow/yellow-project/wiki/Setup-Guide)
 
 ## Documentation
 
