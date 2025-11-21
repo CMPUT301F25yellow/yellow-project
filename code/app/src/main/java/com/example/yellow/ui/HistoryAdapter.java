@@ -61,23 +61,12 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
             holder.image.setImageResource(R.drawable.ic_image_icon);
         }
 
-        // In History, "Join Waiting List" doesn't make much sense if they are already
-        // joined.
-        // We can change the text to "View Details" or hide it.
-        // For now, let's make it "View Details"
-        holder.actionButton.setText("View Details");
-        holder.actionButton.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ViewEventActivity.class);
-            intent.putExtra("eventId", event.getId());
-            context.startActivity(intent);
-        });
+        // In History, we don't want the action button.
+        holder.actionButton.setVisibility(View.GONE);
 
-        // Also make the whole card clickable
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ViewEventActivity.class);
-            intent.putExtra("eventId", event.getId());
-            context.startActivity(intent);
-        });
+        // Also make the whole card non-clickable as per user request
+        holder.itemView.setOnClickListener(null);
+        holder.itemView.setClickable(false);
     }
 
     @Override
