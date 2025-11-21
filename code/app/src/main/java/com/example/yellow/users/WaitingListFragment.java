@@ -37,15 +37,16 @@ public class WaitingListFragment extends Fragment {
     private TextView titleText;
     private TextView dateText;
     private TextView locationText;
-    private ImageView bannerImage;   // 🆕 poster banner
+    private ImageView bannerImage; // 🆕 poster banner
 
-    public WaitingListFragment() {}
+    public WaitingListFragment() {
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
 
         return inflater.inflate(R.layout.fragment_waiting_room, container, false);
     }
@@ -60,13 +61,13 @@ public class WaitingListFragment extends Fragment {
         ViewCompat.setOnApplyWindowInsetsListener(view, (v2, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
             ViewGroup.LayoutParams lp = spacer.getLayoutParams();
-            lp.height = bars.top;  // push content below the notch/status bar
+            lp.height = bars.top; // push content below the notch/status bar
             spacer.setLayoutParams(lp);
             return insets;
         });
 
         // Firestore + User
-        db   = FirebaseFirestore.getInstance();
+        db = FirebaseFirestore.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user == null) {
@@ -75,19 +76,19 @@ public class WaitingListFragment extends Fragment {
             return;
         }
 
-        userId  = user.getUid();
+        userId = user.getUid();
         eventId = getArguments().getString("eventId");
 
         // UI
-        Button   leaveButton = view.findViewById(R.id.leaveButton);
-        ImageView backArrow  = view.findViewById(R.id.backArrow);
-        TextView userCount   = view.findViewById(R.id.userCount);
+        Button leaveButton = view.findViewById(R.id.leaveButton);
+        ImageView backArrow = view.findViewById(R.id.backArrow);
+        TextView userCount = view.findViewById(R.id.userCount);
 
         // Header UI
-        titleText    = view.findViewById(R.id.eventTitle);
-        dateText     = view.findViewById(R.id.eventDateTime);
+        titleText = view.findViewById(R.id.eventTitle);
+        dateText = view.findViewById(R.id.eventDateTime);
         locationText = view.findViewById(R.id.eventLocation);
-        bannerImage  = view.findViewById(R.id.eventBanner);  // 🆕
+        bannerImage = view.findViewById(R.id.eventBanner); // 🆕
 
         loadEventDetails();
 
@@ -101,8 +102,24 @@ public class WaitingListFragment extends Fragment {
                     }
                 });
 
-        // Auto-join waiting list
-        joinWaitingRoom();
+        // Auto-join waiting list (with profile check)
+        com.example.yellow.utils.ProfileUtils.checkProfile(getContext(), isComplete -> {
+            if (isComplete) {
+                joinWaitingRoom();
+            } else {
+                // If incomplete, we already showed the dialog.
+                // If they cancel, we should probably exit this screen because they can't join.
+                // But the dialog is async.
+                // For now, let's just NOT join. The user is staring at the screen but not
+                // joined.
+                // They can click "Leave" or "Back".
+            }
+        }, () -> {
+            // Navigate to profile
+            if (requireActivity() instanceof MainActivity) {
+                ((MainActivity) requireActivity()).openProfile();
+            }
+        });
 
         // Leave waiting room
         leaveButton.setOnClickListener(v -> leaveWaitingRoom());
@@ -120,8 +137,7 @@ public class WaitingListFragment extends Fragment {
                     public void handleOnBackPressed() {
                         leaveWaitingRoom();
                     }
-                }
-        );
+                });
     }
 
     private void loadEventDetails() {
@@ -129,10 +145,12 @@ public class WaitingListFragment extends Fragment {
                 .document(eventId)
                 .get()
                 .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) return;
+                    if (!doc.exists())
+                        return;
 
                     Event event = doc.toObject(Event.class);
-                    if (event == null) return;
+                    if (event == null)
+                        return;
 
                     // Title
                     titleText.setText(event.getName());
@@ -163,9 +181,8 @@ public class WaitingListFragment extends Fragment {
                         }
                     }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Failed to load event info", Toast.LENGTH_SHORT).show()
-                );
+                .addOnFailureListener(
+                        e -> Toast.makeText(getContext(), "Failed to load event info", Toast.LENGTH_SHORT).show());
     }
 
     // Join waiting list
@@ -197,7 +214,8 @@ public class WaitingListFragment extends Fragment {
         public String eventId;
         public Object timestamp = FieldValue.serverTimestamp();
 
-        public WaitingUser() {}
+        public WaitingUser() {
+        }
 
         public WaitingUser(String userId, String eventId) {
             this.userId = userId;
