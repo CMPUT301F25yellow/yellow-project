@@ -29,7 +29,7 @@ public class EventTest {
         assertEquals("Fun event", e.getDescription());
         assertEquals("UofA", e.getLocation());
         assertEquals("data:image/jpeg;base64,xxx", e.getPosterImageUrl());
-        assertEquals("data:image/jpeg;base64,xxx", e.getPosterUrl());
+
         assertEquals("user123", e.getOrganizerId());
         assertEquals("Alice", e.getOrganizerName());
     }
@@ -81,7 +81,7 @@ public class EventTest {
         assertEquals("Name", m.get("name"));
         assertEquals("Desc", m.get("description"));
         assertEquals("Loc", m.get("location"));
-        assertEquals("data:image/png;base64,zzz", m.get("posterUrl"));
+        assertEquals("data:image/png;base64,zzz", m.get("posterImageUrl"));
         assertEquals("uid123", m.get("organizerId"));
         assertEquals("Bob", m.get("organizerName"));
         assertTrue(m.containsKey("startDate"));
