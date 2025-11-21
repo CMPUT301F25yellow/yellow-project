@@ -44,8 +44,9 @@ public class ProfileUserFragment extends Fragment {
     /**
      * Creates and returns the layout for the profile screen.
      *
-     * @param inflater  the LayoutInflater used to inflate views
-     * @param container the parent view that the fragment's UI will attach to
+     * @param inflater           the LayoutInflater used to inflate views
+     * @param container          the parent view that the fragment's UI will attach
+     *                           to
      * @param savedInstanceState any saved instance data
      * @return the root View for this fragment
      */
@@ -54,14 +55,14 @@ public class ProfileUserFragment extends Fragment {
     public View onCreateView(
             @NonNull LayoutInflater inflater,
             @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState
-    ) {
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_profile_users, container, false);
     }
+
     /**
      * Sets up buttons, Firebase, and loads user profile information.
      *
-     * @param v the root view
+     * @param v                  the root view
      * @param savedInstanceState the saved state, if any
      */
     @Override
@@ -70,14 +71,13 @@ public class ProfileUserFragment extends Fragment {
 
         // Views
         inputFullName = v.findViewById(R.id.inputFullName);
-        inputEmail    = v.findViewById(R.id.inputEmail);
-        inputPhone    = v.findViewById(R.id.inputPhone);
-        btnSave       = v.findViewById(R.id.btnSave);
+        inputEmail = v.findViewById(R.id.inputEmail);
+        inputPhone = v.findViewById(R.id.inputPhone);
+        btnSave = v.findViewById(R.id.btnSave);
         btnDeleteProfile = v.findViewById(R.id.btnDeleteProfile);
 
         requireActivity().getWindow().setStatusBarColor(
-                ContextCompat.getColor(requireContext(), R.color.surface_dark)
-        );
+                ContextCompat.getColor(requireContext(), R.color.surface_dark));
 
         View spacer = v.findViewById(R.id.statusBarSpacer);
         ViewCompat.setOnApplyWindowInsetsListener(v, (view, insets) -> {
@@ -92,14 +92,12 @@ public class ProfileUserFragment extends Fragment {
 
         View btnBack = v.findViewById(R.id.btnBack);
         if (btnBack != null) {
-            btnBack.setOnClickListener(b ->
-                    requireActivity().getSupportFragmentManager().popBackStack()
-            );
+            btnBack.setOnClickListener(b -> requireActivity().getSupportFragmentManager().popBackStack());
         }
 
         // Firebase
         auth = FirebaseAuth.getInstance();
-        db   = FirebaseFirestore.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // Make sure we have a user (anonymous is fine), then load & toggle admin button
         ensureSignedIn(() -> {
@@ -118,7 +116,9 @@ public class ProfileUserFragment extends Fragment {
 
     // ----- Auth -----
     /** Callback to run after sign-in. */
-    private interface AfterLogin { void go(); }
+    private interface AfterLogin {
+        void go();
+    }
 
     /**
      * Ensures there is a signed-in user.
@@ -138,7 +138,8 @@ public class ProfileUserFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     toast("Auth failed: " + e.getMessage());
                     // Disable Save to avoid writing without a UID
-                    if (btnSave != null) btnSave.setEnabled(false);
+                    if (btnSave != null)
+                        btnSave.setEnabled(false);
                 });
     }
 
@@ -156,7 +157,8 @@ public class ProfileUserFragment extends Fragment {
     /** Loads profile from Firestore. */
     private void loadProfile() {
         String uid = uidOrNull();
-        if (uid == null) return;
+        if (uid == null)
+            return;
 
         db.collection("profiles")
                 .document(uid)
@@ -172,7 +174,7 @@ public class ProfileUserFragment extends Fragment {
      */
     private void bindDocToUi(DocumentSnapshot doc) {
         if (doc != null && doc.exists()) {
-            String name  = doc.getString("fullName");
+            String name = doc.getString("fullName");
             String email = doc.getString("email");
             String phone = doc.getString("phone");
 
@@ -199,7 +201,7 @@ public class ProfileUserFragment extends Fragment {
             return;
         }
 
-        String name  = safe(inputFullName);
+        String name = safe(inputFullName);
         String email = safe(inputEmail);
         String phone = safe(inputPhone);
 
@@ -210,14 +212,14 @@ public class ProfileUserFragment extends Fragment {
         }
 
         Map<String, Object> data = new HashMap<>();
-        data.put("fullName",  name);
-        data.put("email",     email);
-        data.put("phone",     phone);
+        data.put("fullName", name);
+        data.put("email", email);
+        data.put("phone", phone);
         data.put("updatedAt", Timestamp.now());
 
         db.collection("profiles")
                 .document(uid)
-                .set(data, SetOptions.merge())  // merge so we don’t wipe other fields
+                .set(data, SetOptions.merge()) // merge so we don’t wipe other fields
                 .addOnSuccessListener(unused -> toast("Profile saved"))
                 .addOnFailureListener(e -> toast("Save failed: " + e.getMessage()));
     }
@@ -227,7 +229,8 @@ public class ProfileUserFragment extends Fragment {
      */
     private void deleteProfile() {
         String uid = uidOrNull();
-        if (uid == null) return;
+        if (uid == null)
+            return;
 
         db.collection("profiles")
                 .document(uid)
@@ -248,10 +251,14 @@ public class ProfileUserFragment extends Fragment {
      */
     private void toggleAdminButtonFromFirestore() {
         View btnAdmin = getView() != null ? getView().findViewById(R.id.btnAdminDashboard) : null;
-        if (btnAdmin == null) return;
+        if (btnAdmin == null)
+            return;
 
         String uid = uidOrNull();
-        if (uid == null) { btnAdmin.setVisibility(View.GONE); return; }
+        if (uid == null) {
+            btnAdmin.setVisibility(View.GONE);
+            return;
+        }
 
         // Start hidden until we confirm admin
         btnAdmin.setVisibility(View.GONE);
@@ -274,9 +281,8 @@ public class ProfileUserFragment extends Fragment {
                     boolean isAdmin = "admin".equals(role);
                     btnAdmin.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
                     if (isAdmin) {
-                        btnAdmin.setOnClickListener(v ->
-                                startActivity(new android.content.Intent(
-                                        requireContext(), com.example.yellow.admin.AdminDashboardActivity.class)));
+                        btnAdmin.setOnClickListener(v -> startActivity(new android.content.Intent(
+                                requireContext(), com.example.yellow.admin.AdminDashboardActivity.class)));
                     } else {
                         btnAdmin.setOnClickListener(null);
                     }

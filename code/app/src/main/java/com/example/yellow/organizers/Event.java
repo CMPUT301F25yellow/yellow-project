@@ -41,15 +41,16 @@ public class Event {
     /**
      * No-argument constructor required for Firebase deserialization.
      */
-    public Event() {}
+    public Event() {
+    }
 
     /**
      * Full constructor for creating a complete Event object.
      */
     public Event(String id, String name, String description, String location,
-                 Timestamp startDate, Timestamp endDate, String posterImageUrl,
-                 int maxEntrants, String organizerId, String organizerName,
-                 boolean requireGeolocation, String qrDeepLink, String qrImagePng) {
+            Timestamp startDate, Timestamp endDate, String posterImageUrl,
+            int maxEntrants, String organizerId, String organizerName,
+            boolean requireGeolocation, String qrDeepLink, String qrImagePng) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -67,54 +68,128 @@ public class Event {
 
     // -------------------- Getters and Setters --------------------
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public String getEventName() { return name; } // Aliased for consistency
-    public void setEventName(String name) { this.name = name; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getEventName() {
+        return name;
+    } // Aliased for consistency
 
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
+    public void setEventName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
     // --- CORRECTED GETTER AND SETTER FOR POSTER ---
-    public String getPosterImageUrl() { return posterImageUrl; }
+    public String getPosterImageUrl() {
+        return posterImageUrl;
+    }
+
     public void setPosterImageUrl(String posterImageUrl) {
         this.posterImageUrl = posterImageUrl; // Now correctly sets its own field
     }
 
     // The confusing posterUrl field and its methods have been REMOVED.
 
-    public String getOrganizerId() { return organizerId; }
-    public void setOrganizerId(String organizerId) { this.organizerId = organizerId; }
+    public String getOrganizerId() {
+        return organizerId;
+    }
 
-    public String getOrganizerName() { return organizerName; }
-    public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
+    public void setOrganizerId(String organizerId) {
+        this.organizerId = organizerId;
+    }
 
-    public Timestamp getStartDate() { return startDate; }
-    public void setStartDate(Timestamp startDate) { this.startDate = startDate; }
+    public String getOrganizerName() {
+        return organizerName;
+    }
 
-    public Timestamp getEndDate() { return endDate; }
-    public void setEndDate(Timestamp endDate) { this.endDate = endDate; }
+    public void setOrganizerName(String organizerName) {
+        this.organizerName = organizerName;
+    }
 
-    public int getMaxEntrants() { return maxEntrants == null ? 0 : maxEntrants; }
-    public void setMaxEntrants(Integer maxEntrants) { this.maxEntrants = maxEntrants; }
+    public Timestamp getStartDate() {
+        return startDate;
+    }
 
-    public boolean isRequireGeolocation() { return requireGeolocation != null && requireGeolocation; }
-    public void setRequireGeolocation(Boolean requireGeolocation) { this.requireGeolocation = requireGeolocation; }
+    public void setStartDate(Timestamp startDate) {
+        this.startDate = startDate;
+    }
 
-    public Timestamp getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public Timestamp getEndDate() {
+        return endDate;
+    }
 
-    public String getQrDeepLink() { return qrDeepLink; }
-    public void setQrDeepLink(String qrDeepLink) { this.qrDeepLink = qrDeepLink; }
+    public void setEndDate(Timestamp endDate) {
+        this.endDate = endDate;
+    }
 
-    public String getQrImagePng() { return qrImagePng; }
-    public void setQrImagePng(String qrImagePng) { this.qrImagePng = qrImagePng; }
+    public int getMaxEntrants() {
+        return maxEntrants == null ? 0 : maxEntrants;
+    }
+
+    public void setMaxEntrants(Integer maxEntrants) {
+        this.maxEntrants = maxEntrants;
+    }
+
+    public boolean isRequireGeolocation() {
+        return requireGeolocation != null && requireGeolocation;
+    }
+
+    public void setRequireGeolocation(Boolean requireGeolocation) {
+        this.requireGeolocation = requireGeolocation;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getQrDeepLink() {
+        return qrDeepLink;
+    }
+
+    public void setQrDeepLink(String qrDeepLink) {
+        this.qrDeepLink = qrDeepLink;
+    }
+
+    public String getQrImagePng() {
+        return qrImagePng;
+    }
+
+    public void setQrImagePng(String qrImagePng) {
+        this.qrImagePng = qrImagePng;
+    }
 
     /**
      * Builds a small readable string like "Nov 05, 2025 @ Edmonton"
@@ -129,7 +204,8 @@ public class Event {
             sb.append(new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(d));
         }
         if (location != null && !location.isEmpty()) {
-            if (sb.length() > 0) sb.append(" @ ");
+            if (sb.length() > 0)
+                sb.append(" @ ");
             sb.append(location);
         }
         return sb.toString();
@@ -153,7 +229,8 @@ public class Event {
         m.put("description", description);
         m.put("location", location);
         m.put("organizerId", organizerId);
-        if (organizerName != null) m.put("organizerName", organizerName);
+        if (organizerName != null)
+            m.put("organizerName", organizerName);
         m.put("startDate", startDate);
         m.put("endDate", endDate);
         // Use safe defaults for missing fields
@@ -161,8 +238,10 @@ public class Event {
         m.put("requireGeolocation", isRequireGeolocation());
         m.put("createdAt", createdAt);
 
-        if (qrDeepLink != null)  m.put("qrDeepLink", qrDeepLink);
-        if (qrImagePng != null)  m.put("qrImagePng", qrImagePng);
+        if (qrDeepLink != null)
+            m.put("qrDeepLink", qrDeepLink);
+        if (qrImagePng != null)
+            m.put("qrImagePng", qrImagePng);
 
         return m;
     }
