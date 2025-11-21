@@ -228,7 +228,6 @@ public class Event {
         m.put("name", name);
         m.put("description", description);
         m.put("location", location);
-        m.put("posterImageUrl", posterImageUrl);
         m.put("organizerId", organizerId);
         if (organizerName != null)
             m.put("organizerName", organizerName);

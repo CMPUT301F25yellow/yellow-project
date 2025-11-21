@@ -72,14 +72,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.surface_dark));
 
         // ---- Step 3: Insets for top (status bar) & bottom (nav bar) ----
-        final View root   = findViewById(R.id.adminRoot);
+        final View root = findViewById(R.id.adminRoot);
         final View spacer = findViewById(R.id.statusBarSpacer);
         final View scroll = findViewById(R.id.scroll);
 
         // Keep original padding values to add insets cleanly
-        final int padStart  = (scroll != null) ? scroll.getPaddingStart()  : 0;
-        final int padTop    = (scroll != null) ? scroll.getPaddingTop()    : 0;
-        final int padEnd    = (scroll != null) ? scroll.getPaddingEnd()    : 0;
+        final int padStart = (scroll != null) ? scroll.getPaddingStart() : 0;
+        final int padTop = (scroll != null) ? scroll.getPaddingTop() : 0;
+        final int padEnd = (scroll != null) ? scroll.getPaddingEnd() : 0;
         final int padBottom = (scroll != null) ? scroll.getPaddingBottom() : 0;
 
         if (root != null) {
@@ -114,10 +114,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
 
         // ---- Step 5: Buttons ----
-        MaterialButton btnViewEvents   = findViewById(R.id.btnViewEvents);
+        MaterialButton btnViewEvents = findViewById(R.id.btnViewEvents);
         MaterialButton btnViewProfiles = findViewById(R.id.btnViewProfiles);
-        MaterialButton btnViewImages   = findViewById(R.id.btnViewImages);
-        MaterialButton btnViewLogs     = findViewById(R.id.btnViewLogs);
+        MaterialButton btnViewImages = findViewById(R.id.btnViewImages);
+        MaterialButton btnViewLogs = findViewById(R.id.btnViewLogs);
 
         // Open Manage Events
         if (btnViewEvents != null) {
@@ -132,29 +132,27 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         // Open Manage Profile
         if (btnViewProfiles != null) {
-            btnViewProfiles.setOnClickListener(v ->
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(android.R.id.content, new ManageProfilesFragment())
-                            .addToBackStack(null)
-                            .commit()
-            );
+            btnViewProfiles.setOnClickListener(v -> getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(android.R.id.content, new ManageProfilesFragment())
+                    .addToBackStack(null)
+                    .commit());
         }
 
         if (btnViewImages != null) {
-            btnViewImages.setOnClickListener(v ->
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(android.R.id.content, new ManageImagesFragment())
-                            .addToBackStack(null)
-                            .commit()
-            );
+            btnViewImages.setOnClickListener(v -> getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(android.R.id.content, new ManageImagesFragment())
+                    .addToBackStack(null)
+                    .commit());
         }
 
         if (btnViewLogs != null) {
-            btnViewLogs.setOnClickListener(v ->
-                    Toast.makeText(this, "Open Notification Logs (TODO)", Toast.LENGTH_SHORT).show()
-            );
+            btnViewLogs.setOnClickListener(v -> getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(android.R.id.content, new ManageNotificationLogFragment())
+                    .addToBackStack(null)
+                    .commit());
         }
     }
 }

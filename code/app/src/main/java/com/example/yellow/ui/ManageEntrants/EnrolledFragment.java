@@ -31,14 +31,13 @@ public class EnrolledFragment extends Fragment {
     private FirebaseFirestore db;
     private LinearLayout container;
     private String eventId;
-    private final SimpleDateFormat dateFormat =
-            new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         // Reuse SAME layout as Selected tab
         return inflater.inflate(R.layout.fragment_enrolled_entrants, container, false);
     }
@@ -53,7 +52,8 @@ public class EnrolledFragment extends Fragment {
 
         // REMOVE BUTTON — Cancelled tab should NOT have notify button
         View btn = view.findViewById(R.id.btnSendNotification);
-        if (btn != null) btn.setVisibility(View.GONE);
+        if (btn != null)
+            btn.setVisibility(View.GONE);
 
         if (eventId == null) {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -97,6 +97,7 @@ public class EnrolledFragment extends Fragment {
                     }
                 });
     }
+
     private void showNotificationDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Notify Enrolled Entrants");
@@ -122,22 +123,38 @@ public class EnrolledFragment extends Fragment {
                 .collection("enrolled")
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    java.util.List<String> userIds = new java.util.ArrayList<>();
                     for (DocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
-                        if (userId == null) continue;
-
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("message", message);
-                        data.put("eventId", eventId);
-                        data.put("timestamp", FieldValue.serverTimestamp());
-                        data.put("read", false);
-
-                        db.collection("profiles").document(userId)
-                                .collection("notifications")
-                                .add(data);
+                        if (userId != null)
+                            userIds.add(userId);
                     }
 
-                    Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
+                    // Fetch event name
+                    db.collection("events").document(eventId).get().addOnSuccessListener(eventDoc -> {
+                        String eventName = eventDoc.getString("name");
+                        if (eventName == null)
+                            eventName = "Unknown Event";
+
+                        com.example.yellow.utils.NotificationManager.sendNotification(
+                                getContext(),
+                                eventId,
+                                eventName,
+                                message,
+                                userIds,
+                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        Toast.makeText(getContext(), "Failed to send: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    });
                 });
     }
 

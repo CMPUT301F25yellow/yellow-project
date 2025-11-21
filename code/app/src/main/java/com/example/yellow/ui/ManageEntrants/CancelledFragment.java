@@ -10,7 +10,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.app.AlertDialog;
 
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -32,14 +31,13 @@ public class CancelledFragment extends Fragment {
     private FirebaseFirestore db;
     private LinearLayout container;
     private String eventId;
-    private final SimpleDateFormat dateFormat =
-            new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         // Reuse SAME layout as Selected tab
         return inflater.inflate(R.layout.fragment_cancelled_list, container, false);
     }
@@ -95,6 +93,7 @@ public class CancelledFragment extends Fragment {
                 });
 
     }
+
     private void showNotificationDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Notify Cancelled Entrants");
@@ -114,29 +113,47 @@ public class CancelledFragment extends Fragment {
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
         builder.show();
     }
+
     private void sendNotificationToCancelled(String message) {
         db.collection("events").document(eventId)
                 .collection("cancelled")
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    java.util.List<String> userIds = new java.util.ArrayList<>();
                     for (DocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
-                        if (userId == null) continue;
-
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("message", message);
-                        data.put("eventId", eventId);
-                        data.put("timestamp", FieldValue.serverTimestamp());
-                        data.put("read", false);
-
-                        db.collection("profiles").document(userId)
-                                .collection("notifications")
-                                .add(data);
+                        if (userId != null)
+                            userIds.add(userId);
                     }
 
-                    Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
+                    // Fetch event name for the log
+                    db.collection("events").document(eventId).get().addOnSuccessListener(eventDoc -> {
+                        String eventName = eventDoc.getString("name");
+                        if (eventName == null)
+                            eventName = "Unknown Event";
+
+                        com.example.yellow.utils.NotificationManager.sendNotification(
+                                getContext(),
+                                eventId,
+                                eventName,
+                                message,
+                                userIds,
+                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        Toast.makeText(getContext(), "Failed to send: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    });
                 });
     }
+
     private String extractTimestamp(DocumentSnapshot doc) {
         Object ts = doc.get("timestamp");
 
