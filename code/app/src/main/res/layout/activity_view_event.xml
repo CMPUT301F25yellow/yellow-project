@@ -73,20 +73,10 @@
     <!-- Pager (No changes here) -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
+        android:background="@color/black"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
 
-    <!-- Manage Entrants Button (No changes here) -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnManageEntrants"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="@string/manage_entrants"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        app:backgroundTint="@color/pink_bg"
-        app:cornerRadius="30dp"
-        app:elevation="4dp"/>
 
 </LinearLayout>
