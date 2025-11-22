@@ -134,7 +134,7 @@ public class HistoryFragmentEspressoTest {
         // 8. Verify the event is in the list (RecyclerView is visible)
         onView(withId(R.id.rvHistory)).check(matches(isDisplayed()));
     }
-    
+
 
     private void fillProfile() throws InterruptedException {
         // Click Profile Icon

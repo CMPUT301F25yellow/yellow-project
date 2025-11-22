@@ -77,6 +77,7 @@ public class HistoryFragmentTest {
 
     private MockedStatic<FirebaseAuth> mockedAuthStatic;
     private MockedStatic<FirebaseFirestore> mockedDbStatic;
+    private MockedStatic<com.example.yellow.utils.ProfileUtils> mockedProfileUtils;
 
     /**
      * Sets up the test environment before each test runs.
@@ -91,9 +92,18 @@ public class HistoryFragmentTest {
 
         mockedAuthStatic = mockStatic(FirebaseAuth.class);
         mockedDbStatic = mockStatic(FirebaseFirestore.class);
+        mockedProfileUtils = mockStatic(com.example.yellow.utils.ProfileUtils.class);
 
         mockedAuthStatic.when(FirebaseAuth::getInstance).thenReturn(mockAuth);
         mockedDbStatic.when(FirebaseFirestore::getInstance).thenReturn(mockDb);
+
+        // Mock ProfileUtils.checkProfile to always return true (Profile Complete)
+        mockedProfileUtils.when(() -> com.example.yellow.utils.ProfileUtils.checkProfile(any(), any(), any()))
+                .thenAnswer(invocation -> {
+                    com.example.yellow.utils.ProfileUtils.OnCheckComplete listener = invocation.getArgument(1);
+                    listener.onResult(true);
+                    return null;
+                });
 
         when(mockAuth.getCurrentUser()).thenReturn(mockUser);
         when(mockUser.getUid()).thenReturn("test_user_id");
@@ -112,6 +122,7 @@ public class HistoryFragmentTest {
     public void tearDown() {
         mockedAuthStatic.close();
         mockedDbStatic.close();
+        mockedProfileUtils.close();
     }
 
     /**
