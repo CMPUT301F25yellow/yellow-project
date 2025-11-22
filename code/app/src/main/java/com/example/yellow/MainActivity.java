@@ -145,6 +145,13 @@ public class MainActivity extends AppCompatActivity {
 
         // Start live events feed
         startLiveEventsListener();
+
+        // [NEW] Register Device for Admin Identity
+        com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .getCurrentUser();
+        if (user != null) {
+            com.example.yellow.utils.DeviceIdentityManager.ensureDeviceDocument(this, user);
+        }
     }
 
     @Override

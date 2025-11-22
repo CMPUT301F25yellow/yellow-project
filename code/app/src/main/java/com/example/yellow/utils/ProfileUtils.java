@@ -53,6 +53,37 @@ public class ProfileUtils {
                 });
     }
 
+    /**
+     * Checks if the current user has a complete profile (Name + Email).
+     * Does NOT show any dialog if incomplete.
+     *
+     * @param context    The Activity/Fragment context.
+     * @param onComplete Callback with true if complete, false if incomplete (or
+     *                   error).
+     */
+    public static void checkProfileSilent(Context context, OnCheckComplete onComplete) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            // Silent check: just return false, don't toast
+            onComplete.onResult(false);
+            return;
+        }
+
+        FirebaseFirestore.getInstance().collection("profiles")
+                .document(user.getUid())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (isProfileComplete(doc)) {
+                        onComplete.onResult(true);
+                    } else {
+                        onComplete.onResult(false);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    onComplete.onResult(false);
+                });
+    }
+
     private static boolean isProfileComplete(DocumentSnapshot doc) {
         if (doc == null || !doc.exists())
             return false;
