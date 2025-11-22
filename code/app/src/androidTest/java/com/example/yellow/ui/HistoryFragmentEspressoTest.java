@@ -38,34 +38,76 @@ public class HistoryFragmentEspressoTest {
     @Rule
     public ActivityScenarioRule<MainActivity> activityRule = new ActivityScenarioRule<>(MainActivity.class);
 
+    @org.junit.Before
+    public void setUp() throws InterruptedException {
+        // Ensure we start with a fresh anonymous user for EACH test to avoid state
+        // leakage.
+        ensureFreshLogin();
+    }
+
+    private void ensureFreshLogin() throws InterruptedException {
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        com.google.firebase.auth.FirebaseAuth auth = com.google.firebase.auth.FirebaseAuth.getInstance();
+
+        if (auth.getCurrentUser() != null) {
+            auth.signOut();
+        }
+
+        auth.signInAnonymously().addOnCompleteListener(task -> {
+            latch.countDown();
+        });
+
+        // Wait for login to complete (max 10 seconds)
+        latch.await(10, java.util.concurrent.TimeUnit.SECONDS);
+        Thread.sleep(1000); // Extra buffer for Firestore/Auth propagation
+    }
+
     /**
-     * Test: Navigate to History Tab
-     * <p>
-     * Steps:
-     * 1. Launch the App (MainActivity).
-     * 2. Click on the "History" icon in the bottom navigation bar.
-     * 3. Verify that the "Event History" header is visible on the screen.
+     * Test Case 1: User logged in (Anonymous), but NO profile.
+     * Expected: "Profile Incomplete" Alert Dialog.
      */
     @Test
-    public void testNavigateToHistory() throws InterruptedException {
-        // Wait 2 seconds so user can see the app open
+    public void testHistory_NoProfile_ShowsDialog() throws InterruptedException {
+        // Wait for app launch
         Thread.sleep(2000);
 
         // 1. Click the History tab
         onView(withId(R.id.nav_history)).perform(click());
 
-        // Wait 2 seconds so user can see the tab switch
+        // Wait for tab switch
         Thread.sleep(2000);
 
-        // 3. Check if the RecyclerView is visible
-        onView(withId(R.id.rvHistory)).check(matches(isDisplayed()));
-
-        // Wait 2 seconds so user can see the final result
-        Thread.sleep(2000);
+        // 2. Check if the Alert Dialog is visible
+        onView(withText("Profile Incomplete")).check(matches(isDisplayed()));
+        onView(withText("You must provide your Full Name and Email to perform this action."))
+                .check(matches(isDisplayed()));
     }
 
+    /**
+     * Test Case 2: User logged in, HAS profile, but NO events.
+     * Expected: "No history found" message (Empty State).
+     */
     @Test
-    public void testJoinEventAndVerifyHistory() throws InterruptedException {
+    public void testHistory_WithProfile_NoEvents_ShowsEmptyState() throws InterruptedException {
+        // 1. Fill Profile first
+        fillProfile();
+
+        // 2. Click the History tab
+        onView(withId(R.id.nav_history)).perform(click());
+
+        // Wait for tab switch
+        Thread.sleep(2000);
+
+        // 3. Check if the Empty State is visible
+        onView(withId(R.id.tvEmptyState)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * Test Case 3: User logged in, joins ONE event.
+     * Expected: Event appears in the list.
+     */
+    @Test
+    public void testHistory_OneEvent_ShowsEvent() throws InterruptedException {
         // 1. Fill Profile first (so we can join)
         fillProfile();
 
@@ -73,7 +115,6 @@ public class HistoryFragmentEspressoTest {
         Thread.sleep(3000);
 
         // 3. Click "Join" on the FIRST event in the list
-        // We use a custom matcher 'first()' because there might be multiple events
         onView(first(withId(R.id.eventButton))).perform(click());
 
         // 4. Wait for Waiting Room to load and Auto-Join
@@ -90,12 +131,10 @@ public class HistoryFragmentEspressoTest {
         onView(withId(R.id.nav_history)).perform(click());
         Thread.sleep(2000);
 
-        // 8. Verify the event is in the list
-        // We just check that the RecyclerView has at least one item displayed
+        // 8. Verify the event is in the list (RecyclerView is visible)
         onView(withId(R.id.rvHistory)).check(matches(isDisplayed()));
-        // Ideally we would check for the specific event name, but for now checking the
-        // list is populated is good.
     }
+    
 
     private void fillProfile() throws InterruptedException {
         // Click Profile Icon
@@ -138,5 +177,26 @@ public class HistoryFragmentEspressoTest {
                 description.appendText("should return first matching item");
             }
         };
+    }
+
+    // --- Helper Matcher for Toasts ---
+    public static class ToastMatcher extends org.hamcrest.TypeSafeMatcher<androidx.test.espresso.Root> {
+        @Override
+        public void describeTo(org.hamcrest.Description description) {
+            description.appendText("is toast");
+        }
+
+        @Override
+        public boolean matchesSafely(androidx.test.espresso.Root root) {
+            int type = root.getWindowLayoutParams().get().type;
+            if (type == android.view.WindowManager.LayoutParams.TYPE_TOAST) {
+                android.os.IBinder windowToken = root.getDecorView().getWindowToken();
+                android.os.IBinder appToken = root.getDecorView().getApplicationWindowToken();
+                if (windowToken == appToken) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

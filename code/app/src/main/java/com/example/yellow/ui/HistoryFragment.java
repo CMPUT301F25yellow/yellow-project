@@ -78,7 +78,18 @@ public class HistoryFragment extends Fragment {
         adapter = new HistoryAdapter(getContext());
         recyclerView.setAdapter(adapter);
 
-        loadHistory();
+        // [NEW] Check Profile before loading history
+        com.example.yellow.utils.ProfileUtils.checkProfile(getContext(), isComplete -> {
+            if (isComplete) {
+                loadHistory();
+            }
+        }, () -> {
+            // Navigate to ProfileUserFragment
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainer, new ProfileUserFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
     }
 
     private void loadHistory() {
