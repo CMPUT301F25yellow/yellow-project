@@ -97,6 +97,7 @@ public class HistoryFragment extends Fragment {
         db.collection("events").get().addOnSuccessListener(eventSnapshots -> {
             if (eventSnapshots.isEmpty()) {
                 adapter.setEvents(new ArrayList<>());
+                showEmptyState(true);
                 return;
             }
 
@@ -120,7 +121,9 @@ public class HistoryFragment extends Fragment {
 
                     if (pendingChecks.decrementAndGet() == 0) {
                         if (userEvents.isEmpty()) {
-                            Toast.makeText(getContext(), "No history found.", Toast.LENGTH_SHORT).show();
+                            showEmptyState(true);
+                        } else {
+                            showEmptyState(false);
                         }
                         adapter.setEvents(userEvents);
                     }
@@ -130,6 +133,18 @@ public class HistoryFragment extends Fragment {
             Log.e("HistoryFragment", "Error loading events", e);
             Toast.makeText(getContext(), "Error loading events: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private void showEmptyState(boolean isEmpty) {
+        View view = getView();
+        if (view == null)
+            return;
+
+        View emptyView = view.findViewById(R.id.tvEmptyState);
+        if (emptyView != null) {
+            emptyView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        }
     }
 
     private void checkUserInEvent(String eventId, String userId, OnCheckResult listener) {
