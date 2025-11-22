@@ -16,14 +16,10 @@
 ## Key Features
 
 - [Feature 1]: Brief description
-- [Feature 2]: Brief description
-- [Feature 3]: Brief description
 
 ## Setup Instructions
 
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
+* [Setup Instructions](https://github.com/CMPUT301F25yellow/yellow-project/wiki/Setup-Guide)
 
 ## Documentation
 
