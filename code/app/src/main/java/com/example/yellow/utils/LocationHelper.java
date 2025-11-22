@@ -7,10 +7,11 @@ import android.location.Location;
 import android.os.Looper;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCaller;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -21,54 +22,73 @@ import com.google.android.gms.location.Priority;
 
 import java.util.function.Consumer;
 
+/**
+ * Helper class to get the user's current location, handling runtime permission.
+ * IMPORTANT: The ActivityResult registration is done against an ActivityResultCaller,
+ * which should be the Fragment (not the Activity). That avoids the "register while
+ * RESUMED" crash.
+ */
 public class LocationHelper {
 
-    private final FragmentActivity activity;
+    private final Context context;
     private final FusedLocationProviderClient fusedLocationClient;
     private final ActivityResultLauncher<String> requestPermissionLauncher;
-    private Consumer<Location> onLocationResult;
+    private final Consumer<Location> onLocationResult;
 
-    public LocationHelper(FragmentActivity activity, Consumer<Location> onLocationResult) {
-        this.activity = activity;
+    public LocationHelper(@NonNull ActivityResultCaller caller,
+                          @NonNull Context context,
+                          @NonNull Consumer<Location> onLocationResult) {
+
+        this.context = context;
         this.onLocationResult = onLocationResult;
-        this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(activity);
+        this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
-        // This launcher handles the result of the permission request dialog
-        this.requestPermissionLauncher = activity.registerForActivityResult(
-                new ActivityResultContracts.RequestPermission(),
-                isGranted -> {
-                    if (isGranted) {
-                        // Permission was granted, now get the location
-                        requestLocationUpdates();
-                    } else {
-                        // Permission was denied, report failure by calling the callback with null
-                        Toast.makeText(activity, "Location permission is required for this feature.", Toast.LENGTH_LONG).show();
-                        this.onLocationResult.accept(null);
-                    }
-                }
-        );
+        // Register for the permission result with the Fragment (caller), not the Activity.
+        this.requestPermissionLauncher =
+                caller.registerForActivityResult(
+                        new ActivityResultContracts.RequestPermission(),
+                        isGranted -> {
+                            if (isGranted) {
+                                requestLocationUpdates();
+                            } else {
+                                Toast.makeText(
+                                        context,
+                                        "Location permission is required for this feature.",
+                                        Toast.LENGTH_LONG
+                                ).show();
+                                this.onLocationResult.accept(null);
+                            }
+                        }
+                );
     }
 
+    /**
+     * Public entry point – call this to start the "get location" flow.
+     */
     public void getCurrentLocation() {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // We already have permission, proceed to get location
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED) {
+            // Permission already granted, go straight to location request
             requestLocationUpdates();
         } else {
-            // We don't have permission, launch the request dialog
+            // Ask for permission
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }
 
+    /**
+     * Internal helper that actually requests a single high-accuracy location update.
+     */
     private void requestLocationUpdates() {
-        // Suppress the warning because we checked for permission in getCurrentLocation()
         try {
-            LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
-                    .setWaitForAccurateLocation(false)
-                    .setMinUpdateIntervalMillis(2000)
-                    .setMaxUpdateDelayMillis(10000)
-                    .build();
+            LocationRequest locationRequest = LocationRequest.create()
+                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                    .setInterval(5000)
+                    .setFastestInterval(2000)
+                    .setNumUpdates(1); // One-shot location
 
-            // We only need one location update, so we create a callback that removes itself.
             LocationCallback locationCallback = new LocationCallback() {
                 @Override
                 public void onLocationResult(LocationResult locationResult) {
@@ -83,7 +103,11 @@ public class LocationHelper {
                 }
             };
 
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+            fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+            );
         } catch (SecurityException e) {
             // This should not happen if permission check is correct
             onLocationResult.accept(null);

@@ -39,36 +39,40 @@ public class MapViewModel extends ViewModel {
             return;
         }
 
-        Log.d(TAG, "Fetching entrants for event: " + eventId);
+        Log.d(TAG, "Fetching waiting-list users for event: " + eventId);
 
-        // This is now a simple, one-step fetch.
-        db.collection("events").document(eventId).collection("entrants").get()
+        db.collection("events")
+                .document(eventId)
+                .collection("waitingList")
+                .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (queryDocumentSnapshots.isEmpty()) {
-                        Log.d(TAG, "No entrants found for this event.");
-                        entrantsWithLocation.setValue(new ArrayList<>()); // Post empty list
+                        Log.d(TAG, "No waiting users found for this event.");
+                        entrantsWithLocation.setValue(new ArrayList<>());
                         return;
                     }
 
                     List<WaitingUser> usersWithLocation = new ArrayList<>();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        WaitingUser entrant = document.toObject(WaitingUser.class);
+                        WaitingUser user = document.toObject(WaitingUser.class);
 
-                        // Important check: only add users who have location data
-                        if (entrant != null && entrant.getLatitude() != null && entrant.getLongitude() != null &&
-                                entrant.getLatitude() != 0 && entrant.getLongitude() != 0) {
-                            usersWithLocation.add(entrant);
+                        // Only include users with valid location
+                        if (user != null &&
+                                user.getLatitude() != null &&
+                                user.getLongitude() != null &&
+                                user.getLatitude() != 0 &&
+                                user.getLongitude() != 0) {
+                            usersWithLocation.add(user);
                         }
                     }
 
-                    Log.d(TAG, "Found " + usersWithLocation.size() + " entrants with location data.");
-                    // Post the final list to LiveData for the fragment to observe
+                    Log.d(TAG, "Found " + usersWithLocation.size() + " waiting users with location data.");
                     entrantsWithLocation.setValue(usersWithLocation);
-
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error fetching entrants", e);
-                    errorMessage.setValue("Failed to load entrant locations.");
+                    Log.e(TAG, "Error fetching waiting users", e);
+                    errorMessage.setValue("Failed to load waiting user locations.");
                 });
     }
+
 }

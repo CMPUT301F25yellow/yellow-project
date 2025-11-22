@@ -42,9 +42,37 @@ public class WaitingListFragment extends Fragment {
     private TextView locationText;
     private ImageView bannerImage; // 🆕 poster banner
     private Event currentEvent; // To hold the loaded event details
+    private LocationHelper locationHelper;
+
 
     public WaitingListFragment() {
     }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Initialize LocationHelper here. We pass "this" as ActivityResultCaller (the Fragment),
+        // and requireContext() for Toasts and FusedLocationProviderClient.
+        locationHelper = new LocationHelper(
+                this,               // ActivityResultCaller -> the Fragment
+                requireContext(),   // Context
+                location -> {
+                    if (location != null) {
+                        // Successfully got a location → save waiting user with coordinates
+                        saveWaitingUser(location.getLatitude(), location.getLongitude());
+                    } else {
+                        // Could not get location (permission denied, GPS error, etc.)
+                        Toast.makeText(
+                                getContext(),
+                                "Failed to get location. Cannot join this event.",
+                                Toast.LENGTH_LONG
+                        ).show();
+                    }
+                }
+        );
+    }
+
 
     @Nullable
     @Override
@@ -215,24 +243,22 @@ public class WaitingListFragment extends Fragment {
                 return; // User is already in the list, do nothing.
             }
 
-            // User is not in the list, decide how to proceed
             if (currentEvent.isRequireGeolocation()) {
                 // --- CASE 1: LOCATION IS REQUIRED ---
                 Toast.makeText(getContext(), "Location is required, getting your position...", Toast.LENGTH_SHORT).show();
 
-                // Use the new LocationHelper
-                new LocationHelper(requireActivity(), location -> {
-                    if (location != null) {
-                        saveWaitingUser(location.getLatitude(), location.getLongitude());
-                    } else {
-                        // Location fetch failed (permission denied or GPS error)
-                        Toast.makeText(getContext(), "Failed to get location. Cannot join this event.", Toast.LENGTH_LONG).show();
-                    }
-                }).getCurrentLocation();
+                // Use the helper instance created in onCreate
+                if (locationHelper != null) {
+                    locationHelper.getCurrentLocation();
+                } else {
+                    // Fallback safety – should not normally happen
+                    Toast.makeText(getContext(),
+                            "Location helper not initialized. Cannot join this event.",
+                            Toast.LENGTH_LONG).show();
+                }
 
             } else {
                 // --- CASE 2: LOCATION IS NOT REQUIRED ---
-                // Save user immediately with no location data
                 saveWaitingUser(null, null);
             }
         });
