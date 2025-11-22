@@ -21,6 +21,7 @@ import com.example.yellow.R;
 import com.example.yellow.organizers.Event;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -58,12 +59,15 @@ public class HistoryFragment extends Fragment {
         // Size the spacer to the exact status bar height for a perfect top band
         View spacer = v.findViewById(R.id.statusBarSpacer);
         ViewCompat.setOnApplyWindowInsetsListener(v, (view, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // 1. Handle Status Bar (Top)
             ViewGroup.LayoutParams lp = spacer.getLayoutParams();
             if (lp.height != bars.top) {
                 lp.height = bars.top;
                 spacer.setLayoutParams(lp);
             }
+
             return insets;
         });
 
@@ -87,89 +91,95 @@ public class HistoryFragment extends Fragment {
             return;
         }
 
-        // Collection Group Query: Find all documents in "waitingList" collections
-        // where the document ID matches the current user's ID.
-        // Note: This assumes the document ID in waitingList IS the userId (which is
-        // true in WaitingListFragment).
-        // Alternatively, if we stored userId as a field, we would use
-        // .whereEqualTo("userId", user.getUid())
+        String userId = user.getUid();
 
-        // Based on WaitingListFragment:
-        // .collection("waitingList").document(userId) -> so the doc ID is the userId.
-        // BUT, Collection Group Queries on document IDs are tricky.
-        // It is better to query by a field.
-        // Checked WaitingListFragment: WaitingUser class HAS a 'userId' field.
-        // So we can query by field "userId".
+        // Since we cannot create Collection Group Indexes, we must query all events
+        // and check if the user is in any of the lists.
+        // This is not ideal for scalability but works without custom indexes.
 
-        db.collectionGroup("waitingList")
-                .whereEqualTo("userId", user.getUid())
-                .orderBy("timestamp", Query.Direction.DESCENDING) // Optional: order by join time
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (queryDocumentSnapshots.isEmpty()) {
-                        // No history
-                        adapter.setEvents(new ArrayList<>());
+        db.collection("events").get().addOnSuccessListener(eventSnapshots -> {
+            if (eventSnapshots.isEmpty()) {
+                adapter.setEvents(new ArrayList<>());
+                return;
+            }
+
+            List<Event> userEvents = new ArrayList<>();
+            java.util.concurrent.atomic.AtomicInteger pendingChecks = new java.util.concurrent.atomic.AtomicInteger(
+                    eventSnapshots.size());
+
+            for (DocumentSnapshot eventDoc : eventSnapshots) {
+                String eventId = eventDoc.getId();
+                Event event = eventDoc.toObject(Event.class);
+                if (event != null)
+                    event.setId(eventId);
+
+                // Check all 4 lists for this event
+                checkUserInEvent(eventId, userId, isIn -> {
+                    if (isIn && event != null) {
+                        synchronized (userEvents) {
+                            userEvents.add(event);
+                        }
+                    }
+
+                    if (pendingChecks.decrementAndGet() == 0) {
+                        if (userEvents.isEmpty()) {
+                            Toast.makeText(getContext(), "No history found.", Toast.LENGTH_SHORT).show();
+                        }
+                        adapter.setEvents(userEvents);
+                    }
+                });
+            }
+        }).addOnFailureListener(e -> {
+            Log.e("HistoryFragment", "Error loading events", e);
+            Toast.makeText(getContext(), "Error loading events: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void checkUserInEvent(String eventId, String userId, OnCheckResult listener) {
+        // We need to check if the user exists in ANY of the 4 subcollections.
+        // We can do this by trying to get the specific document for the user in each
+        // collection.
+        // This is much faster than querying the whole collection.
+
+        DocumentReference waitRef = db.collection("events").document(eventId).collection("waitingList")
+                .document(userId);
+        DocumentReference selRef = db.collection("events").document(eventId).collection("selected").document(userId);
+        DocumentReference enrRef = db.collection("events").document(eventId).collection("enrolled").document(userId);
+        DocumentReference canRef = db.collection("events").document(eventId).collection("cancelled").document(userId);
+
+        // Check Waiting List
+        waitRef.get().addOnCompleteListener(t1 -> {
+            if (t1.isSuccessful() && t1.getResult().exists()) {
+                listener.onResult(true);
+                return;
+            }
+            // Check Selected
+            selRef.get().addOnCompleteListener(t2 -> {
+                if (t2.isSuccessful() && t2.getResult().exists()) {
+                    listener.onResult(true);
+                    return;
+                }
+                // Check Enrolled
+                enrRef.get().addOnCompleteListener(t3 -> {
+                    if (t3.isSuccessful() && t3.getResult().exists()) {
+                        listener.onResult(true);
                         return;
                     }
-
-                    List<String> eventIds = new ArrayList<>();
-                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        // The parent of the waitingList collection is the Event document
-                        // path: events/{eventId}/waitingList/{userId}
-                        // parent: events/{eventId}
-                        // We can get the event ID from the reference parent's parent.
-
-                        // doc.getReference().getParent() -> waitingList collection
-                        // doc.getReference().getParent().getParent() -> event document
-
-                        if (doc.getReference().getParent().getParent() != null) {
-                            eventIds.add(doc.getReference().getParent().getParent().getId());
-                        }
-                    }
-
-                    fetchEvents(eventIds);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("HistoryFragment", "Error loading history", e);
-                    Toast.makeText(getContext(), "Error loading history: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
-    }
-
-    private void fetchEvents(List<String> eventIds) {
-        if (eventIds.isEmpty())
-            return;
-
-        // Firestore 'in' query supports up to 10 items.
-        // If we have more, we might need to batch or fetch individually.
-        // For simplicity, let's fetch individually or in batches of 10.
-        // OR, simpler: just fetch them one by one and add to list.
-        // Since we want to show them all, let's fetch all.
-
-        List<Event> loadedEvents = new ArrayList<>();
-        // Counter to know when done
-        final int[] completed = { 0 };
-
-        for (String id : eventIds) {
-            db.collection("events").document(id).get()
-                    .addOnSuccessListener(doc -> {
-                        Event event = doc.toObject(Event.class);
-                        if (event != null) {
-                            // Manually set ID if it's missing in the object (though @DocumentId should
-                            // handle it)
-                            event.setId(doc.getId());
-                            loadedEvents.add(event);
-                        }
-                        completed[0]++;
-                        if (completed[0] == eventIds.size()) {
-                            adapter.setEvents(loadedEvents);
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        completed[0]++; // count even if failed
-                        if (completed[0] == eventIds.size()) {
-                            adapter.setEvents(loadedEvents);
+                    // Check Cancelled
+                    canRef.get().addOnCompleteListener(t4 -> {
+                        if (t4.isSuccessful() && t4.getResult().exists()) {
+                            listener.onResult(true);
+                        } else {
+                            listener.onResult(false);
                         }
                     });
-        }
+                });
+            });
+        });
     }
+
+    interface OnCheckResult {
+        void onResult(boolean isIn);
+    }
+
 }
