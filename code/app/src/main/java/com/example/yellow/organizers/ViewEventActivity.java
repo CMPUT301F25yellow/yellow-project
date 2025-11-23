@@ -55,6 +55,18 @@ public class ViewEventActivity extends AppCompatActivity {
             if (tabLayout == null || viewPager == null) {
                 throw new IllegalStateException("TabLayout or ViewPager not found. Check activity_view_event.xml IDs.");
             }
+
+            viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                @Override
+                public void onPageSelected(int position) {
+                    super.onPageSelected(position);
+                    // position 1 == Map tab in
+                    boolean isMapTab = (position == 1);
+                    // Disable swipe when on Map so gestures is easier to use
+                    viewPager.setUserInputEnabled(!isMapTab);
+                }
+            });
+
         } catch (Exception e) {
             Log.e(TAG, "Failed to bind views. Check your layout file.", e);
             Toast.makeText(this, "UI Error: Layout is broken.", Toast.LENGTH_LONG).show();

@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -21,12 +22,16 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * shows all entrants who were selected for an event
@@ -38,6 +43,7 @@ public class SelectedFragment extends Fragment {
     private LinearLayout container;
     private String eventId;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    private final Set<String> selectedUserIds = new HashSet<>();
 
     /** inflates the layout for the selected entrants screen */
     @Nullable
@@ -58,6 +64,7 @@ public class SelectedFragment extends Fragment {
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
 
         Button btnNotify = view.findViewById(R.id.btnSendNotification);
+        Button btnCancel = view.findViewById(R.id.btnCancelSelected);
 
         if (eventId == null) {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -66,11 +73,13 @@ public class SelectedFragment extends Fragment {
 
         loadSelectedEntrants();
         btnNotify.setOnClickListener(v -> showNotificationDialog());
+        btnCancel.setOnClickListener(v -> cancelSelectedEntrants());
     }
 
     /** loads all selected entrants in real time from Firestore */
     private void loadSelectedEntrants() {
         container.removeAllViews();
+        selectedUserIds.clear(); // reset selection whenever we reload
 
         db.collection("events").document(eventId)
                 .collection("selected")
@@ -81,6 +90,7 @@ public class SelectedFragment extends Fragment {
                     }
 
                     container.removeAllViews();
+                    selectedUserIds.clear();
 
                     if (snapshot == null || snapshot.isEmpty()) {
                         TextView empty = new TextView(getContext());
@@ -101,10 +111,8 @@ public class SelectedFragment extends Fragment {
                                 .addOnSuccessListener(profile -> {
                                     String name = profile.getString("fullName");
                                     String email = profile.getString("email");
-                                    if (name == null)
-                                        name = "Unnamed Entrant";
-                                    if (email == null)
-                                        email = "No email";
+                                    if (name == null) name = "Unnamed Entrant";
+                                    if (email == null) email = "No email";
 
                                     String dateSelected = "Unknown date";
                                     Object ts = doc.get("timestamp");
@@ -114,13 +122,19 @@ public class SelectedFragment extends Fragment {
                                         dateSelected = dateFormat.format(new Date((Long) ts));
                                     }
 
-                                    addEntrantCard(name, email, dateSelected, "Selected");
+                                    // ⬇️ pass userId into the card now
+                                    addEntrantCard(userId, name, email, dateSelected, "Selected");
                                 })
-                                .addOnFailureListener(
-                                        err -> addEntrantCard("Unknown", "Error loading profile", "N/A", "Selected"));
+                                .addOnFailureListener(err ->
+                                        addEntrantCard(userId,
+                                                "Unknown",
+                                                "Error loading profile",
+                                                "N/A",
+                                                "Selected"));
                     }
                 });
     }
+
 
     /** shows a dialog to write a custom message or use a default one */
     private void showNotificationDialog() {
@@ -194,7 +208,12 @@ public class SelectedFragment extends Fragment {
     }
 
     /** builds and adds one entrant card to the screen */
-    private void addEntrantCard(String name, String email, String joinDate, String status) {
+    private void addEntrantCard(String userId,
+                                String name,
+                                String email,
+                                String joinDate,
+                                String status) {
+
         View card = LayoutInflater.from(getContext())
                 .inflate(R.layout.item_entrant_card, container, false);
 
@@ -202,6 +221,7 @@ public class SelectedFragment extends Fragment {
         TextView tvEmail = card.findViewById(R.id.tvEntrantEmail);
         TextView tvJoinDate = card.findViewById(R.id.tvJoinDate);
         TextView tvStatus = card.findViewById(R.id.tvStatus);
+        CheckBox cbSelected = card.findViewById(R.id.checkboxSelected); // NEW
 
         tvName.setText(name);
         tvEmail.setText(email);
@@ -210,8 +230,11 @@ public class SelectedFragment extends Fragment {
 
         int colorRes;
         switch (status.toLowerCase()) {
+            case "waiting":
+                colorRes = R.color.hinty;
+                break;
             case "selected":
-                colorRes = R.color.brand_primary;
+                colorRes = R.color.gold;
                 break;
             case "enrolled":
                 colorRes = R.color.green_400;
@@ -225,6 +248,80 @@ public class SelectedFragment extends Fragment {
         }
 
         tvStatus.getBackground().setTint(getResources().getColor(colorRes));
+
+        // Only show & use checkbox for SelectedFragment's "Selected" status
+        if ("selected".equalsIgnoreCase(status) && cbSelected != null) {
+            cbSelected.setVisibility(View.VISIBLE);
+
+            // Restore checked state if list was rebuilt
+            cbSelected.setChecked(selectedUserIds.contains(userId));
+
+            cbSelected.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    selectedUserIds.add(userId);
+                } else {
+                    selectedUserIds.remove(userId);
+                }
+            });
+
+            // Tap anywhere on card toggles checkbox for nicer UX
+            card.setOnClickListener(v -> cbSelected.setChecked(!cbSelected.isChecked()));
+        } else if (cbSelected != null) {
+            cbSelected.setVisibility(View.GONE);
+        }
+
         container.addView(card);
     }
+
+    /** Called when organizer taps "Cancel Selected Entrants" */
+    private void cancelSelectedEntrants() {
+        if (eventId == null) {
+            Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (selectedUserIds.isEmpty()) {
+            Toast.makeText(getContext(), "No entrants selected to cancel.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Cancel selected entrants")
+                .setMessage("Cancel " + selectedUserIds.size() +
+                        " entrant(s) and move them to the Cancelled list?")
+                .setPositiveButton("Yes", (dialog, which) -> performCancellationBatch())
+                .setNegativeButton("No", null)
+                .show();
+    }
+
+    /** Moves all checked entrants from events/{eventId}/selected -> events/{eventId}/cancelled */
+    private void performCancellationBatch() {
+        DocumentReference eventRef = db.collection("events").document(eventId);
+        WriteBatch batch = db.batch();
+
+        for (String userId : selectedUserIds) {
+            DocumentReference selectedRef = eventRef.collection("selected").document(userId);
+            DocumentReference cancelledRef = eventRef.collection("cancelled").document(userId);
+
+            // CancelledFragment expects userId + timestamp
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", userId);
+            data.put("timestamp", FieldValue.serverTimestamp());
+
+            batch.set(cancelledRef, data);
+            batch.delete(selectedRef);
+        }
+
+        batch.commit()
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(getContext(), "Cancelled selected entrants.", Toast.LENGTH_SHORT).show();
+                    selectedUserIds.clear();
+                    // Snapshot listener on "selected" + "cancelled" will refresh both tabs automatically
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(),
+                                "Failed to cancel entrants: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show());
+    }
+
 }
