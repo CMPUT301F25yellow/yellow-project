@@ -181,3 +181,4 @@ public class EntrantsFragment extends Fragment {
         entrantsContainer.addView(card);
     }
 }
+
