@@ -14,8 +14,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Top Row: Name + Status -->
-        <!-- Top Row: Name + Status -->
+        <!-- Top Row: Name + Status + (NEW) Checkbox -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,8 +42,17 @@
                 android:text="Waiting"
                 android:textColor="@color/white"
                 android:textSize="12sp" />
-        </LinearLayout>
 
+            <!-- Checkbox (hidden by default for all other tabs) -->
+            <CheckBox
+                android:id="@+id/checkboxSelected"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:visibility="gone"
+                android:buttonTint="@color/white" />
+
+        </LinearLayout>
 
         <!-- Email -->
         <TextView
