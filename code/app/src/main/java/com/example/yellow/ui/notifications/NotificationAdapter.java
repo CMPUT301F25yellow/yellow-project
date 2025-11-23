@@ -25,8 +25,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     private List<NotificationItem> list = new ArrayList<>();
 
     public interface ActionListener {
-        void onAccept(String eventId);
-        void onDecline(String eventId);
+        void onAccept(String eventId, String notificationId);
+        void onDecline(String eventId, String notificationId);
     }
 
     private ActionListener listener;
@@ -53,19 +53,20 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         NotificationItem item = list.get(position);
 
         holder.tvTitle.setText("New Notification");
-        holder.tvMessage.setText(item.message);
-        holder.tvTime.setText(formatTime(item.timestamp));
+        holder.tvMessage.setText(item.getMessage());
+        holder.tvTime.setText(formatTime(item.getTimestamp()));
 
-        if (item.eventId != null && !item.eventId.isEmpty()) {
+        if (item.getEventId() != null && !item.getEventId().isEmpty()) {
             holder.actionButtons.setVisibility(View.VISIBLE);
 
-            holder.btnAccept.setOnClickListener(v -> {
-                if (listener != null) listener.onAccept(item.eventId);
-            });
+            holder.btnAccept.setOnClickListener(v ->
+                    listener.onAccept(item.getEventId(), item.getNotificationId())
+            );
 
-            holder.btnDecline.setOnClickListener(v -> {
-                if (listener != null) listener.onDecline(item.eventId);
-            });
+
+            holder.btnDecline.setOnClickListener(v ->
+                    listener.onDecline(item.getEventId(), item.getNotificationId())
+            );
         } else {
             holder.actionButtons.setVisibility(View.GONE);
         }
