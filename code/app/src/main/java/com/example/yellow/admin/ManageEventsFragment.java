@@ -146,10 +146,13 @@ public class ManageEventsFragment extends Fragment {
 
                         ImageView ivThumb = card.findViewById(R.id.thumb);
                         TextView tvTitle = card.findViewById(R.id.title);
+                        TextView tvOrganizerName = card.findViewById(R.id.tvOrganizerName);
                         TextView tvDate = card.findViewById(R.id.date);
                         MaterialButton btnDelete = card.findViewById(R.id.btnDelete);
 
                         tvTitle.setText(!name.isEmpty() ? name : "(untitled)");
+                        tvOrganizerName.setText(
+                                "by " + (!TextUtils.isEmpty(organizerName) ? organizerName : "Unknown organizer"));
                         tvDate.setText(!dateLabel.isEmpty() ? dateLabel : "No date");
 
                         if (!TextUtils.isEmpty(posterUrl)) {

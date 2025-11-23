@@ -29,12 +29,17 @@ import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.google.firebase.firestore.WriteBatch;
+
+import android.util.Log;
 
 /**
  * Profile screen for users to add/view/edit/delete their profile.
  */
 
 public class ProfileUserFragment extends Fragment {
+
+    private static final String TAG = "ProfileUserFragment";
 
     private TextInputEditText inputFullName, inputEmail, inputPhone;
     private MaterialButton btnSave, btnDeleteProfile;
@@ -241,7 +246,11 @@ public class ProfileUserFragment extends Fragment {
         db.collection("profiles")
                 .document(uid)
                 .set(data, SetOptions.merge()) // merge so we don’t wipe other fields
-                .addOnSuccessListener(unused -> toast("Profile saved"))
+                .addOnSuccessListener(unused -> {
+                    toast("Profile saved");
+                    // Propagate the updated name to other Firestore docs that cache the user name
+                    com.example.yellow.utils.ProfileSyncUtils.updateUserDisplayNameEverywhere(db, uid, name);
+                })
                 .addOnFailureListener(e -> toast("Save failed: " + e.getMessage()));
     }
 
@@ -319,4 +328,5 @@ public class ProfileUserFragment extends Fragment {
             Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
         }
     }
+
 }
