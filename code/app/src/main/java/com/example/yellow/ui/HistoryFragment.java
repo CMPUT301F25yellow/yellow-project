@@ -59,12 +59,15 @@ public class HistoryFragment extends Fragment {
         // Size the spacer to the exact status bar height for a perfect top band
         View spacer = v.findViewById(R.id.statusBarSpacer);
         ViewCompat.setOnApplyWindowInsetsListener(v, (view, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // 1. Handle Status Bar (Top)
             ViewGroup.LayoutParams lp = spacer.getLayoutParams();
             if (lp.height != bars.top) {
                 lp.height = bars.top;
                 spacer.setLayoutParams(lp);
             }
+
             return insets;
         });
 
