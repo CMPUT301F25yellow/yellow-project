@@ -60,6 +60,14 @@ public class ProfileUserFragmentTest {
     @Mock private Task<Void> mockUpdateTask;
     @Mock private Task<AuthResult> mockAuthTask;
 
+    @Mock private CollectionReference mockEventsCollection;
+    @Mock private CollectionReference mockLogsCollection;
+    @Mock private com.google.firebase.firestore.Query mockQuery;
+    @Mock private com.google.firebase.firestore.QuerySnapshot mockQuerySnapshot;
+    @Mock private Task<com.google.firebase.firestore.QuerySnapshot> mockQueryTask;
+    @Mock private com.google.firebase.firestore.WriteBatch mockBatch;
+    @Mock private Task<Void> mockBatchCommitTask;
+
     private MockedStatic<FirebaseAuth> mockedAuthStatic;
     private MockedStatic<FirebaseFirestore> mockedDbStatic;
     private MockedStatic<com.example.yellow.utils.DeviceIdentityManager> mockedDeviceIdentity;
@@ -106,6 +114,26 @@ public class ProfileUserFragmentTest {
         mockTaskSuccess(mockSetTask);
         mockTaskSuccess(mockDeleteTask);
         mockTaskSuccess(mockUpdateTask);
+
+        // Mock events and logs for ProfileSyncUtils
+        when(mockDb.collection("events")).thenReturn(mockEventsCollection);
+        when(mockDb.collection("notification_logs")).thenReturn(mockLogsCollection);
+        when(mockDb.batch()).thenReturn(mockBatch);
+        when(mockBatch.commit()).thenReturn(mockBatchCommitTask);
+        mockTaskSuccess(mockBatchCommitTask);
+
+        when(mockEventsCollection.whereEqualTo(anyString(), anyString())).thenReturn(mockQuery);
+        when(mockLogsCollection.whereEqualTo(anyString(), anyString())).thenReturn(mockQuery);
+        when(mockQuery.get()).thenReturn(mockQueryTask);
+
+        // Mock query success with empty snapshot
+        when(mockQueryTask.addOnSuccessListener(any())).thenAnswer(invocation -> {
+            com.google.android.gms.tasks.OnSuccessListener listener = invocation.getArgument(0);
+            when(mockQuerySnapshot.isEmpty()).thenReturn(true);
+            listener.onSuccess(mockQuerySnapshot);
+            return mockQueryTask;
+        });
+        when(mockQueryTask.addOnFailureListener(any())).thenReturn(mockQueryTask);
     }
 
     @After
