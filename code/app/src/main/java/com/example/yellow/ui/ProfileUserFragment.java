@@ -17,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
@@ -37,6 +38,7 @@ public class ProfileUserFragment extends Fragment {
 
     private TextInputEditText inputFullName, inputEmail, inputPhone;
     private MaterialButton btnSave, btnDeleteProfile;
+    private MaterialSwitch switchNotifications;
 
     private FirebaseAuth auth;
     private FirebaseFirestore db;
@@ -73,6 +75,7 @@ public class ProfileUserFragment extends Fragment {
         inputFullName = v.findViewById(R.id.inputFullName);
         inputEmail = v.findViewById(R.id.inputEmail);
         inputPhone = v.findViewById(R.id.inputPhone);
+        switchNotifications = v.findViewById(R.id.switchNotifications);
         btnSave = v.findViewById(R.id.btnSave);
         btnDeleteProfile = v.findViewById(R.id.btnDeleteProfile);
 
@@ -103,6 +106,15 @@ public class ProfileUserFragment extends Fragment {
         ensureSignedIn(() -> {
             loadProfile();
             toggleAdminButtonFromFirestore();
+
+            switchNotifications.setOnCheckedChangeListener((b, isChecked) -> {
+                String uid = uidOrNull();
+                if (uid == null) return;
+
+                db.collection("profiles")
+                        .document(uid)
+                        .update("notificationsEnabled", isChecked);
+            });
         });
 
         // Save
@@ -167,6 +179,8 @@ public class ProfileUserFragment extends Fragment {
                 .addOnFailureListener(e -> toast("Load failed: " + e.getMessage()));
     }
 
+
+
     /**
      * Writes the Firestore document values into the input fields.
      *
@@ -181,11 +195,18 @@ public class ProfileUserFragment extends Fragment {
             inputFullName.setText(name != null ? name : "");
             inputEmail.setText(email != null ? email : "");
             inputPhone.setText(phone != null ? phone : "");
+            Boolean enabled = doc.getBoolean("notificationsEnabled");
+            if (enabled == null) enabled = true; // default ON
+            switchNotifications.setChecked(enabled);
+
         } else {
             // New user: clear fields
             inputFullName.setText("");
             inputEmail.setText("");
             inputPhone.setText("");
+            Boolean enabled = true; // default for brand-new profiles
+            switchNotifications.setChecked(enabled);
+
         }
     }
 

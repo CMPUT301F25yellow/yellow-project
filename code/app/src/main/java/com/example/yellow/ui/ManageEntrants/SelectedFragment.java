@@ -157,37 +157,60 @@ public class SelectedFragment extends Fragment {
                     }
 
                     java.util.List<String> userIds = new java.util.ArrayList<>();
+
+                    // Fetch each profile and check notification settings
                     for (DocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
-                        if (userId != null)
-                            userIds.add(userId);
-                    }
+                        if (userId == null) continue;
 
-                    // Fetch event name
-                    db.collection("events").document(eventId).get().addOnSuccessListener(eventDoc -> {
-                        String eventName = eventDoc.getString("name");
-                        if (eventName == null)
-                            eventName = "Unknown Event";
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
+                                    if (enabled == null) enabled = true; // default ON
 
-                        com.example.yellow.utils.NotificationManager.sendNotification(
-                                getContext(),
-                                eventId,
-                                eventName,
-                                message,
-                                userIds,
-                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
-                                    @Override
-                                    public void onSuccess() {
-                                        Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
-                                    }
-
-                                    @Override
-                                    public void onFailure(Exception e) {
-                                        Toast.makeText(getContext(), "Failed to send: " + e.getMessage(),
-                                                Toast.LENGTH_SHORT).show();
+                                    if (enabled) {
+                                        userIds.add(userId);
                                     }
                                 });
-                    });
+                    }
+
+                    // Add a small delay to allow all Firestore fetches to finish
+                    // before sending notifications
+                    new android.os.Handler().postDelayed(() -> {
+
+                        if (userIds.isEmpty()) {
+                            Toast.makeText(getContext(),
+                                    "No users to notify (all have notifications off)", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // Fetch event name
+                        db.collection("events").document(eventId).get().addOnSuccessListener(eventDoc -> {
+                            String eventName = eventDoc.getString("name");
+                            if (eventName == null) eventName = "Unknown Event";
+
+                            com.example.yellow.utils.NotificationManager.sendNotification(
+                                    getContext(),
+                                    eventId,
+                                    eventName,
+                                    message,
+                                    userIds,
+                                    new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                        @Override
+                                        public void onSuccess() {
+                                            Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
+                                        }
+
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            Toast.makeText(getContext(), "Failed to send: " + e.getMessage(),
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        });
+
+                    }, 500); // 0.5 second delay to allow all profile lookups to complete
                 })
                 .addOnFailureListener(
                         e -> Toast.makeText(getContext(), "Failed to fetch users", Toast.LENGTH_SHORT).show());
