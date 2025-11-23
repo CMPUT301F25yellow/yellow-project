@@ -119,39 +119,78 @@ public class CancelledFragment extends Fragment {
                 .collection("cancelled")
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    java.util.List<String> userIds = new java.util.ArrayList<>();
-                    for (DocumentSnapshot doc : snapshot) {
-                        String userId = doc.getString("userId");
-                        if (userId != null)
-                            userIds.add(userId);
+
+                    if (snapshot.isEmpty()) {
+                        Toast.makeText(getContext(),
+                                "No cancelled entrants to notify", Toast.LENGTH_SHORT).show();
+                        return;
                     }
 
-                    // Fetch event name for the log
-                    db.collection("events").document(eventId).get().addOnSuccessListener(eventDoc -> {
-                        String eventName = eventDoc.getString("name");
-                        if (eventName == null)
-                            eventName = "Unknown Event";
+                    java.util.List<String> userIds = new java.util.ArrayList<>();
 
-                        com.example.yellow.utils.NotificationManager.sendNotification(
-                                getContext(),
-                                eventId,
-                                eventName,
-                                message,
-                                userIds,
-                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
-                                    @Override
-                                    public void onSuccess() {
-                                        Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
-                                    }
+                    // Fetch each profile and check notification settings
+                    for (DocumentSnapshot doc : snapshot) {
+                        String userId = doc.getString("userId");
+                        if (userId == null) continue;
 
-                                    @Override
-                                    public void onFailure(Exception e) {
-                                        Toast.makeText(getContext(), "Failed to send: " + e.getMessage(),
-                                                Toast.LENGTH_SHORT).show();
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
+                                    if (enabled == null) enabled = true; // default ON
+
+                                    if (enabled) {
+                                        userIds.add(userId);
                                     }
                                 });
-                    });
-                });
+                    }
+
+                    // Delay for async Firestore profile lookups
+                    new android.os.Handler().postDelayed(() -> {
+
+                        if (userIds.isEmpty()) {
+                            Toast.makeText(getContext(),
+                                    "No users to notify (all have notifications off)",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // Fetch event name
+                        db.collection("events").document(eventId)
+                                .get()
+                                .addOnSuccessListener(eventDoc -> {
+                                    String eventName = eventDoc.getString("name");
+                                    if (eventName == null) eventName = "Unknown Event";
+
+                                    com.example.yellow.utils.NotificationManager.sendNotification(
+                                            getContext(),
+                                            eventId,
+                                            eventName,
+                                            message,
+                                            userIds,
+                                            new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    Toast.makeText(getContext(),
+                                                            "Notification sent!",
+                                                            Toast.LENGTH_SHORT).show();
+                                                }
+
+                                                @Override
+                                                public void onFailure(Exception e) {
+                                                    Toast.makeText(getContext(),
+                                                            "Failed to send: " + e.getMessage(),
+                                                            Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                });
+
+                    }, 500); // half-second delay to allow profile fetches to finish
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(),
+                                "Failed to fetch cancelled entrants",
+                                Toast.LENGTH_SHORT).show());
     }
 
     private String extractTimestamp(DocumentSnapshot doc) {
