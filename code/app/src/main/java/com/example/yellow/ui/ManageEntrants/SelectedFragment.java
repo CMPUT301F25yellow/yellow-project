@@ -43,8 +43,8 @@ public class SelectedFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_selected_list, container, false);
     }
 
@@ -93,15 +93,18 @@ public class SelectedFragment extends Fragment {
 
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         String userId = doc.getString("userId");
-                        if (userId == null || userId.isEmpty()) continue;
+                        if (userId == null || userId.isEmpty())
+                            continue;
 
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
                                     String name = profile.getString("fullName");
                                     String email = profile.getString("email");
-                                    if (name == null) name = "Unnamed Entrant";
-                                    if (email == null) email = "No email";
+                                    if (name == null)
+                                        name = "Unnamed Entrant";
+                                    if (email == null)
+                                        email = "No email";
 
                                     String dateSelected = "Unknown date";
                                     Object ts = doc.get("timestamp");
@@ -113,8 +116,8 @@ public class SelectedFragment extends Fragment {
 
                                     addEntrantCard(name, email, dateSelected, "Selected");
                                 })
-                                .addOnFailureListener(err ->
-                                        addEntrantCard("Unknown", "Error loading profile", "N/A", "Selected"));
+                                .addOnFailureListener(
+                                        err -> addEntrantCard("Unknown", "Error loading profile", "N/A", "Selected"));
                     }
                 });
     }
@@ -153,26 +156,41 @@ public class SelectedFragment extends Fragment {
                         return;
                     }
 
+                    java.util.List<String> userIds = new java.util.ArrayList<>();
                     for (DocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
-                        if (userId == null || userId.isEmpty()) continue;
-
-                        Map<String, Object> notification = new HashMap<>();
-                        notification.put("message", message);
-                        notification.put("eventId", eventId);
-                        notification.put("timestamp", FieldValue.serverTimestamp());
-                        notification.put("read", false);
-
-                        db.collection("notifications")
-                                .document(userId)
-                                .collection("messages")
-                                .add(notification);
+                        if (userId != null)
+                            userIds.add(userId);
                     }
 
-                    Toast.makeText(getContext(), "Notification sent to all selected entrants", Toast.LENGTH_SHORT).show();
+                    // Fetch event name
+                    db.collection("events").document(eventId).get().addOnSuccessListener(eventDoc -> {
+                        String eventName = eventDoc.getString("name");
+                        if (eventName == null)
+                            eventName = "Unknown Event";
+
+                        com.example.yellow.utils.NotificationManager.sendNotification(
+                                getContext(),
+                                eventId,
+                                eventName,
+                                message,
+                                userIds,
+                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        Toast.makeText(getContext(), "Notification sent!", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        Toast.makeText(getContext(), "Failed to send: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    });
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Failed to send notifications", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(
+                        e -> Toast.makeText(getContext(), "Failed to fetch users", Toast.LENGTH_SHORT).show());
     }
 
     /** builds and adds one entrant card to the screen */

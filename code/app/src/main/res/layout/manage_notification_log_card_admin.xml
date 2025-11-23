@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
+    app:cardBackgroundColor="@color/surface_dark">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="14dp">
+
+        <!-- Icon -->
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_bell"
+            app:tint="@color/white"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Text Content -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp"
+            app:layout_constraintStart_toEndOf="@id/icon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/icon">
+
+            <TextView
+                android:id="@+id/eventName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Event Name"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/timestamp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Jan 01, 2025 • 12:00 PM"
+                android:textColor="@color/white"
+                android:alpha="0.6"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"/>
+
+            <TextView
+                android:id="@+id/message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Notification message..."
+                android:textColor="@color/white"
+                android:alpha="0.9"
+                android:textSize="14sp"
+                android:layout_marginTop="6dp"/>
+
+            <TextView
+                android:id="@+id/recipientCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sent to 5 recipients"
+                android:textColor="@color/white"
+                android:alpha="0.5"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/organizerName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sent by: Organizer Name"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewRecipients"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View Recipients"
+                android:textColor="@color/white"
+                android:layout_marginTop="4dp"
+                android:padding="0dp"
+                android:minHeight="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:textAlignment="viewStart"/>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

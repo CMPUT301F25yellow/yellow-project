@@ -20,6 +20,7 @@ import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 
 import com.example.yellow.R;
 import com.example.yellow.organizers.Event;
@@ -41,6 +42,15 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import android.graphics.Color;
+import java.util.Collections;
+import com.google.zxing.EncodeHintType;
 
 /**
  * Screen for organizers to create a new {@link Event}.
@@ -79,7 +89,6 @@ public class CreateEventActivity extends AppCompatActivity {
     private SwitchMaterial geolocationSwitch;
     private MaterialButton createEventButton;
 
-    // Optional preview area for a generated QR (present only if added in XML)
     private MaterialCardView qrCard;
     private ImageView qrImagePreview;
 
@@ -173,7 +182,6 @@ public class CreateEventActivity extends AppCompatActivity {
             geolocationSwitch = requireView(R.id.geolocationSwitch, "geolocationSwitch");
             createEventButton = requireView(R.id.createEventButton, "createEventButton");
 
-            // Optional QR preview (only if present in layout)
             qrCard = findViewById(R.id.qrCard);
             qrImagePreview = findViewById(R.id.qrImage);
 
@@ -258,179 +266,119 @@ public class CreateEventActivity extends AppCompatActivity {
      * <p>If everything succeeds, this Activity finishes and returns to the previous screen.</p>
      */
     private void onCreateEvent() {
+        // --- 1. Validate Form Inputs ---
+        String name = textOf(eventNameInput);
+        String desc = textOf(descriptionInput);
+        String loc = textOf(locationInput);
+        String maxStr = textOf(maxEntrantsInput);
+        boolean requireGeo = geolocationSwitch.isChecked();
+
+        if (TextUtils.isEmpty(name)) {
+            eventNameInput.setError("Required");
+            eventNameInput.requestFocus();
+            return;
+        }
+        if (selectedPosterUri == null) {
+            toast("Please select a poster image");
+            return;
+        }
+        if (endCal.before(startCal)) {
+            toast("End date cannot be before start date");
+            return;
+        }
+
+        int maxEntrants = 0;
+        if (!TextUtils.isEmpty(maxStr)) {
+            try {
+                maxEntrants = Integer.parseInt(maxStr);
+                if (maxEntrants < 0) throw new NumberFormatException();
+            } catch (NumberFormatException e) {
+                maxEntrantsInput.setError("Invalid number");
+                maxEntrantsInput.requestFocus();
+                return;
+            }
+        }
+
+        createEventButton.setEnabled(false);
+        toast("Creating event...");
+
         try {
-            String name = textOf(eventNameInput);
-            String desc = textOf(descriptionInput);
-            String loc  = textOf(locationInput);
-            String maxStr = textOf(maxEntrantsInput);
-            boolean requireGeo = geolocationSwitch.isChecked();
-
-            if (TextUtils.isEmpty(name)) {
-                eventNameInput.setError("Required");
-                eventNameInput.requestFocus();
-                return;
-            }
-            if (selectedPosterUri == null) {
-                toast("Please select a poster image");
-                return;
-            }
-            if (endCal.before(startCal)) {
-                toast("End date cannot be before start date");
-                return;
+            // --- 2. Encode Poster Image ---
+            String posterDataUri = encodeImageUriToDataUri(selectedPosterUri);
+            if (posterDataUri == null) {
+                throw new Exception("Could not read poster image.");
             }
 
-            int maxEntrants = 0;
-            if (!TextUtils.isEmpty(maxStr)) {
-                try {
-                    maxEntrants = Integer.parseInt(maxStr);
-                    if (maxEntrants < 0) throw new NumberFormatException();
-                } catch (NumberFormatException e) {
-                    maxEntrantsInput.setError("Invalid number");
-                    maxEntrantsInput.requestFocus();
-                    return;
-                }
+            // --- 3. Generate Event ID and Deep Link ---
+            String eventId = FirebaseManager.getInstance().getNewEventId();
+            String deepLink = "https://yellow-app.com/event/" + eventId;
+            Log.d(TAG, "Generated Deep Link: " + deepLink);
+
+            // --- 4. Generate QR Code Bitmap ---
+            Bitmap qrBitmap = com.example.yellow.utils.QrUtils.makeQr(deepLink, 768);
+            if (qrBitmap == null) {
+                throw new Exception("Failed to generate QR code bitmap.");
             }
+            Log.d(TAG, "Successfully created QR code bitmap.");
 
-            createEventButton.setEnabled(false);
+            // --- 5. Convert QR Bitmap to Base64 Data URI ---
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+            byte[] qrBytes = baos.toByteArray();
+            String qrBase64 = android.util.Base64.encodeToString(qrBytes, android.util.Base64.NO_WRAP);
+            String qrDataUri = "data:image/png;base64," + qrBase64;
+            Log.d(TAG, "Successfully encoded QR to Base64 string.");
 
-            String dataUri = encodeImageUriToDataUri(selectedPosterUri);
-            if (dataUri == null) {
-                createEventButton.setEnabled(true);
-                toast("Could not read image");
-                return;
-            }
+            // --- 6. Assemble the Complete Event Object ---
+            String organizerId = (auth.getCurrentUser() != null) ? auth.getCurrentUser().getUid() : "anonymous";
+            String organizerName = (auth.getCurrentUser() != null && auth.getCurrentUser().getDisplayName() != null)
+                    ? auth.getCurrentUser().getDisplayName() : "";
 
-            String organizer = (auth.getCurrentUser() != null)
-                    ? auth.getCurrentUser().getUid()
-                    : "anonymous";
-
-            Event ev = new Event();
-            ev.setName(name);
-            ev.setDescription(desc);
-            ev.setLocation(loc);
-            ev.setPosterImageUrl(dataUri);
-            ev.setOrganizerId(organizer);
-            if (auth.getCurrentUser() != null && auth.getCurrentUser().getDisplayName() != null) {
-                ev.setOrganizerName(auth.getCurrentUser().getDisplayName());
-            }
-            ev.setStartDate(new Timestamp(startCal.getTime()));
+            // Prepare timestamps
+            Timestamp startDate = new Timestamp(startCal.getTime());
             Calendar endCopy = (Calendar) endCal.clone();
             endCopy.set(Calendar.HOUR_OF_DAY, 23);
             endCopy.set(Calendar.MINUTE, 59);
-            endCopy.set(Calendar.SECOND, 59);
-            endCopy.set(Calendar.MILLISECOND, 999);
-            ev.setEndDate(new Timestamp(endCopy.getTime()));
-            ev.setMaxEntrants(maxEntrants);
-            ev.setRequireGeolocation(requireGeo);
-            ev.setCreatedAt(Timestamp.now());
+            Timestamp endDate = new Timestamp(endCopy.getTime());
 
-            FirebaseManager.getInstance().createEvent(ev, new FirebaseManager.CreateEventCallback() {
+            // Create the event with ALL data included from the start
+            Event completeEvent = new Event(
+                    eventId,
+                    name,
+                    desc,
+                    loc,
+                    startDate,
+                    endDate,
+                    posterDataUri,
+                    maxEntrants,
+                    organizerId,
+                    organizerName,
+                    requireGeo,
+                    deepLink,       // Include deep link
+                    qrDataUri       // Include QR image data
+            );
+            completeEvent.setCreatedAt(Timestamp.now()); // Set creation time
 
-                /**
-                 * Some manager implementations may call this overload. We log it for clarity.
-                 *
-                 * @param docId the Firestore document ID of the created event
-                 */
+            // --- 7. Save the Complete Object to Firestore in ONE operation ---
+            FirebaseManager.getInstance().setEvent(eventId, completeEvent, new FirebaseManager.SimpleCallback() {
                 @Override
-                public void onSuccess(String docId) {
-                    Log.w("CreateEvent", "onSuccess(String) was called unexpectedly. docId=" + docId);
+                public void onSuccess() {
+                    Log.i(TAG, "Event created and saved successfully with ID: " + eventId);
+                    toast("Event created successfully!");
+                    // Show the QR dialog and then finish the activity
+                    showQrDialog(qrBitmap);
                 }
 
-                /**
-                 * Main success path used here. We have the created {@link Event}, so we use its ID
-                 * to build the deep link and QR, then update the same Firestore document.
-                 *
-                 * @param event the created event (should include a non-empty ID)
-                 */
-                @Override
-                public void onSuccess(Event event) {
-                    try {
-                        if (event == null || event.getId() == null || event.getId().trim().isEmpty()) {
-                            toast("Event created, but no ID returned");
-                            finish();
-                            return;
-                        }
-
-                        String docId = event.getId();
-
-                        // 1) Build deep link
-                        String deepLink = "https://yellow-app.com/event/" + docId;
-
-                        // 2) Generate QR bitmap
-                        Bitmap qrBmp = com.example.yellow.utils.QrUtils.makeQr(deepLink, 768);
-
-                        if (qrCard != null && qrImagePreview != null){
-                            qrImagePreview.setImageBitmap(qrBmp);
-                            qrCard.setVisibility(View.VISIBLE);
-                        }
-
-                        // 3) Convert to Base64 PNG data URI
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        qrBmp.compress(Bitmap.CompressFormat.PNG, 100, bos);
-                        String qrBase64 = android.util.Base64.encodeToString(bos.toByteArray(), android.util.Base64.NO_WRAP);
-                        String qrDataUri = "data:image/png;base64," + qrBase64;
-
-                        // 4) Save QR info back to this event doc (null-safe patch)
-                        Map<String, Object> patch = new HashMap<>();
-                        if (deepLink != null && !deepLink.isEmpty()) patch.put("qrDeepLink", deepLink);
-                        if (qrDataUri != null && !qrDataUri.isEmpty()) patch.put("qrImagePng", qrDataUri);
-
-                        FirebaseManager.getInstance()
-                                .updateEvent(docId, patch, new FirebaseManager.SimpleCallback() {
-                                    /**
-                                     * Called when the QR fields were saved successfully.
-                                     * We show a toast and finish to return to the previous screen.
-                                     */
-                                    @Override public void onSuccess() {
-                                        toast("Event created successfully!");
-                                        new android.os.Handler().postDelayed(() -> finish(), 1500); //allows user to see qr code before finishing
-                                    }
-
-                                    /**
-                                     * Called when saving the QR fields failed.
-                                     *
-                                     * @param e the error from Firestore (may be {@code null})
-                                     */
-                                    @Override public void onFailure(Exception e) {
-                                        toast("Event made, but QR save failed: " + (e != null ? e.getMessage() : ""));
-                                        finish();
-                                    }
-                                });
-
-                    } catch (Exception ex) {
-                        toast("Event made, but QR failed: " + ex.getMessage());
-                        finish();
-                    }
-                }
-
-                /**
-                 * Called when the initial Event create fails.
-                 *
-                 * @param e the Firestore error (may be {@code null})
-                 */
                 @Override
                 public void onFailure(Exception e) {
-                    Log.e("CreateEvent", "Firestore createEvent failed", e);
+                    Log.e(TAG, "Firestore final setEvent failed", e);
                     createEventButton.setEnabled(true);
                     toast("Firestore error: " + (e != null ? e.getMessage() : "unknown"));
                 }
             });
 
-
-        } catch (SecurityException se) {
-            Log.e(TAG, "SecurityException", se);
-            createEventButton.setEnabled(true);
-            toast("No permission to read image.");
-        } catch (OutOfMemoryError oom) {
-            Log.e(TAG, "OutOfMemoryError", oom);
-            createEventButton.setEnabled(true);
-            toast("Image too large.");
-        } catch (FileNotFoundException fnf) {
-            Log.e(TAG, "FileNotFound", fnf);
-            createEventButton.setEnabled(true);
-            toast("Image not found.");
         } catch (Exception e) {
-            Log.e(TAG, "Unexpected error", e);
+            Log.e(TAG, "An error occurred during event creation", e);
             createEventButton.setEnabled(true);
             toast("Error: " + e.getMessage());
         }
@@ -554,5 +502,37 @@ public class CreateEventActivity extends AppCompatActivity {
      */
     private void toast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * Shows the generated QR code in a pop-up dialog.
+     * The activity will only finish after the user closes the dialog.
+     */
+    private void showQrDialog(Bitmap qrBmp) {
+        if (qrBmp == null) {
+            toast("Event created, but QR could not be displayed.");
+            finish();
+            return;
+        }
+
+        // Create an ImageView to hold the QR bitmap
+        ImageView imageView = new ImageView(this);
+        imageView.setImageBitmap(qrBmp);
+
+        int padding = (int) (24 * getResources().getDisplayMetrics().density);
+        imageView.setPadding(padding, padding, padding, padding);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Event QR Code")
+                .setMessage("Ask attendees to scan this code to view the event.")
+                .setView(imageView)
+                .setPositiveButton("Done", (dialog, which) -> {
+                    dialog.dismiss();
+                    // Now we finally close this Activity
+                    finish();
+                })
+                // If the user cancels by tapping outside / back button
+                .setOnCancelListener(dialog -> finish())
+                .show();
     }
 }

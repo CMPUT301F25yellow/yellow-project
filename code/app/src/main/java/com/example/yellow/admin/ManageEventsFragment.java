@@ -43,31 +43,32 @@ public class ManageEventsFragment extends Fragment {
     /**
      * Creates and returns the Manage Events layout.
      *
-     * @param inflater  Layout inflater.
-     * @param container Optional parent view.
+     * @param inflater           Layout inflater.
+     * @param container          Optional parent view.
      * @param savedInstanceState Saved state, if any.
      * @return The root view for this fragment.
      */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_manage_events, container, false);
     }
 
     /**
-     * Binds views, applies window insets, sets back navigation, and starts listening to events.
+     * Binds views, applies window insets, sets back navigation, and starts
+     * listening to events.
      *
-     * @param v The fragment root view.
+     * @param v                  The fragment root view.
      * @param savedInstanceState Saved state, if any.
      */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
 
-        spacer        = v.findViewById(R.id.statusBarSpacer);
-        scroll        = v.findViewById(R.id.scroll);
+        spacer = v.findViewById(R.id.statusBarSpacer);
+        scroll = v.findViewById(R.id.scroll);
         listContainer = v.findViewById(R.id.listContainer);
 
         // Insets: top spacer + bottom padding
@@ -93,9 +94,7 @@ public class ManageEventsFragment extends Fragment {
         // Back button
         View btnBack = v.findViewById(R.id.btnBack);
         if (btnBack != null) {
-            btnBack.setOnClickListener(x ->
-                    requireActivity().getSupportFragmentManager().popBackStack()
-            );
+            btnBack.setOnClickListener(x -> requireActivity().getSupportFragmentManager().popBackStack());
         }
 
         db = FirebaseFirestore.getInstance();
@@ -108,8 +107,13 @@ public class ManageEventsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (reg != null) { reg.remove(); reg = null; }
-        spacer = null; scroll = null; listContainer = null;
+        if (reg != null) {
+            reg.remove();
+            reg = null;
+        }
+        spacer = null;
+        scroll = null;
+        listContainer = null;
     }
 
     /**
@@ -119,34 +123,34 @@ public class ManageEventsFragment extends Fragment {
         reg = db.collection("events")
                 // .orderBy("startDate") // optional (add Firestore index if prompted)
                 .addSnapshotListener((snap, err) -> {
-                    if (!isAdded()) return;
+                    if (!isAdded())
+                        return;
                     if (err != null || snap == null) {
                         toast("Failed to load events.");
                         return;
                     }
-                    if (listContainer == null) return;
+                    if (listContainer == null)
+                        return;
 
                     listContainer.removeAllViews();
                     LayoutInflater inflater = LayoutInflater.from(getContext());
 
                     for (DocumentSnapshot d : snap.getDocuments()) {
-                        String id             = d.getId();
-                        String name           = str(d, "name");
-                        String organizerName  = str(d, "organizerName");
-                        String posterUrl      = str(d, "posterImageUrl");
-                        String dateLabel      = formatDateField(d.get("startDate"));
+                        String id = d.getId();
+                        String name = str(d, "name");
+                        String organizerName = str(d, "organizerName");
+                        String posterUrl = str(d, "posterImageUrl");
+                        String dateLabel = formatDateField(d.get("startDate"));
 
                         View card = inflater.inflate(R.layout.manage_event_card_admin, listContainer, false);
 
-                        ImageView ivThumb         = card.findViewById(R.id.thumb);
-                        TextView tvTitle          = card.findViewById(R.id.title);
-                        TextView tvDate           = card.findViewById(R.id.date);
-                        TextView tvOrganizer      = card.findViewById(R.id.organizer);
-                        MaterialButton btnDelete  = card.findViewById(R.id.btnDelete);
+                        ImageView ivThumb = card.findViewById(R.id.thumb);
+                        TextView tvTitle = card.findViewById(R.id.title);
+                        TextView tvDate = card.findViewById(R.id.date);
+                        MaterialButton btnDelete = card.findViewById(R.id.btnDelete);
 
                         tvTitle.setText(!name.isEmpty() ? name : "(untitled)");
                         tvDate.setText(!dateLabel.isEmpty() ? dateLabel : "No date");
-                        tvOrganizer.setText(!organizerName.isEmpty() ? ("By " + organizerName) : "By —");
 
                         if (!TextUtils.isEmpty(posterUrl)) {
                             try {
@@ -163,9 +167,7 @@ public class ManageEventsFragment extends Fragment {
                             ivThumb.setImageResource(R.drawable.ic_image_icon);
                         }
 
-                        btnDelete.setOnClickListener(v ->
-                                confirmDelete(id, name, posterUrl)
-                        );
+                        btnDelete.setOnClickListener(v -> confirmDelete(id, name, posterUrl));
 
                         listContainer.addView(card);
                     }
@@ -182,15 +184,16 @@ public class ManageEventsFragment extends Fragment {
     }
 
     /**
-     * Shows a confirmation dialog before deleting the event (and poster if present).
+     * Shows a confirmation dialog before deleting the event (and poster if
+     * present).
      *
-     * @param eventId  The Firestore document ID of the event.
-     * @param title    The event name (used for dialog text).
+     * @param eventId   The Firestore document ID of the event.
+     * @param title     The event name (used for dialog text).
      * @param posterUrl The download URL of the poster image (may be empty).
      */
     private void confirmDelete(@NonNull String eventId,
-                               @NonNull String title,
-                               @NonNull String posterUrl) {
+            @NonNull String title,
+            @NonNull String posterUrl) {
         String label = title.isEmpty() ? eventId : title;
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete event?")
@@ -201,9 +204,10 @@ public class ManageEventsFragment extends Fragment {
     }
 
     /**
-     * Deletes the event document and then attempts to delete its poster in Firebase Storage.
+     * Deletes the event document and then attempts to delete its poster in Firebase
+     * Storage.
      *
-     * @param eventId  The Firestore document ID to delete.
+     * @param eventId   The Firestore document ID to delete.
      * @param posterUrl The download URL of the poster image (may be empty).
      */
     private void deleteEventAndPoster(@NonNull String eventId, @NonNull String posterUrl) {
@@ -247,11 +251,12 @@ public class ManageEventsFragment extends Fragment {
     private String formatDateField(Object raw) {
         if (raw instanceof Timestamp) {
             Date dt = ((Timestamp) raw).toDate();
-            String day  = DateFormat.format("MMM d, yyyy", dt).toString();
+            String day = DateFormat.format("MMM d, yyyy", dt).toString();
             String time = DateFormat.format("h:mm a", dt).toString();
             return day + " • " + time;
         }
-        if (raw instanceof String) return (String) raw;
+        if (raw instanceof String)
+            return (String) raw;
         return "";
     }
 
@@ -261,7 +266,8 @@ public class ManageEventsFragment extends Fragment {
      * @param m Message to display.
      */
     private void toast(String m) {
-        if (!isAdded()) return;
+        if (!isAdded())
+            return;
         android.widget.Toast.makeText(getContext(), m, android.widget.Toast.LENGTH_SHORT).show();
     }
 }

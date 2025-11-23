@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
+import com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -33,7 +34,10 @@ public class EntrantsFragment extends Fragment {
     private FirebaseFirestore db;
     private String eventId;
     private LinearLayout entrantsContainer;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    private MaterialButton btnManageEntrants;   // 🔹 new
+
+    private final SimpleDateFormat dateFormat =
+            new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
     /** inflates the layout for the entrants list screen */
     @Nullable
@@ -50,15 +54,28 @@ public class EntrantsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         entrantsContainer = view.findViewById(R.id.entrantsContainer);
+        btnManageEntrants = view.findViewById(R.id.btnManageEntrants);  // 🔹 bind button
         db = FirebaseFirestore.getInstance();
 
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");
         }
 
-        if (eventId == null) {
+        if (eventId == null || eventId.trim().isEmpty()) {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            if (btnManageEntrants != null) btnManageEntrants.setEnabled(false);
             return;
+        }
+
+        // 🔹 Button click: open ManageEntrantsActivity for this event
+        if (btnManageEntrants != null) {
+            btnManageEntrants.setOnClickListener(v -> {
+                Intent intent = new Intent(requireContext(), ManageEntrantsActivity.class);
+                intent.putExtra("eventId", eventId);
+                // if you also pass eventName in the bundle, you can add it here:
+                // intent.putExtra("eventName", getArguments().getString("eventName"));
+                startActivity(intent);
+            });
         }
 
         loadAllEntrants();

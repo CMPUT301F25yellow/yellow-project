@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
     private View scrollContent;
     private View fragmentContainer;
 
-    // NEW: listener handle for live events
     private ListenerRegistration eventsListener;
 
     @Override
@@ -49,18 +48,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // ---- Views ----
-        View root          = findViewById(R.id.main);
-        header             = findViewById(R.id.header_main);
-        scrollContent      = findViewById(R.id.scrollContent);
-        bottomNav          = findViewById(R.id.bottomNavigationView);
-        fragmentContainer  = findViewById(R.id.fragmentContainer);
+        View root = findViewById(R.id.main);
+        header = findViewById(R.id.header_main);
+        scrollContent = findViewById(R.id.scrollContent);
+        bottomNav = findViewById(R.id.bottomNavigationView);
+        fragmentContainer = findViewById(R.id.fragmentContainer);
 
         // ---- Header icons ----
         View iconProfile = findViewById(R.id.iconProfile);
-        if (iconProfile != null) iconProfile.setOnClickListener(v -> openProfile());
+        if (iconProfile != null)
+            iconProfile.setOnClickListener(v -> openProfile());
 
         View iconNotifications = findViewById(R.id.iconNotifications);
-        if (iconNotifications != null) iconNotifications.setOnClickListener(v -> openNotifications());
+        if (iconNotifications != null)
+            iconNotifications.setOnClickListener(v -> openNotifications());
 
         // ---- Safe-area insets ----
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
@@ -71,24 +72,21 @@ public class MainActivity extends AppCompatActivity {
                         header.getPaddingLeft(),
                         bars.top + dp(12),
                         header.getPaddingRight(),
-                        header.getPaddingBottom()
-                );
+                        header.getPaddingBottom());
             }
             if (scrollContent != null) {
                 scrollContent.setPadding(
                         scrollContent.getPaddingLeft(),
                         scrollContent.getPaddingTop(),
                         scrollContent.getPaddingRight(),
-                        bars.bottom + dp(16)
-                );
+                        bars.bottom + dp(16));
             }
             if (bottomNav != null) {
                 bottomNav.setPadding(
                         bottomNav.getPaddingLeft(),
                         bottomNav.getPaddingTop(),
                         bottomNav.getPaddingRight(),
-                        0
-                );
+                        0);
             }
             return insets;
         });
@@ -105,7 +103,11 @@ public class MainActivity extends AppCompatActivity {
                     openHistory();
                     return true;
                 } else if (id == R.id.nav_create_event) {
-                    startActivity(new Intent(MainActivity.this, CreateEventActivity.class));
+                    com.example.yellow.utils.ProfileUtils.checkProfile(this, isComplete -> {
+                        if (isComplete) {
+                            startActivity(new Intent(MainActivity.this, CreateEventActivity.class));
+                        }
+                    }, () -> openProfile());
                     return true;
                 } else if (id == R.id.nav_my_events) {
                     openMyEvents();
@@ -131,7 +133,8 @@ public class MainActivity extends AppCompatActivity {
 
         // ---- Modern back handling ----
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override public void handleOnBackPressed() {
+            @Override
+            public void handleOnBackPressed() {
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                     getSupportFragmentManager().popBackStack();
                 } else {
@@ -162,8 +165,10 @@ public class MainActivity extends AppCompatActivity {
 
     /** Centralized open method: choose if bottom nav stays visible. */
     private void openFragment(Fragment fragment, String tag, boolean keepBottomNavVisible) {
-        if (header != null) header.setVisibility(View.GONE);
-        if (scrollContent != null) scrollContent.setVisibility(View.GONE);
+        if (header != null)
+            header.setVisibility(View.GONE);
+        if (scrollContent != null)
+            scrollContent.setVisibility(View.GONE);
 
         if (fragmentContainer != null) {
             fragmentContainer.setVisibility(View.VISIBLE);
@@ -184,33 +189,38 @@ public class MainActivity extends AppCompatActivity {
 
     public void showHomeUI(boolean show) {
         int visible = show ? View.VISIBLE : View.GONE;
-        if (header != null) header.setVisibility(visible);
-        if (scrollContent != null) scrollContent.setVisibility(visible);
-        if (fragmentContainer != null) fragmentContainer.setVisibility(show ? View.GONE : View.VISIBLE);
-        if (bottomNav != null) bottomNav.setVisibility(visible);
+        if (header != null)
+            header.setVisibility(visible);
+        if (scrollContent != null)
+            scrollContent.setVisibility(visible);
+        if (fragmentContainer != null)
+            fragmentContainer.setVisibility(show ? View.GONE : View.VISIBLE);
+        if (bottomNav != null)
+            bottomNav.setVisibility(visible);
     }
 
     // ---------- Screens ----------
 
-    private void openProfile() {
-        if (bottomNav != null) bottomNav.getMenu().setGroupCheckable(0, false, true);
-        openFragment(new ProfileUserFragment(), "Profile", /*keepBottomNavVisible=*/false);
+    public void openProfile() {
+        if (bottomNav != null)
+            bottomNav.getMenu().setGroupCheckable(0, false, true);
+        openFragment(new ProfileUserFragment(), "Profile", /* keepBottomNavVisible= */false);
     }
 
     private void openNotifications() {
-        openFragment(new NotificationFragment(), "Notifications", /*keepBottomNavVisible=*/false);
+        openFragment(new NotificationFragment(), "Notifications", /* keepBottomNavVisible= */false);
     }
 
     private void openQrScan() {
-        openFragment(new QrScanFragment(), "QR_SCAN", /*keepBottomNavVisible=*/true);
+        openFragment(new QrScanFragment(), "QR_SCAN", /* keepBottomNavVisible= */true);
     }
 
     private void openHistory() {
-        openFragment(new HistoryFragment(), "History", /*keepBottomNavVisible=*/true);
+        openFragment(new HistoryFragment(), "History", /* keepBottomNavVisible= */true);
     }
 
     private void openMyEvents() {
-        openFragment(new MyEventsFragment(), "MyEvents", /*keepBottomNavVisible=*/true);
+        openFragment(new MyEventsFragment(), "MyEvents", /* keepBottomNavVisible= */true);
     }
 
     public void openWaitingRoom(String eventId) {
@@ -218,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
         Bundle args = new Bundle();
         args.putString("eventId", eventId);
         fragment.setArguments(args);
-        openFragment(fragment, "WAITING_ROOM", /*keepBottomNavVisible=*/false);
+        openFragment(fragment, "WAITING_ROOM", /* keepBottomNavVisible= */false);
     }
 
     // ---------- Live Events (auto-updating) ----------
@@ -240,7 +250,8 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Listen failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    if (querySnapshot == null || eventsContainer == null) return;
+                    if (querySnapshot == null || eventsContainer == null)
+                        return;
 
                     eventsContainer.removeAllViews();
 
@@ -256,14 +267,15 @@ public class MainActivity extends AppCompatActivity {
 
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         Event event = doc.toObject(Event.class);
-                        if (event == null) continue;
+                        if (event == null)
+                            continue;
 
                         View card = getLayoutInflater()
                                 .inflate(R.layout.item_event_card, eventsContainer, false);
 
-                        ImageView img     = card.findViewById(R.id.eventImage);
-                        TextView title    = card.findViewById(R.id.eventTitle);
-                        TextView details  = card.findViewById(R.id.eventDetails);
+                        ImageView img = card.findViewById(R.id.eventImage);
+                        TextView title = card.findViewById(R.id.eventTitle);
+                        TextView details = card.findViewById(R.id.eventDetails);
                         Button joinButton = card.findViewById(R.id.eventButton);
 
                         title.setText(event.getName());
@@ -274,7 +286,8 @@ public class MainActivity extends AppCompatActivity {
                                     .load(event.getPosterImageUrl())
                                     .into(img);
                         } else {
-                            img.setImageResource(R.drawable.my_image);
+                            img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                            img.setImageResource(R.drawable.ic_image_icon);
                         }
 
                         joinButton.setOnClickListener(v -> {

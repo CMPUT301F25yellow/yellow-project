@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_waiting_room"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_black"
-    android:id="@+id/root_waiting_room"
     android:fillViewport="true">
 
     <LinearLayout
@@ -53,26 +53,27 @@
                 android:layout_centerInParent="true" />
         </RelativeLayout>
 
-        <!-- Banner -->
-        <ImageView
-            android:id="@+id/eventBanner"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/my_image"
-            android:layout_marginBottom="16dp" />
-
         <!-- Info Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#1E1E1E"
-            android:padding="16dp"
             android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="20dp"
             android:elevation="2dp"
             android:clipToOutline="true">
+
+            <!-- Poster Banner -->
+            <ImageView
+                android:id="@+id/eventBanner"
+                android:layout_width="match_parent"
+                android:layout_height="380dp"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:src="@drawable/ic_image_icon"
+                android:layout_marginBottom="16dp" />
 
             <!-- Date Row -->
             <LinearLayout
@@ -80,21 +81,20 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
                 android:layout_marginBottom="8dp">
 
                 <ImageView
-                    android:id="@+id/eventBanner"
-                    android:layout_width="match_parent"
-                    android:layout_height="180dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/my_image"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_clock"
+                    android:layout_marginEnd="8dp" />
 
                 <TextView
                     android:id="@+id/eventDateTime"
-                    android:text="Oct 20, 2025 at 6:00 PM"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="Oct 20, 2025"
                     android:textColor="@color/white"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -104,7 +104,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingBottom="12dp">
 
                 <ImageView
                     android:layout_width="20dp"
@@ -114,9 +116,9 @@
 
                 <TextView
                     android:id="@+id/eventLocation"
-                    android:text="Central Park"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="Central Park"
                     android:textColor="@color/white"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -133,9 +135,9 @@
 
         <!-- Waiting Room Title -->
         <TextView
-            android:text="In Waiting Room"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="In Waiting List"
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="16sp"
@@ -144,9 +146,9 @@
 
         <!-- Subtitle -->
         <TextView
-            android:text="Please wait while the host starts the session."
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="Please wait while the host starts the session."
             android:textAlignment="center"
             android:textColor="#AAAAAA"
             android:textSize="13sp"
@@ -172,18 +174,18 @@
                 android:layout_marginEnd="8dp" />
 
             <TextView
-                android:text="Total users in the waiting room"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:text="Total users in the waiting list"
                 android:textColor="@color/white"
                 android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/userCount"
-                android:text="12"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="12"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -192,10 +194,10 @@
         <!-- Leave Button -->
         <Button
             android:id="@+id/leaveButton"
-            android:text="Leave Waiting List"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:text="Leave Waiting List"
             android:backgroundTint="@color/danger_red"
             android:textColor="@android:color/white"
             android:layout_marginHorizontal="16dp"
