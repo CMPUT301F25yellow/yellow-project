@@ -194,36 +194,49 @@ public class WaitingFragment extends Fragment {
             return;
         }
 
-        //shuffle the waiting list and take the specified number of entrants
+        // shuffle and pick winners
         List<String> entrantsCopy = new ArrayList<>(currentWaitingEntrants);
         Collections.shuffle(entrantsCopy);
         List<String> selected = entrantsCopy.subList(0, Math.min(count, entrantsCopy.size()));
 
         for (String userId : selected) {
-            //create a record for the selected entrant
+
             Map<String, Object> data = new HashMap<>();
             data.put("userId", userId);
-            data.put("selected", true);
             data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            data.put("selected", true);
 
-            db.collection("events").document(eventId)
+
+            com.google.firebase.firestore.WriteBatch batch = db.batch();
+
+            // destination
+            var selectedRef = db.collection("events")
+                    .document(eventId)
                     .collection("selected")
-                    .document(userId)
-                    .set(data)
-                    .addOnSuccessListener(aVoid -> {
-                        //once added to "selected", remove the entrant from the waiting list
-                        db.collection("events").document(eventId)
-                                .collection("waitingList")
-                                .document(userId)
-                                .delete()
-                                .addOnSuccessListener(unused -> {
-                                    //remove from the local cache and refresh the view
-                                    currentWaitingEntrants.remove(userId);
-                                    loadWaitingEntrants();
-                                });
+                    .document(userId);
+
+            // source (to remove)
+            var waitingRef = db.collection("events")
+                    .document(eventId)
+                    .collection("waitingList")
+                    .document(userId);
+
+            // add to selected
+            batch.set(selectedRef, data);
+
+            // remove from waiting
+            batch.delete(waitingRef);
+
+            // commit atomic move
+            batch.commit()
+                    .addOnSuccessListener(unused -> {
+                        currentWaitingEntrants.remove(userId);
+                        loadWaitingEntrants();  // refresh UI
                     })
                     .addOnFailureListener(e ->
-                            Toast.makeText(getContext(), "Error selecting entrant: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                            Toast.makeText(getContext(),
+                                    "Failed to move entrant: " + e.getMessage(),
+                                    Toast.LENGTH_SHORT).show());
         }
 
         Toast.makeText(getContext(),
