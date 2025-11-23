@@ -81,7 +81,18 @@ public class HistoryFragment extends Fragment {
         adapter = new HistoryAdapter(getContext());
         recyclerView.setAdapter(adapter);
 
-        loadHistory();
+        // [NEW] Check Profile before loading history
+        com.example.yellow.utils.ProfileUtils.checkProfile(getContext(), isComplete -> {
+            if (isComplete) {
+                loadHistory();
+            }
+        }, () -> {
+            // Navigate to ProfileUserFragment
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainer, new ProfileUserFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
     }
 
     private void loadHistory() {
@@ -100,6 +111,7 @@ public class HistoryFragment extends Fragment {
         db.collection("events").get().addOnSuccessListener(eventSnapshots -> {
             if (eventSnapshots.isEmpty()) {
                 adapter.setEvents(new ArrayList<>());
+                showEmptyState(true);
                 return;
             }
 
@@ -123,7 +135,9 @@ public class HistoryFragment extends Fragment {
 
                     if (pendingChecks.decrementAndGet() == 0) {
                         if (userEvents.isEmpty()) {
-                            Toast.makeText(getContext(), "No history found.", Toast.LENGTH_SHORT).show();
+                            showEmptyState(true);
+                        } else {
+                            showEmptyState(false);
                         }
                         adapter.setEvents(userEvents);
                     }
@@ -133,6 +147,18 @@ public class HistoryFragment extends Fragment {
             Log.e("HistoryFragment", "Error loading events", e);
             Toast.makeText(getContext(), "Error loading events: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private void showEmptyState(boolean isEmpty) {
+        View view = getView();
+        if (view == null)
+            return;
+
+        View emptyView = view.findViewById(R.id.tvEmptyState);
+        if (emptyView != null) {
+            emptyView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        }
     }
 
     private void checkUserInEvent(String eventId, String userId, OnCheckResult listener) {

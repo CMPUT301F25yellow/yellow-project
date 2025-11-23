@@ -38,27 +38,23 @@ public class AdminDashboardActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
 
         // ---- Step 1: Verify admin role ----
-        String uid = FirebaseAuth.getInstance().getUid();
-        if (uid == null) {
-            Toast.makeText(this, "Access denied: not signed in.", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        // ---- Step 1: Verify admin role ----
+        // [NEW] Device-based admin check
+        if (com.example.yellow.utils.DeviceIdentityManager.isCurrentDeviceAdmin()) {
+            setupAdminUI(); // Load dashboard
+        } else {
+            // Fallback: Try to refresh status just in case, or show denied
+            com.example.yellow.utils.DeviceIdentityManager
+                    .ensureDeviceDocument(this, FirebaseAuth.getInstance().getCurrentUser())
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult()) {
+                            setupAdminUI();
+                        } else {
+                            Toast.makeText(this, "Access denied: Device not authorized.", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    });
         }
-
-        FirebaseFirestore.getInstance().collection("roles").document(uid)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists() && "admin".equals(doc.getString("role"))) {
-                        setupAdminUI(); // Load dashboard
-                    } else {
-                        Toast.makeText(this, "Access denied: not an admin.", Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to verify role.", Toast.LENGTH_SHORT).show();
-                    finish();
-                });
     }
 
     /**

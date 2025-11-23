@@ -275,39 +275,25 @@ public class ProfileUserFragment extends Fragment {
         if (btnAdmin == null)
             return;
 
-        String uid = uidOrNull();
-        if (uid == null) {
+        // [NEW] Device-based admin check
+        if (com.example.yellow.utils.DeviceIdentityManager.isCurrentDeviceAdmin()) {
+            btnAdmin.setVisibility(View.VISIBLE);
+            btnAdmin.setOnClickListener(v -> startActivity(new android.content.Intent(
+                    requireContext(), com.example.yellow.admin.AdminDashboardActivity.class)));
+        } else {
             btnAdmin.setVisibility(View.GONE);
-            return;
+            // Try to refresh silently in case status changed recently
+            com.example.yellow.utils.DeviceIdentityManager
+                    .ensureDeviceDocument(getContext(),
+                            com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser())
+                    .addOnSuccessListener(isAdmin -> {
+                        if (isAdmin) {
+                            btnAdmin.setVisibility(View.VISIBLE);
+                            btnAdmin.setOnClickListener(v -> startActivity(new android.content.Intent(
+                                    requireContext(), com.example.yellow.admin.AdminDashboardActivity.class)));
+                        }
+                    });
         }
-
-        // Start hidden until we confirm admin
-        btnAdmin.setVisibility(View.GONE);
-
-        db.collection("roles").document(uid)
-                .addSnapshotListener((doc, err) -> {
-                    if (err != null) {
-                        android.util.Log.e("ADMIN", "roles read error: " + err.getMessage(), err);
-                        // Do NOT force-hide again on error; just keep current state
-                        return;
-                    }
-                    if (doc == null || !doc.exists()) {
-                        android.util.Log.d("ADMIN", "roles/" + uid + " missing");
-                        btnAdmin.setVisibility(View.GONE);
-                        btnAdmin.setOnClickListener(null);
-                        return;
-                    }
-                    String role = doc.getString("role");
-                    android.util.Log.d("ADMIN", "role=" + role);
-                    boolean isAdmin = "admin".equals(role);
-                    btnAdmin.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
-                    if (isAdmin) {
-                        btnAdmin.setOnClickListener(v -> startActivity(new android.content.Intent(
-                                requireContext(), com.example.yellow.admin.AdminDashboardActivity.class)));
-                    } else {
-                        btnAdmin.setOnClickListener(null);
-                    }
-                });
     }
 
     // ----- Helpers -----
