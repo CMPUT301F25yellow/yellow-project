@@ -139,6 +139,21 @@
                     android:textColor="@color/white" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Notifs on/off button -->
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchNotifications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Notifications"
+                android:textSize="25dp"
+                android:textColor="@color/white"
+                android:textOn=""
+                android:textOff=""
+                android:showText="false"
+                app:materialThemeOverlay="@style/CustomSwitchTheme"
+                android:checked="true"/>
+
             <!-- Save button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSave"

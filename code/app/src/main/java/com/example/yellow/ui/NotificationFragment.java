@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,10 +24,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import com.example.yellow.R;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -93,13 +96,13 @@ public class NotificationFragment extends Fragment {
 
         adapter.setActionListener(new NotificationAdapter.ActionListener() {
             @Override
-            public void onAccept(String eventId) {
-                acceptSelection(eventId);
+            public void onAccept(String eventId, String notificationId) {
+                acceptSelection(eventId, notificationId);
             }
 
             @Override
-            public void onDecline(String eventId) {
-                declineSelection(eventId);
+            public void onDecline(String eventId, String notificationId) {
+                declineSelection(eventId, notificationId);
             }
         });
 
@@ -125,43 +128,84 @@ public class NotificationFragment extends Fragment {
                 });
 
     }
-    private void acceptSelection(String eventId) {
+    private void acceptSelection(String eventId, String notificationId) {
         String uid = FirebaseAuth.getInstance().getUid();
         if (uid == null) return;
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Remove user from selected
-        db.collection("events").document(eventId)
-                .collection("selected").document(uid)
-                .delete();
+        // Firestore refs
+        var selectedRef = db.collection("events").document(eventId)
+                .collection("selected").document(uid);
 
-        // Add to enrolled
-        db.collection("events").document(eventId)
-                .collection("enrolled").document(uid)
-                .set(new HashMap<String, Object>() {{
-                    put("userId", uid);
-                    put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
-                }});
+        var enrolledRef = db.collection("events").document(eventId)
+                .collection("enrolled").document(uid);
+
+        var notifRef = db.collection("profiles").document(uid)
+                .collection("notifications").document(notificationId);
+
+        // Data
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", uid);
+        data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+
+        // Batch
+        WriteBatch batch = db.batch();
+        batch.delete(selectedRef);
+        batch.set(enrolledRef, data);
+
+        // Remove notification
+        batch.delete(notifRef);
+
+        batch.commit()
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(getContext(),
+                            "🎉 You are now enrolled in the event!",
+                            Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(),
+                            "❌ Failed: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
     }
 
-    private void declineSelection(String eventId) {
+    private void declineSelection(String eventId, String notificationId) {
         String uid = FirebaseAuth.getInstance().getUid();
         if (uid == null) return;
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Remove user from selected
-        db.collection("events").document(eventId)
-                .collection("selected").document(uid)
-                .delete();
+        var selectedRef = db.collection("events").document(eventId)
+                .collection("selected").document(uid);
 
-        // Add to cancelled
-        db.collection("events").document(eventId)
-                .collection("cancelled").document(uid)
-                .set(new HashMap<String, Object>() {{
-                    put("userId", uid);
-                    put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
-                }});
+        var cancelledRef = db.collection("events").document(eventId)
+                .collection("cancelled").document(uid);
+
+        var notifRef = db.collection("profiles").document(uid)
+                .collection("notifications").document(notificationId);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", uid);
+        data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+
+        WriteBatch batch = db.batch();
+        batch.delete(selectedRef);
+        batch.set(cancelledRef, data);
+
+        // Remove notification
+        batch.delete(notifRef);
+
+        batch.commit()
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(getContext(),
+                            "❗ You declined the selection.",
+                            Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(),
+                            "❌ Failed: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
     }
 }

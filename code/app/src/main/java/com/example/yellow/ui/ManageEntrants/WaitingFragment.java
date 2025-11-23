@@ -55,6 +55,8 @@ public class WaitingFragment extends Fragment {
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
 
         Button drawButton = view.findViewById(R.id.btnDraw);
+        Button notifyButton = view.findViewById(R.id.btnNotifyAll);
+
 
         if (eventId == null) {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -64,6 +66,8 @@ public class WaitingFragment extends Fragment {
         loadWaitingEntrants();
 
         drawButton.setOnClickListener(v -> showDrawDialog());
+        notifyButton.setOnClickListener(v -> showNotificationDialog());
+
     }
 
     /**
@@ -157,6 +161,28 @@ public class WaitingFragment extends Fragment {
                 .show();
     }
 
+    private void showNotificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Notify Waiting Users");
+
+        final EditText input = new EditText(getContext());
+        input.setHint("Enter custom message (optional)");
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        input.setMinLines(3);
+        builder.setView(input);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String message = input.getText().toString().trim();
+            if (message.isEmpty()) {
+                message = "There is an update regarding the event you are waiting on.";
+            }
+            sendNotificationToAllWaiting(message);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+
     /**
      * Randomly select users from the waiting list and move them to selected list
      */
@@ -168,41 +194,132 @@ public class WaitingFragment extends Fragment {
             return;
         }
 
-        //shuffle the waiting list and take the specified number of entrants
+        // shuffle and pick winners
         List<String> entrantsCopy = new ArrayList<>(currentWaitingEntrants);
         Collections.shuffle(entrantsCopy);
         List<String> selected = entrantsCopy.subList(0, Math.min(count, entrantsCopy.size()));
 
         for (String userId : selected) {
-            //create a record for the selected entrant
+
             Map<String, Object> data = new HashMap<>();
             data.put("userId", userId);
-            data.put("selected", true);
             data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            data.put("selected", true);
 
-            db.collection("events").document(eventId)
+
+            com.google.firebase.firestore.WriteBatch batch = db.batch();
+
+            // destination
+            var selectedRef = db.collection("events")
+                    .document(eventId)
                     .collection("selected")
-                    .document(userId)
-                    .set(data)
-                    .addOnSuccessListener(aVoid -> {
-                        //once added to "selected", remove the entrant from the waiting list
-                        db.collection("events").document(eventId)
-                                .collection("waitingList")
-                                .document(userId)
-                                .delete()
-                                .addOnSuccessListener(unused -> {
-                                    //remove from the local cache and refresh the view
-                                    currentWaitingEntrants.remove(userId);
-                                    loadWaitingEntrants();
-                                });
+                    .document(userId);
+
+            // source (to remove)
+            var waitingRef = db.collection("events")
+                    .document(eventId)
+                    .collection("waitingList")
+                    .document(userId);
+
+            // add to selected
+            batch.set(selectedRef, data);
+
+            // remove from waiting
+            batch.delete(waitingRef);
+
+            // commit atomic move
+            batch.commit()
+                    .addOnSuccessListener(unused -> {
+                        currentWaitingEntrants.remove(userId);
+                        loadWaitingEntrants();  // refresh UI
                     })
                     .addOnFailureListener(e ->
-                            Toast.makeText(getContext(), "Error selecting entrant: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                            Toast.makeText(getContext(),
+                                    "Failed to move entrant: " + e.getMessage(),
+                                    Toast.LENGTH_SHORT).show());
         }
 
         Toast.makeText(getContext(),
                 "Selected " + selected.size() + " entrants.",
                 Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Sends a notification to every waiting user.
+     */
+    private void sendNotificationToAllWaiting(String message) {
+        db.collection("events").document(eventId)
+                .collection("waitingList")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.isEmpty()) {
+                        Toast.makeText(getContext(), "No waiting users to notify", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    java.util.List<String> userIds = new java.util.ArrayList<>();
+
+                    // Fetch profile settings for each user
+                    for (DocumentSnapshot doc : snapshot) {
+                        String userId = doc.getString("userId");
+                        if (userId == null) continue;
+
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
+                                    if (enabled == null) enabled = true;
+
+                                    if (enabled) {
+                                        userIds.add(userId);
+                                    }
+                                });
+                    }
+
+                    // Delay slightly to allow profile fetches to complete
+                    new android.os.Handler().postDelayed(() -> {
+
+                        if (userIds.isEmpty()) {
+                            Toast.makeText(getContext(),
+                                    "No users to notify (all have notifications off)", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // Fetch event name for the notification title
+                        db.collection("events").document(eventId)
+                                .get()
+                                .addOnSuccessListener(eventDoc -> {
+                                    String eventName = eventDoc.getString("name");
+                                    if (eventName == null) eventName = "Event Update";
+
+                                    com.example.yellow.utils.NotificationManager.sendNotification(
+                                            getContext(),
+                                            eventId,
+                                            eventName,
+                                            message,
+                                            userIds,
+                                            new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    Toast.makeText(getContext(),
+                                                            "Notifications sent!",
+                                                            Toast.LENGTH_SHORT).show();
+                                                }
+
+                                                @Override
+                                                public void onFailure(Exception e) {
+                                                    Toast.makeText(getContext(),
+                                                            "Failed to send: " + e.getMessage(),
+                                                            Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                    );
+                                });
+
+                    }, 500); // 0.5 sec delay for profile reads
+                })
+                .addOnFailureListener(
+                        e -> Toast.makeText(getContext(), "Failed to fetch waiting users", Toast.LENGTH_SHORT).show());
     }
 
     /**
