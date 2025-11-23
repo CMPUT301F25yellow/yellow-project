@@ -48,51 +48,73 @@ public class DeviceIdentityManager {
      * 4. Updates the local cache.
      */
     public static Task<Boolean> ensureDeviceDocument(Context context, FirebaseUser user) {
-        if (user == null)
+        if (context == null || user == null) {
             return Tasks.forResult(false);
+        }
 
         String deviceId = getDeviceId(context);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         Log.d(TAG, "Ensuring device doc for ID: " + deviceId);
 
-        // Data to update
-        Map<String, Object> data = new HashMap<>();
-        data.put("uid", user.getUid());
-        data.put("lastSeen", FieldValue.serverTimestamp());
-
-        // Create if not exists, merge if exists
-        // We use merge() so we don't overwrite an existing 'isAdmin' flag
+        // First, check if the document exists
         return db.collection(COLLECTION_DEVICES).document(deviceId)
-                .set(data, SetOptions.merge())
-                .continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.e(TAG, "Failed to write device doc", task.getException());
+                .get()
+                .continueWithTask(getTask -> {
+                    if (!getTask.isSuccessful()) {
+                        Log.e(TAG, "Failed to check device doc existence", getTask.getException());
                         return Tasks.forResult(false);
                     }
-                    // Now read back to check admin status
-                    return db.collection(COLLECTION_DEVICES).document(deviceId).get()
-                            .continueWith(readTask -> {
-                                if (readTask.isSuccessful() && readTask.getResult() != null) {
-                                    DocumentSnapshot doc = readTask.getResult();
-                                    // Handle both Boolean and String "true" for robustness
-                                    Object adminField = doc.get("isAdmin");
-                                    boolean isAdmin = false;
-                                    if (adminField instanceof Boolean) {
-                                        isAdmin = (Boolean) adminField;
-                                    } else if (adminField instanceof String) {
-                                        isAdmin = "true".equalsIgnoreCase((String) adminField);
+
+                    DocumentSnapshot snapshot = getTask.getResult();
+
+                    if (snapshot != null && snapshot.exists()) {
+                        // Document exists: only update uid and lastSeen, preserve isAdmin
+                        Log.d(TAG, "Device doc exists, updating uid and lastSeen only");
+                        Map<String, Object> updateData = new HashMap<>();
+                        updateData.put("uid", user.getUid());
+                        updateData.put("lastSeen", FieldValue.serverTimestamp());
+
+                        return db.collection(COLLECTION_DEVICES).document(deviceId)
+                                .update(updateData)
+                                .continueWith(updateTask -> {
+                                    if (!updateTask.isSuccessful()) {
+                                        Log.e(TAG, "Failed to update device doc", updateTask.getException());
+                                        return false;
                                     }
+
+                                    // Read back the isAdmin value
+                                    Boolean isAdminObj = snapshot.getBoolean("isAdmin");
+                                    boolean isAdmin = Boolean.TRUE.equals(isAdminObj);
 
                                     isAdminCache = isAdmin;
                                     isCacheLoaded = true;
                                     Log.d(TAG, "Device " + deviceId + " isAdmin: " + isAdminCache);
                                     return isAdminCache;
-                                } else {
-                                    Log.w(TAG, "Failed to read device doc", readTask.getException());
+                                });
+                    } else {
+                        // First run: create new document with isAdmin = false
+                        Log.d(TAG, "Creating new device doc with isAdmin = false");
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("uid", user.getUid());
+                        data.put("lastSeen", FieldValue.serverTimestamp());
+                        data.put("createdAt", FieldValue.serverTimestamp());
+                        data.put("isAdmin", false); // Default for new devices
+
+                        return db.collection(COLLECTION_DEVICES).document(deviceId)
+                                .set(data)
+                                .continueWith(setTask -> {
+                                    if (!setTask.isSuccessful()) {
+                                        Log.e(TAG, "Failed to create device doc", setTask.getException());
+                                        return false;
+                                    }
+
+                                    isAdminCache = false;
+                                    isCacheLoaded = true;
+                                    Log.d(TAG, "Created new device " + deviceId + " with isAdmin = false");
                                     return false;
-                                }
-                            });
+                                });
+                    }
                 });
     }
 

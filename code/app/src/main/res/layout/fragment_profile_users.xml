@@ -148,6 +148,9 @@
                 android:text="Notifications"
                 android:textSize="25dp"
                 android:textColor="@color/white"
+                android:textOn=""
+                android:textOff=""
+                android:showText="false"
                 app:materialThemeOverlay="@style/CustomSwitchTheme"
                 android:checked="true"/>
 
