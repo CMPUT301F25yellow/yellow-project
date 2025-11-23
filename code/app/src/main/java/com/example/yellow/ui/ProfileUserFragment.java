@@ -109,7 +109,8 @@ public class ProfileUserFragment extends Fragment {
 
             switchNotifications.setOnCheckedChangeListener((b, isChecked) -> {
                 String uid = uidOrNull();
-                if (uid == null) return;
+                if (uid == null)
+                    return;
 
                 db.collection("profiles")
                         .document(uid)
@@ -179,8 +180,6 @@ public class ProfileUserFragment extends Fragment {
                 .addOnFailureListener(e -> toast("Load failed: " + e.getMessage()));
     }
 
-
-
     /**
      * Writes the Firestore document values into the input fields.
      *
@@ -196,7 +195,8 @@ public class ProfileUserFragment extends Fragment {
             inputEmail.setText(email != null ? email : "");
             inputPhone.setText(phone != null ? phone : "");
             Boolean enabled = doc.getBoolean("notificationsEnabled");
-            if (enabled == null) enabled = true; // default ON
+            if (enabled == null)
+                enabled = true; // default ON
             switchNotifications.setChecked(enabled);
 
         } else {
@@ -287,7 +287,9 @@ public class ProfileUserFragment extends Fragment {
                     .ensureDeviceDocument(getContext(),
                             com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser())
                     .addOnSuccessListener(isAdmin -> {
-                        if (isAdmin) {
+                        // Null-safe: treat null as false
+                        boolean admin = Boolean.TRUE.equals(isAdmin);
+                        if (admin) {
                             btnAdmin.setVisibility(View.VISIBLE);
                             btnAdmin.setOnClickListener(v -> startActivity(new android.content.Intent(
                                     requireContext(), com.example.yellow.admin.AdminDashboardActivity.class)));
