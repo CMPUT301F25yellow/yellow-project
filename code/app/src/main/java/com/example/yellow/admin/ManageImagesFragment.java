@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -31,30 +32,31 @@ import java.util.Map;
  * Admin screen to browse uploaded poster images and remove them from events.
  *
  * Implements:
- *  - US 03.03.01: As an administrator, I want to be able to remove images.
- *  - US 03.06.01: As an administrator, I want to be able to browse images
- *                 that are uploaded so I can remove them if necessary.
+ * - US 03.03.01: As an administrator, I want to be able to remove images.
+ * - US 03.06.01: As an administrator, I want to be able to browse images
+ * that are uploaded so I can remove them if necessary.
  *
- * NOTE: This fragment now ONLY deals with poster images (posterImageUrl/posterUrl),
- *       not QR images.
+ * NOTE: This fragment now ONLY deals with poster images
+ * (posterImageUrl/posterUrl),
+ * not QR images.
  */
 public class ManageImagesFragment extends Fragment {
 
     private FirebaseFirestore db;
-    private LinearLayout listContainer;
+    private GridLayout listContainer;
     private View spacer, scroll;
     private ListenerRegistration reg;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         // Layout should define:
-        //  - @id/statusBarSpacer
-        //  - @id/btnBack
-        //  - @id/scroll
-        //  - @id/listContainer
+        // - @id/statusBarSpacer
+        // - @id/btnBack
+        // - @id/scroll
+        // - @id/listContainer
         return inflater.inflate(R.layout.fragment_manage_images, container, false);
     }
 
@@ -62,8 +64,8 @@ public class ManageImagesFragment extends Fragment {
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
 
-        spacer        = v.findViewById(R.id.statusBarSpacer);
-        scroll        = v.findViewById(R.id.scroll);
+        spacer = v.findViewById(R.id.statusBarSpacer);
+        scroll = v.findViewById(R.id.scroll);
         listContainer = v.findViewById(R.id.listContainer);
 
         // Insets: top spacer + bottom padding (same pattern as ManageEventsFragment)
@@ -89,9 +91,7 @@ public class ManageImagesFragment extends Fragment {
         // Back button
         View btnBack = v.findViewById(R.id.btnBack);
         if (btnBack != null) {
-            btnBack.setOnClickListener(x ->
-                    requireActivity().getSupportFragmentManager().popBackStack()
-            );
+            btnBack.setOnClickListener(x -> requireActivity().getSupportFragmentManager().popBackStack());
         }
 
         db = FirebaseFirestore.getInstance();
@@ -118,20 +118,23 @@ public class ManageImagesFragment extends Fragment {
     private void listenForImages() {
         reg = db.collection("events")
                 .addSnapshotListener((snap, err) -> {
-                    if (!isAdded()) return;
+                    if (!isAdded())
+                        return;
                     if (err != null || snap == null) {
                         toast("Failed to load images.");
                         return;
                     }
-                    if (listContainer == null) return;
+                    if (listContainer == null)
+                        return;
 
                     listContainer.removeAllViews();
                     LayoutInflater inflater = LayoutInflater.from(getContext());
 
                     int count = 0;
                     for (DocumentSnapshot d : snap.getDocuments()) {
-                        String eventId   = d.getId();
-                        String name      = safe(d.getString("name"));
+                        String eventId = d.getId();
+                        String name = safe(d.getString("name"));
+                        String organizerName = safe(d.getString("organizerName"));
                         String posterUri = safe(d.getString("posterImageUrl"));
 
                         // Only care about events that actually HAVE a poster
@@ -144,11 +147,22 @@ public class ManageImagesFragment extends Fragment {
                         View card = inflater.inflate(
                                 R.layout.manage_images_card_admin, listContainer, false);
 
-                        ImageView ivThumb        = card.findViewById(R.id.posterThumb);
-                        TextView tvTitle         = card.findViewById(R.id.title);
-                        MaterialButton btnDelete = card.findViewById(R.id.btnDeleteImage);
+                        // Set grid layout params (width 0, weight 1)
+                        // We cast the params because inflate returns the parent's param type
+                        // (GridLayout.LayoutParams)
+                        GridLayout.LayoutParams params = (GridLayout.LayoutParams) card.getLayoutParams();
+                        params.width = 0;
+                        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+                        params.setMargins(8, 8, 8, 8);
+                        card.setLayoutParams(params);
 
-                        tvTitle.setText(!name.isEmpty() ? name : "(untitled event)");
+                        ImageView ivThumb = card.findViewById(R.id.posterThumb);
+                        TextView tvTitle = card.findViewById(R.id.title);
+                        TextView tvUploaderName = card.findViewById(R.id.tvUploaderName);
+                        View btnDelete = card.findViewById(R.id.btnDeleteImage); // Now an ImageView/View
+
+                        tvTitle.setText("Event : " + (!name.isEmpty() ? name : "(untitled)"));
+                        tvUploaderName.setText("by " + (!organizerName.isEmpty() ? organizerName : "Unknown"));
 
                         try {
                             Glide.with(this)
@@ -161,9 +175,7 @@ public class ManageImagesFragment extends Fragment {
                             ivThumb.setImageResource(R.drawable.ic_image_icon);
                         }
 
-                        btnDelete.setOnClickListener(v ->
-                                confirmRemovePosterImage(eventId, name)
-                        );
+                        btnDelete.setOnClickListener(v -> confirmRemovePosterImage(eventId, name));
 
                         listContainer.addView(card);
                     }
@@ -183,7 +195,7 @@ public class ManageImagesFragment extends Fragment {
      * Ask admin before removing the POSTER image from the event doc.
      */
     private void confirmRemovePosterImage(@NonNull String eventId,
-                                          @NonNull String eventName) {
+            @NonNull String eventName) {
         String label = eventName.isEmpty() ? eventId : eventName;
 
         new AlertDialog.Builder(requireContext())
@@ -198,7 +210,7 @@ public class ManageImagesFragment extends Fragment {
      * Clears only the poster fields from the event document.
      *
      * - posterImageUrl: Base64 or URL for the poster
-     * - posterUrl     : extra field if you also store a download URL
+     * - posterUrl : extra field if you also store a download URL
      */
     private void removePosterImageFromEvent(@NonNull String eventId) {
         Map<String, Object> patch = new HashMap<>();
@@ -207,10 +219,8 @@ public class ManageImagesFragment extends Fragment {
 
         db.collection("events").document(eventId)
                 .update(patch)
-                .addOnSuccessListener(unused ->
-                        toast("Poster image removed."))
-                .addOnFailureListener(e ->
-                        toast("Remove failed: " + (e != null ? e.getMessage() : "unknown error")));
+                .addOnSuccessListener(unused -> toast("Poster image removed."))
+                .addOnFailureListener(e -> toast("Remove failed: " + (e != null ? e.getMessage() : "unknown error")));
     }
 
     /** Null-safe trim helper. */
@@ -220,7 +230,8 @@ public class ManageImagesFragment extends Fragment {
 
     /** Short toast helper that checks attachment. */
     private void toast(String m) {
-        if (!isAdded()) return;
+        if (!isAdded())
+            return;
         android.widget.Toast.makeText(getContext(), m, android.widget.Toast.LENGTH_SHORT).show();
     }
 }
