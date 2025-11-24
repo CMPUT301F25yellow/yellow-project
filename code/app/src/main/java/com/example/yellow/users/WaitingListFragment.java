@@ -44,7 +44,6 @@ public class WaitingListFragment extends Fragment {
     private Event currentEvent; // To hold the loaded event details
     private LocationHelper locationHelper;
 
-
     public WaitingListFragment() {
     }
 
@@ -52,11 +51,12 @@ public class WaitingListFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize LocationHelper here. We pass "this" as ActivityResultCaller (the Fragment),
+        // Initialize LocationHelper here. We pass "this" as ActivityResultCaller (the
+        // Fragment),
         // and requireContext() for Toasts and FusedLocationProviderClient.
         locationHelper = new LocationHelper(
-                this,               // ActivityResultCaller -> the Fragment
-                requireContext(),   // Context
+                this, // ActivityResultCaller -> the Fragment
+                requireContext(), // Context
                 location -> {
                     if (location != null) {
                         // Successfully got a location → save waiting user with coordinates
@@ -66,13 +66,10 @@ public class WaitingListFragment extends Fragment {
                         Toast.makeText(
                                 getContext(),
                                 "Failed to get location. Cannot join this event.",
-                                Toast.LENGTH_LONG
-                        ).show();
+                                Toast.LENGTH_LONG).show();
                     }
-                }
-        );
+                });
     }
-
 
     @Nullable
     @Override
@@ -232,20 +229,31 @@ public class WaitingListFragment extends Fragment {
         if (currentEvent == null) {
             // Event details haven't loaded yet. This can happen if Firestore is slow.
             // We can wait a moment and try again, or just ask the user to wait.
-            Toast.makeText(getContext(), "Connecting to event...", Toast.LENGTH_SHORT).show();
-            // A more robust solution might use a listener or retry, but for now we'll just wait for user action.
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Connecting to event...", Toast.LENGTH_SHORT).show();
+            }
+            // A more robust solution might use a listener or retry, but for now we'll just
+            // wait for user action.
             return;
         }
 
         DocumentReference ref = db.collection("events").document(eventId).collection("waitingList").document(userId);
         ref.get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "You're already on the waiting list for this event",
+                            Toast.LENGTH_SHORT)
+                            .show();
+                }
                 return; // User is already in the list, do nothing.
             }
 
             if (currentEvent.isRequireGeolocation()) {
                 // --- CASE 1: LOCATION IS REQUIRED ---
-                Toast.makeText(getContext(), "Location is required, getting your position...", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Location is required, getting your position...", Toast.LENGTH_SHORT)
+                            .show();
+                }
 
                 // Use the helper instance created in onCreate
                 if (locationHelper != null) {
@@ -266,7 +274,8 @@ public class WaitingListFragment extends Fragment {
 
     /**
      * Helper method to create and save the WaitingUser object to Firestore.
-     * @param latitude The user's latitude, or null if not provided.
+     * 
+     * @param latitude  The user's latitude, or null if not provided.
      * @param longitude The user's longitude, or null if not provided.
      */
     private void saveWaitingUser(@Nullable Double latitude, @Nullable Double longitude) {
@@ -289,10 +298,46 @@ public class WaitingListFragment extends Fragment {
 
         ref.set(entry).addOnSuccessListener(unused -> {
             db.collection("events").document(eventId).update("waitlisted", FieldValue.increment(1));
-            Toast.makeText(getContext(), "Joined waiting room!", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Successfully joined waiting list!", Toast.LENGTH_SHORT).show();
+            }
+
+            // Send notification to user
+            if (currentEvent != null) {
+                sendWaitlistJoinedNotification(userId, currentEvent.getName());
+            }
         }).addOnFailureListener(e -> {
-            Toast.makeText(getContext(), "Error: Could not join waiting room.", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Error: Could not join waiting room.", Toast.LENGTH_SHORT).show();
+            }
         });
+    }
+
+    /**
+     * Sends a notification to the user confirming they joined the waiting list.
+     * 
+     * @param userId    User ID who joined
+     * @param eventName Name of the event
+     */
+    private void sendWaitlistJoinedNotification(String userId, String eventName) {
+        java.util.Map<String, Object> notification = new java.util.HashMap<>();
+        notification.put("message", "You are now on the waiting list for: " + eventName);
+        notification.put("eventId", eventId);
+        notification.put("timestamp", FieldValue.serverTimestamp());
+        notification.put("read", false);
+
+        db.collection("profiles")
+                .document(userId)
+                .collection("notifications")
+                .document()
+                .set(notification)
+                .addOnSuccessListener(v -> {
+                    // Notification sent successfully (silent)
+                })
+                .addOnFailureListener(e -> {
+                    // Log error but don't block user experience
+                    android.util.Log.e("WaitingListFragment", "Failed to send notification", e);
+                });
     }
 
     // Leave waiting room

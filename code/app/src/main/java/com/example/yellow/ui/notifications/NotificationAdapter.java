@@ -26,6 +26,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     public interface ActionListener {
         void onAccept(String eventId, String notificationId);
+
         void onDecline(String eventId, String notificationId);
     }
 
@@ -35,40 +36,61 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         this.listener = listener;
     }
 
+    private static final int TYPE_DEFAULT = 0;
+    private static final int TYPE_WAITING_LIST = 1;
+
     public void setList(List<NotificationItem> newList) {
         list = newList;
         notifyDataSetChanged();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        NotificationItem item = list.get(position);
+        if (item.getMessage() != null && item.getMessage().toLowerCase().contains("waiting list")) {
+            return TYPE_WAITING_LIST;
+        }
+        return TYPE_DEFAULT;
+    }
+
     @NonNull
     @Override
     public NotifVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        int layoutId = (viewType == TYPE_WAITING_LIST)
+                ? R.layout.item_notification_waiting_list
+                : R.layout.item_notification;
+
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_notification, parent, false);
+                .inflate(layoutId, parent, false);
         return new NotifVH(v);
     }
 
     @Override
     public void onBindViewHolder(@NonNull NotifVH holder, int position) {
         NotificationItem item = list.get(position);
+        int viewType = getItemViewType(position);
 
-        holder.tvTitle.setText("New Notification");
+        if (viewType == TYPE_DEFAULT) {
+            holder.tvTitle.setText("New Notification");
+        }
+        // For TYPE_WAITING_LIST, title is set in XML ("Waiting List")
+
         holder.tvMessage.setText(item.getMessage());
         holder.tvTime.setText(formatTime(item.getTimestamp()));
 
-        if (item.getEventId() != null && !item.getEventId().isEmpty()) {
-            holder.actionButtons.setVisibility(View.VISIBLE);
+        // Only handle buttons if they exist (TYPE_DEFAULT)
+        if (holder.actionButtons != null) {
+            if (item.getEventId() != null && !item.getEventId().isEmpty()) {
+                holder.actionButtons.setVisibility(View.VISIBLE);
 
-            holder.btnAccept.setOnClickListener(v ->
-                    listener.onAccept(item.getEventId(), item.getNotificationId())
-            );
+                holder.btnAccept
+                        .setOnClickListener(v -> listener.onAccept(item.getEventId(), item.getNotificationId()));
 
-
-            holder.btnDecline.setOnClickListener(v ->
-                    listener.onDecline(item.getEventId(), item.getNotificationId())
-            );
-        } else {
-            holder.actionButtons.setVisibility(View.GONE);
+                holder.btnDecline
+                        .setOnClickListener(v -> listener.onDecline(item.getEventId(), item.getNotificationId()));
+            } else {
+                holder.actionButtons.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -92,6 +114,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             tvMessage = itemView.findViewById(R.id.tvMessage);
             tvAction = itemView.findViewById(R.id.tvAction);
 
+            // These will be null for item_notification_waiting_list
             actionButtons = itemView.findViewById(R.id.actionButtons);
             btnAccept = itemView.findViewById(R.id.btnAccept);
             btnDecline = itemView.findViewById(R.id.btnDecline);
@@ -99,21 +122,24 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     private String formatTime(Timestamp ts) {
-        if (ts == null) return "";
+        if (ts == null)
+            return "";
 
         long diff = System.currentTimeMillis() - ts.toDate().getTime();
         long min = diff / 60000;
         long hr = diff / (60000 * 60);
         long day = diff / (60000 * 60 * 24);
 
-        if (min < 1) return "just now";
-        if (min < 60) return min + "m ago";
-        if (hr < 24) return hr + "h ago";
-        if (day < 7) return day + "d ago";
+        if (min < 1)
+            return "just now";
+        if (min < 60)
+            return min + "m ago";
+        if (hr < 24)
+            return hr + "h ago";
+        if (day < 7)
+            return day + "d ago";
 
         return new SimpleDateFormat("MMM d", Locale.getDefault())
                 .format(ts.toDate());
     }
 }
-
-

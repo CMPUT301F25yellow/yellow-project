@@ -266,10 +266,41 @@ public class ProfileUserFragment extends Fragment {
         // Use cascade deletion to remove profile, events, and subcollections
         com.example.yellow.utils.UserCleanupUtils.deleteUserAndEvents(uid, db)
                 .addOnSuccessListener(unused -> {
-                    toast("Profile and events deleted");
-                    inputFullName.setText("");
-                    inputEmail.setText("");
-                    inputPhone.setText("");
+                    // After Firestore cleanup, delete the Auth user
+                    com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
+                            .getCurrentUser();
+                    if (user != null) {
+                        user.delete()
+                                .addOnCompleteListener(task -> {
+                                    if (task.isSuccessful()) {
+                                        toast("Account deleted");
+                                        // Restart the app to reset state
+                                        android.content.Intent intent = new android.content.Intent(requireActivity(),
+                                                com.example.yellow.MainActivity.class);
+                                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                                | android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                                | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                        startActivity(intent);
+                                    } else {
+                                        toast("Profile deleted, but account deletion failed: "
+                                                + task.getException().getMessage());
+                                        // At least sign out
+                                        com.google.firebase.auth.FirebaseAuth.getInstance().signOut();
+                                        // Restart the app
+                                        android.content.Intent intent = new android.content.Intent(requireActivity(),
+                                                com.example.yellow.MainActivity.class);
+                                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                                | android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                                                | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                        startActivity(intent);
+                                    }
+                                });
+                    } else {
+                        toast("Profile deleted");
+                        inputFullName.setText("");
+                        inputEmail.setText("");
+                        inputPhone.setText("");
+                    }
                 })
                 .addOnFailureListener(e -> toast("Delete failed: " + e.getMessage()));
     }
