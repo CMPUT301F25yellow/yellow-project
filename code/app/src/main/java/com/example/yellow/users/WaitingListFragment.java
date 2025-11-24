@@ -131,25 +131,6 @@ public class WaitingListFragment extends Fragment {
                     }
                 });
 
-        // Auto-join waiting list (with profile check)
-        com.example.yellow.utils.ProfileUtils.checkProfile(getContext(), isComplete -> {
-            if (isComplete) {
-                joinWaitingRoom();
-            } else {
-                // If incomplete, we already showed the dialog.
-                // If they cancel, we should probably exit this screen because they can't join.
-                // But the dialog is async.
-                // For now, let's just NOT join. The user is staring at the screen but not
-                // joined.
-                // They can click "Leave" or "Back".
-            }
-        }, () -> {
-            // Navigate to profile
-            if (requireActivity() instanceof MainActivity) {
-                ((MainActivity) requireActivity()).openProfile();
-            }
-        });
-
         // Leave waiting room
         leaveButton.setOnClickListener(v -> leaveWaitingRoom());
 

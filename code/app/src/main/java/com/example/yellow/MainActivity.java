@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Event> allEvents = new ArrayList<>();
     private LinearLayout eventsContainer;
     private String selectedDate = null;
+    private ListenerRegistration notificationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,32 +139,44 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        // ---- Notification Dot Listener ----
-        String uid = FirebaseAuth.getInstance().getUid();
+        // ---- Notification Dot Listener (Dynamic) ----
+        FirebaseAuth.getInstance().addAuthStateListener(firebaseAuth -> {
+            String uid = firebaseAuth.getUid();
+            if (uid != null && notificationDot != null) {
+                // Remove existing listener if any to avoid duplicates
+                if (notificationListener != null) {
+                    notificationListener.remove();
+                }
 
-        if (uid != null && notificationDot != null) {
-            FirebaseFirestore.getInstance()
-                    .collection("profiles")
-                    .document(uid)
-                    .collection("notifications")
-                    .addSnapshotListener((snapshot, e) -> {
+                notificationListener = FirebaseFirestore.getInstance()
+                        .collection("profiles")
+                        .document(uid)
+                        .collection("notifications")
+                        .addSnapshotListener((snapshot, e) -> {
+                            if (snapshot == null)
+                                return;
 
-                        if (snapshot == null)
-                            return;
-
-                        boolean hasUnread = false;
-
-                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                            Boolean read = doc.getBoolean("read");
-                            if (read == null || !read) {
-                                hasUnread = true;
-                                break;
+                            boolean hasUnread = false;
+                            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                                Boolean read = doc.getBoolean("read");
+                                if (read == null || !read) {
+                                    hasUnread = true;
+                                    break;
+                                }
                             }
-                        }
-
-                        notificationDot.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
-                    });
-        }
+                            notificationDot.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
+                        });
+            } else {
+                // User logged out
+                if (notificationListener != null) {
+                    notificationListener.remove();
+                    notificationListener = null;
+                }
+                if (notificationDot != null) {
+                    notificationDot.setVisibility(View.GONE);
+                }
+            }
+        });
 
         // ---- Restore Home UI when back stack empties ----
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
