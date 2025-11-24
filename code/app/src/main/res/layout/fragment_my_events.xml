@@ -48,13 +48,15 @@
         android:id="@+id/scrollMyEvents"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="16dp"
-        android:fillViewport="true"
         android:background="@color/background_black"
-        app:layout_constraintTop_toBottomOf="@id/myEventsHeader"
+        android:fillViewport="true"
+        android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/myEventsHeader"
+        app:layout_constraintVertical_bias="0.0">
 
         <LinearLayout
             android:id="@+id/myEventsContainer"
@@ -66,10 +68,10 @@
                 android:id="@+id/tvEventCount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
                 android:text="Loading..."
                 android:textColor="@color/hinty"
-                android:textSize="14sp"
-                android:layout_marginBottom="12dp" />
+                android:textSize="14sp" />
 
         </LinearLayout>
 

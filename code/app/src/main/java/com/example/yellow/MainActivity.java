@@ -2,8 +2,11 @@ package com.example.yellow;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -28,9 +31,17 @@ import com.example.yellow.ui.ProfileUserFragment;
 import com.example.yellow.ui.QrScanFragment;
 import com.example.yellow.users.WaitingListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,12 +51,18 @@ public class MainActivity extends AppCompatActivity {
     private View fragmentContainer;
 
     private ListenerRegistration eventsListener;
+    private List<Event> allEvents = new ArrayList<>();
+    private LinearLayout eventsContainer;
+    private String selectedDate = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        eventsContainer = findViewById(R.id.eventsContainer);
+
 
         // ---- Views ----
         View root = findViewById(R.id.main);
@@ -141,6 +158,56 @@ public class MainActivity extends AppCompatActivity {
                     finish();
                 }
             }
+        });
+
+        //search bar
+        EditText searchBar = findViewById(R.id.searchBar);
+        searchBar.addTextChangedListener(new TextWatcher() {
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterEvents(s.toString());
+            }
+
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        //filter by dates
+        Button btnPickDate = findViewById(R.id.btnPickDate);
+
+        btnPickDate.setOnClickListener(v -> {
+
+            MaterialDatePicker<Long> datePicker =
+                    MaterialDatePicker.Builder.datePicker()
+                            .setTitleText("Select Event Date")
+                            .build();
+
+            datePicker.show(getSupportFragmentManager(), "DATE_PICKER");
+
+            datePicker.addOnPositiveButtonClickListener(selection -> {
+                // Convert timestamp → formatted date string
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                selectedDate = sdf.format(new Date(selection));
+                btnPickDate.setText(selectedDate); //shows selected date
+
+                // Re-filter with the new date
+                filterEvents(searchBar.getText().toString());
+            });
+        });
+
+        //clearing filters
+        Button btnClearFilters = findViewById(R.id.btnClearFilters);
+
+        btnClearFilters.setOnClickListener(v -> {
+            selectedDate = null;        // Removes the date filter
+            searchBar.setText("");      // Clears the search bar text
+            btnPickDate.setText("Availability");
+
+
+            renderEvents(allEvents);    // Draws all events again
         });
 
         // Start live events feed
@@ -242,7 +309,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void startLiveEventsListener() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        LinearLayout eventsContainer = findViewById(R.id.eventsContainer);
 
         // Remove any existing listener before attaching a new one
         if (eventsListener != null) {
@@ -261,49 +327,91 @@ public class MainActivity extends AppCompatActivity {
                         return;
 
                     eventsContainer.removeAllViews();
+                    allEvents.clear();
 
                     if (querySnapshot.isEmpty()) {
-                        TextView empty = new TextView(this);
-                        empty.setText("No events yet.");
-                        empty.setTextColor(getResources().getColor(R.color.white));
-                        empty.setAlpha(0.7f);
-                        empty.setPadding(dp(8), dp(16), dp(8), 0);
-                        eventsContainer.addView(empty);
+                        renderEvents(allEvents);
                         return;
                     }
 
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         Event event = doc.toObject(Event.class);
-                        if (event == null)
-                            continue;
+                        if (event == null) continue;
 
-                        View card = getLayoutInflater()
-                                .inflate(R.layout.item_event_card, eventsContainer, false);
+                        // Store event ID for the join button
+                        event.setId(doc.getId());
 
-                        ImageView img = card.findViewById(R.id.eventImage);
-                        TextView title = card.findViewById(R.id.eventTitle);
-                        TextView details = card.findViewById(R.id.eventDetails);
-                        Button joinButton = card.findViewById(R.id.eventButton);
-
-                        title.setText(event.getName());
-                        details.setText(event.getFormattedDateAndLocation());
-
-                        if (event.getPosterImageUrl() != null && !event.getPosterImageUrl().isEmpty()) {
-                            Glide.with(MainActivity.this)
-                                    .load(event.getPosterImageUrl())
-                                    .into(img);
-                        } else {
-                            img.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                            img.setImageResource(R.drawable.ic_image_icon);
-                        }
-
-                        joinButton.setOnClickListener(v -> {
-                            String eventId = doc.getId();
-                            openWaitingRoom(eventId);
-                        });
-
-                        eventsContainer.addView(card);
+                        allEvents.add(event);
                     }
+
+// Draw all events normally (no filter yet)
+                    renderEvents(allEvents);
                 });
+    }
+    private void renderEvents(List<Event> list) {
+        eventsContainer.removeAllViews();
+
+        if (list.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("No events match your search.");
+            empty.setTextColor(getResources().getColor(R.color.white));
+            empty.setAlpha(0.7f);
+            empty.setPadding(dp(8), dp(16), dp(8), 0);
+            eventsContainer.addView(empty);
+            return;
+        }
+
+        for (Event event : list) {
+            View card = getLayoutInflater()
+                    .inflate(R.layout.item_event_card, eventsContainer, false);
+
+            ImageView img = card.findViewById(R.id.eventImage);
+            TextView title = card.findViewById(R.id.eventTitle);
+            TextView details = card.findViewById(R.id.eventDetails);
+            Button joinButton = card.findViewById(R.id.eventButton);
+
+            title.setText(event.getName());
+            details.setText(event.getFormattedDateAndLocation());
+
+            if (event.getPosterImageUrl() != null && !event.getPosterImageUrl().isEmpty()) {
+                Glide.with(MainActivity.this)
+                        .load(event.getPosterImageUrl())
+                        .into(img);
+            } else {
+                img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                img.setImageResource(R.drawable.ic_image_icon);
+            }
+
+            joinButton.setOnClickListener(v -> {
+                openWaitingRoom(event.getId());
+            });
+
+            eventsContainer.addView(card);
+        }
+    }
+    private void filterEvents(String keyword) {
+        keyword = keyword.toLowerCase().trim();
+
+        List<Event> filtered = new ArrayList<>();
+
+        for (Event e : allEvents) {
+
+            boolean matchesKeyword =
+                    keyword.isEmpty() ||
+                            e.getName().toLowerCase().contains(keyword) ||
+                            e.getDescription().toLowerCase().contains(keyword);
+
+            String eventDate = e.getFormattedDateAndLocation();
+
+            boolean matchesDate =
+                    (selectedDate == null) ||   // no date filter → always true
+                            eventDate.contains(selectedDate);
+
+            if (matchesKeyword && matchesDate) {
+                filtered.add(e);
+            }
+        }
+
+        renderEvents(filtered);
     }
 }
