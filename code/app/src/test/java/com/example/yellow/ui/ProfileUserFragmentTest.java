@@ -102,6 +102,12 @@ public class ProfileUserFragmentTest {
         // Auth mocks
         when(mockAuth.getCurrentUser()).thenReturn(mockUser);
         when(mockUser.getUid()).thenReturn("test_user_id");
+        
+        // Mock FirebaseUser.delete() to return a successful Task
+        @SuppressWarnings("unchecked")
+        Task<Void> mockUserDeleteTask = mock(Task.class);
+        when(mockUser.delete()).thenReturn(mockUserDeleteTask);
+        mockTaskSuccess(mockUserDeleteTask);
 
         // Firestore mocks
         when(mockDb.collection("profiles")).thenReturn(mockProfilesCollection);
