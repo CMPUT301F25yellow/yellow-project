@@ -12,12 +12,14 @@ public class NotificationItem {
     private String eventId;
     private boolean read;
     private Timestamp timestamp;
+    private String type;
 
     @DocumentId
-    private String notificationId;   // Auto-populated with the Firestore doc ID
+    private String notificationId; // Auto-populated with the Firestore doc ID
 
     // Required empty constructor for Firestore
-    public NotificationItem() {}
+    public NotificationItem() {
+    }
 
     // Getters
     public String getMessage() {
@@ -38,5 +40,9 @@ public class NotificationItem {
 
     public String getNotificationId() {
         return notificationId;
+    }
+
+    public String getType() {
+        return type;
     }
 }

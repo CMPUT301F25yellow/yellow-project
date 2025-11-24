@@ -47,10 +47,15 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     @Override
     public int getItemViewType(int position) {
         NotificationItem item = list.get(position);
-        if (item.getMessage() != null && item.getMessage().toLowerCase().contains("waiting list")) {
-            return TYPE_WAITING_LIST;
+        boolean isWaitingList = false;
+
+        if (item.getType() != null && item.getType().equalsIgnoreCase("waiting_list")) {
+            isWaitingList = true;
+        } else if (item.getMessage() != null && item.getMessage().toLowerCase().contains("waiting list")) {
+            isWaitingList = true;
         }
-        return TYPE_DEFAULT;
+
+        return isWaitingList ? TYPE_WAITING_LIST : TYPE_DEFAULT;
     }
 
     @NonNull

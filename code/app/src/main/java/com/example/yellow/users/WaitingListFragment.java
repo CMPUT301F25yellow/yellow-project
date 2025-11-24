@@ -283,42 +283,11 @@ public class WaitingListFragment extends Fragment {
                 Toast.makeText(getContext(), "Successfully joined waiting list!", Toast.LENGTH_SHORT).show();
             }
 
-            // Send notification to user
-            if (currentEvent != null) {
-                sendWaitlistJoinedNotification(userId, currentEvent.getName());
-            }
         }).addOnFailureListener(e -> {
             if (getContext() != null) {
                 Toast.makeText(getContext(), "Error: Could not join waiting room.", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    /**
-     * Sends a notification to the user confirming they joined the waiting list.
-     * 
-     * @param userId    User ID who joined
-     * @param eventName Name of the event
-     */
-    private void sendWaitlistJoinedNotification(String userId, String eventName) {
-        java.util.Map<String, Object> notification = new java.util.HashMap<>();
-        notification.put("message", "You are now on the waiting list for: " + eventName);
-        notification.put("eventId", eventId);
-        notification.put("timestamp", FieldValue.serverTimestamp());
-        notification.put("read", false);
-
-        db.collection("profiles")
-                .document(userId)
-                .collection("notifications")
-                .document()
-                .set(notification)
-                .addOnSuccessListener(v -> {
-                    // Notification sent successfully (silent)
-                })
-                .addOnFailureListener(e -> {
-                    // Log error but don't block user experience
-                    android.util.Log.e("WaitingListFragment", "Failed to send notification", e);
-                });
     }
 
     // Leave waiting room
