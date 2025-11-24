@@ -55,15 +55,20 @@ import com.google.zxing.EncodeHintType;
 /**
  * Screen for organizers to create a new {@link Event}.
  *
- * <p>What this Activity does, in order:</p>
+ * <p>
+ * What this Activity does, in order:
+ * </p>
  * <ol>
- *     <li>Shows inputs for name, description, location, dates, and poster image.</li>
- *     <li>Validates the inputs when the user taps "Create".</li>
- *     <li>Reads the selected poster and stores it as a Base64 data URI (kept in Firestore).</li>
- *     <li>Creates the Event document in Firestore.</li>
- *     <li>Builds a deep link like {@code yellow://event/<docId>} and generates a QR for it.</li>
- *     <li>Writes the deep link and QR image back to the same Event document.</li>
- *     <li>Finishes the Activity (returns to the previous screen).</li>
+ * <li>Shows inputs for name, description, location, dates, and poster
+ * image.</li>
+ * <li>Validates the inputs when the user taps "Create".</li>
+ * <li>Reads the selected poster and stores it as a Base64 data URI (kept in
+ * Firestore).</li>
+ * <li>Creates the Event document in Firestore.</li>
+ * <li>Builds a deep link like {@code yellow://event/<docId>} and generates a QR
+ * for it.</li>
+ * <li>Writes the deep link and QR image back to the same Event document.</li>
+ * <li>Finishes the Activity (returns to the previous screen).</li>
  * </ol>
  */
 public class CreateEventActivity extends AppCompatActivity {
@@ -103,15 +108,20 @@ public class CreateEventActivity extends AppCompatActivity {
     /**
      * Built-in photo picker launcher.
      *
-     * <p>When the user picks a photo, we remember the {@link Uri} and show it in the poster preview.</p>
+     * <p>
+     * When the user picks a photo, we remember the {@link Uri} and show it in the
+     * poster preview.
+     * </p>
      */
-    private final ActivityResultLauncher<PickVisualMediaRequest> photoPicker =
-            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+    private final ActivityResultLauncher<PickVisualMediaRequest> photoPicker = registerForActivityResult(
+            new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri != null) {
                     selectedPosterUri = uri;
                     posterImageView.setImageURI(selectedPosterUri);
-                    if (uploadPosterText != null) uploadPosterText.setVisibility(View.GONE);
-                    if (uploadIcon != null) uploadIcon.setVisibility(View.GONE);
+                    if (uploadPosterText != null)
+                        uploadPosterText.setVisibility(View.GONE);
+                    if (uploadIcon != null)
+                        uploadIcon.setVisibility(View.GONE);
                 } else {
                     toast("No image selected");
                 }
@@ -120,15 +130,19 @@ public class CreateEventActivity extends AppCompatActivity {
     /**
      * Fallback content picker for devices without the modern photo picker.
      *
-     * <p>Works the same as {@link #photoPicker} but uses a generic file chooser.</p>
+     * <p>
+     * Works the same as {@link #photoPicker} but uses a generic file chooser.
+     * </p>
      */
-    private final ActivityResultLauncher<String> contentPicker =
-            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+    private final ActivityResultLauncher<String> contentPicker = registerForActivityResult(
+            new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
                     selectedPosterUri = uri;
                     posterImageView.setImageURI(selectedPosterUri);
-                    if (uploadPosterText != null) uploadPosterText.setVisibility(View.GONE);
-                    if (uploadIcon != null) uploadIcon.setVisibility(View.GONE);
+                    if (uploadPosterText != null)
+                        uploadPosterText.setVisibility(View.GONE);
+                    if (uploadIcon != null)
+                        uploadIcon.setVisibility(View.GONE);
                 } else {
                     toast("No image selected");
                 }
@@ -137,7 +151,8 @@ public class CreateEventActivity extends AppCompatActivity {
     /**
      * Standard Activity entry point. Sets up UI, Firebase, and click handlers.
      *
-     * @param savedInstanceState previously saved state (usually {@code null} for a new screen)
+     * @param savedInstanceState previously saved state (usually {@code null} for a
+     *                           new screen)
      */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -228,14 +243,16 @@ public class CreateEventActivity extends AppCompatActivity {
      */
     private <T extends View> T requireView(int id, String name) {
         T v = findViewById(id);
-        if (v == null) throw new IllegalStateException("Missing view in layout: " + name);
+        if (v == null)
+            throw new IllegalStateException("Missing view in layout: " + name);
         return v;
     }
 
     /**
      * Opens a date picker and writes the chosen date into the correct text box.
      *
-     * @param isStart {@code true} to pick the start date; {@code false} for the end date
+     * @param isStart {@code true} to pick the start date; {@code false} for the end
+     *                date
      */
     private void showDatePicker(boolean isStart) {
         final Calendar cal = isStart ? startCal : endCal;
@@ -243,7 +260,8 @@ public class CreateEventActivity extends AppCompatActivity {
         int m = cal.get(Calendar.MONTH);
         int d = cal.get(Calendar.DAY_OF_MONTH);
         DatePickerDialog dlg = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
-            @Override public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
                 cal.set(year, month, dayOfMonth);
                 if (isStart) {
                     startDateInput.setText(dateFmt.format(cal.getTime()));
@@ -263,7 +281,10 @@ public class CreateEventActivity extends AppCompatActivity {
      * Validates the form, encodes the poster image, writes the {@link Event},
      * then generates and saves the QR code/deep link for that event.
      *
-     * <p>If everything succeeds, this Activity finishes and returns to the previous screen.</p>
+     * <p>
+     * If everything succeeds, this Activity finishes and returns to the previous
+     * screen.
+     * </p>
      */
     private void onCreateEvent() {
         // --- 1. Validate Form Inputs ---
@@ -291,7 +312,8 @@ public class CreateEventActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(maxStr)) {
             try {
                 maxEntrants = Integer.parseInt(maxStr);
-                if (maxEntrants < 0) throw new NumberFormatException();
+                if (maxEntrants < 0)
+                    throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 maxEntrantsInput.setError("Invalid number");
                 maxEntrantsInput.requestFocus();
@@ -299,9 +321,47 @@ public class CreateEventActivity extends AppCompatActivity {
             }
         }
 
-        createEventButton.setEnabled(false);
-        toast("Creating event...");
+        com.google.firebase.auth.FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
+            toast("You must be logged in.");
+            return;
+        }
 
+        createEventButton.setEnabled(false);
+        toast("Verifying profile...");
+
+        final int finalMaxEntrants = maxEntrants;
+
+        // Check if user has a profile
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
+                .getInstance();
+        db.collection("profiles").document(user.getUid()).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String profileName = documentSnapshot.getString("fullName");
+                        if (TextUtils.isEmpty(profileName)) {
+                            createEventButton.setEnabled(true);
+                            toast("Please set your name in your profile first.");
+                            return;
+                        }
+
+                        // Profile exists and has a name, proceed with event creation
+                        proceedWithEventCreation(name, desc, loc, finalMaxEntrants, requireGeo, user.getUid(),
+                                profileName);
+                    } else {
+                        createEventButton.setEnabled(true);
+                        toast("You must create a profile before creating an event.");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    createEventButton.setEnabled(true);
+                    toast("Failed to verify profile: " + e.getMessage());
+                });
+    }
+
+    private void proceedWithEventCreation(String name, String desc, String loc, int maxEntrants, boolean requireGeo,
+            String organizerId, String organizerName) {
+        toast("Creating event...");
         try {
             // --- 2. Encode Poster Image ---
             String posterDataUri = encodeImageUriToDataUri(selectedPosterUri);
@@ -330,10 +390,6 @@ public class CreateEventActivity extends AppCompatActivity {
             Log.d(TAG, "Successfully encoded QR to Base64 string.");
 
             // --- 6. Assemble the Complete Event Object ---
-            String organizerId = (auth.getCurrentUser() != null) ? auth.getCurrentUser().getUid() : "anonymous";
-            String organizerName = (auth.getCurrentUser() != null && auth.getCurrentUser().getDisplayName() != null)
-                    ? auth.getCurrentUser().getDisplayName() : "";
-
             // Prepare timestamps
             Timestamp startDate = new Timestamp(startCal.getTime());
             Calendar endCopy = (Calendar) endCal.clone();
@@ -354,8 +410,8 @@ public class CreateEventActivity extends AppCompatActivity {
                     organizerId,
                     organizerName,
                     requireGeo,
-                    deepLink,       // Include deep link
-                    qrDataUri       // Include QR image data
+                    deepLink, // Include deep link
+                    qrDataUri // Include QR image data
             );
             completeEvent.setCreatedAt(Timestamp.now()); // Set creation time
 
@@ -413,13 +469,15 @@ public class CreateEventActivity extends AppCompatActivity {
         BitmapFactory.Options bounds = new BitmapFactory.Options();
         bounds.inJustDecodeBounds = true;
         try (InputStream is = cr.openInputStream(uri)) {
-            if (is == null) throw new FileNotFoundException("Null input stream");
+            if (is == null)
+                throw new FileNotFoundException("Null input stream");
             BitmapFactory.decodeStream(is, null, bounds);
         }
 
         int w = bounds.outWidth;
         int h = bounds.outHeight;
-        if (w <= 0 || h <= 0) throw new IllegalArgumentException("Invalid image");
+        if (w <= 0 || h <= 0)
+            throw new IllegalArgumentException("Invalid image");
 
         int inSample = 1;
         while (w / inSample > MAX_DIMENSION || h / inSample > MAX_DIMENSION) {
@@ -433,10 +491,12 @@ public class CreateEventActivity extends AppCompatActivity {
 
         Bitmap bitmap;
         try (InputStream is2 = cr.openInputStream(uri)) {
-            if (is2 == null) throw new FileNotFoundException("Null input stream");
+            if (is2 == null)
+                throw new FileNotFoundException("Null input stream");
             bitmap = BitmapFactory.decodeStream(is2, null, opts);
         }
-        if (bitmap == null) throw new IllegalArgumentException("Unable to decode image");
+        if (bitmap == null)
+            throw new IllegalArgumentException("Unable to decode image");
 
         // Extra scale if still too large
         int bw = bitmap.getWidth();
@@ -455,7 +515,8 @@ public class CreateEventActivity extends AppCompatActivity {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, bos);
             jpg = bos.toByteArray();
-            if (jpg.length <= MAX_DOC_BYTES || quality <= MIN_JPEG_QUALITY) break;
+            if (jpg.length <= MAX_DOC_BYTES || quality <= MIN_JPEG_QUALITY)
+                break;
             quality -= 5;
         }
 
@@ -469,11 +530,13 @@ public class CreateEventActivity extends AppCompatActivity {
      *
      * @param cr  the {@link ContentResolver} to query
      * @param uri the content {@link Uri}
-     * @return a MIME type like {@code image/jpeg}; defaults to {@code image/jpeg} if unknown
+     * @return a MIME type like {@code image/jpeg}; defaults to {@code image/jpeg}
+     *         if unknown
      */
     private String guessMime(ContentResolver cr, Uri uri) {
         String t = cr.getType(uri);
-        if (t == null || t.trim().isEmpty()) t = "image/jpeg";
+        if (t == null || t.trim().isEmpty())
+            t = "image/jpeg";
         return t;
     }
 
@@ -489,7 +552,8 @@ public class CreateEventActivity extends AppCompatActivity {
         try (android.database.Cursor c = getContentResolver().query(uri, null, null, null, null)) {
             if (c != null && c.moveToFirst()) {
                 int idx = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                if (idx >= 0) name = c.getString(idx);
+                if (idx >= 0)
+                    name = c.getString(idx);
             }
         }
         return name;
