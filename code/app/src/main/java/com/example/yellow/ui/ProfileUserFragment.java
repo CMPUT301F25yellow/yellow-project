@@ -256,17 +256,17 @@ public class ProfileUserFragment extends Fragment {
 
     /**
      * Deletes the user's profile document from Firestore and clears inputs.
+     * Also deletes all events created by this user and their subcollections.
      */
     private void deleteProfile() {
         String uid = uidOrNull();
         if (uid == null)
             return;
 
-        db.collection("profiles")
-                .document(uid)
-                .delete()
+        // Use cascade deletion to remove profile, events, and subcollections
+        com.example.yellow.utils.UserCleanupUtils.deleteUserAndEvents(uid, db)
                 .addOnSuccessListener(unused -> {
-                    toast("Profile deleted");
+                    toast("Profile and events deleted");
                     inputFullName.setText("");
                     inputEmail.setText("");
                     inputPhone.setText("");
