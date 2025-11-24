@@ -88,12 +88,13 @@
 
             <!-- Search bar -->
             <EditText
+                android:id="@+id/searchBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:drawableStart="@android:drawable/ic_menu_search"
                 android:drawablePadding="8dp"
-                android:hint="Search for Interests"
+                android:hint="Search events"
                 android:padding="12dp"
                 android:textColor="@color/white"
                 android:textColorHint="@color/hinty" />
