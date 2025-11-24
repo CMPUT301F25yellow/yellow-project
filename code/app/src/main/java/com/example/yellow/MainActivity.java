@@ -31,12 +31,17 @@ import com.example.yellow.ui.ProfileUserFragment;
 import com.example.yellow.ui.QrScanFragment;
 import com.example.yellow.users.WaitingListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -48,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private ListenerRegistration eventsListener;
     private List<Event> allEvents = new ArrayList<>();
     private LinearLayout eventsContainer;
+    private String selectedDate = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //search bar
         EditText searchBar = findViewById(R.id.searchBar);
         searchBar.addTextChangedListener(new TextWatcher() {
 
@@ -164,6 +172,42 @@ public class MainActivity extends AppCompatActivity {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override public void afterTextChanged(Editable s) {}
+        });
+
+        //filter by dates
+        Button btnPickDate = findViewById(R.id.btnPickDate);
+
+        btnPickDate.setOnClickListener(v -> {
+
+            MaterialDatePicker<Long> datePicker =
+                    MaterialDatePicker.Builder.datePicker()
+                            .setTitleText("Select Event Date")
+                            .build();
+
+            datePicker.show(getSupportFragmentManager(), "DATE_PICKER");
+
+            datePicker.addOnPositiveButtonClickListener(selection -> {
+                // Convert timestamp → formatted date string
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                selectedDate = sdf.format(new Date(selection));
+                btnPickDate.setText(selectedDate); //shows selected date
+
+                // Re-filter with the new date
+                filterEvents(searchBar.getText().toString());
+            });
+        });
+
+        //clearing filters
+        Button btnClearFilters = findViewById(R.id.btnClearFilters);
+
+        btnClearFilters.setOnClickListener(v -> {
+            selectedDate = null;        // Removes the date filter
+            searchBar.setText("");      // Clears the search bar text
+            btnPickDate.setText("Availability");
+
+
+            renderEvents(allEvents);    // Draws all events again
         });
 
         // Start live events feed
@@ -348,16 +392,22 @@ public class MainActivity extends AppCompatActivity {
     private void filterEvents(String keyword) {
         keyword = keyword.toLowerCase().trim();
 
-        if (keyword.isEmpty()) {
-            renderEvents(allEvents);
-            return;
-        }
-
         List<Event> filtered = new ArrayList<>();
 
         for (Event e : allEvents) {
-            if (e.getName().toLowerCase().contains(keyword) ||
-                    e.getDescription().toLowerCase().contains(keyword)) {
+
+            boolean matchesKeyword =
+                    keyword.isEmpty() ||
+                            e.getName().toLowerCase().contains(keyword) ||
+                            e.getDescription().toLowerCase().contains(keyword);
+
+            String eventDate = e.getFormattedDateAndLocation();
+
+            boolean matchesDate =
+                    (selectedDate == null) ||   // no date filter → always true
+                            eventDate.contains(selectedDate);
+
+            if (matchesKeyword && matchesDate) {
                 filtered.add(e);
             }
         }
