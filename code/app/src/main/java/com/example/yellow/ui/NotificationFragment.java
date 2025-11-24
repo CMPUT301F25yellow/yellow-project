@@ -19,7 +19,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.yellow.models.NotificationItem;
 import com.example.yellow.ui.notifications.NotificationAdapter;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
@@ -106,8 +108,23 @@ public class NotificationFragment extends Fragment {
             }
         });
 
+        // ---- Mark all unread notifications as read when opening this screen ----
         String uid = FirebaseAuth.getInstance().getUid();
-        if(uid ==null)return;
+        if (uid != null) {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection("profiles")
+                    .document(uid)
+                    .collection("notifications")
+                    .whereEqualTo("read", false)
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+                        WriteBatch batch = db.batch();
+                        for (DocumentSnapshot doc : snapshot) {
+                            batch.update(doc.getReference(), "read", true);
+                        }
+                        batch.commit();
+                    });
+        }
 
         FirebaseFirestore.getInstance()
                 .collection("profiles")
@@ -134,78 +151,154 @@ public class NotificationFragment extends Fragment {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Firestore refs
-        var selectedRef = db.collection("events").document(eventId)
-                .collection("selected").document(uid);
+        // Step 1 — detect status
+        getUserStatus(eventId, uid, status -> {
 
-        var enrolledRef = db.collection("events").document(eventId)
-                .collection("enrolled").document(uid);
+            if (status.equals("cancelled")) {
+                Toast.makeText(getContext(),
+                        "You have cancelled this event. You cannot rejoin.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
 
-        var notifRef = db.collection("profiles").document(uid)
-                .collection("notifications").document(notificationId);
+            if (!status.equals("selected")) {
+                Toast.makeText(getContext(),
+                        "You are not eligible to sign up for this event.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
 
-        // Data
-        Map<String, Object> data = new HashMap<>();
-        data.put("userId", uid);
-        data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            // Step 2 — build references
+            DocumentReference selectedRef = db.collection("events")
+                    .document(eventId)
+                    .collection("selected")
+                    .document(uid);
 
-        // Batch
-        WriteBatch batch = db.batch();
-        batch.delete(selectedRef);
-        batch.set(enrolledRef, data);
+            DocumentReference enrolledRef = db.collection("events")
+                    .document(eventId)
+                    .collection("enrolled")
+                    .document(uid);
 
-        // Remove notification
-        batch.delete(notifRef);
+            DocumentReference notifRef = db.collection("profiles")
+                    .document(uid)
+                    .collection("notifications")
+                    .document(notificationId);
 
-        batch.commit()
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(getContext(),
-                            "🎉 You are now enrolled in the event!",
-                            Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(),
-                            "❌ Failed: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                });
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", uid);
+            data.put("timestamp", FieldValue.serverTimestamp());
+
+            // Step 3 — atomic move
+            WriteBatch batch = db.batch();
+            batch.delete(selectedRef);     // remove from selected
+            batch.set(enrolledRef, data);  // add to enrolled
+            batch.delete(notifRef);        // remove notification
+
+            batch.commit()
+                    .addOnSuccessListener(unused ->
+                            Toast.makeText(getContext(),
+                                    "You are now enrolled in this event!",
+                                    Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(),
+                                    "Failed to enroll: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show());
+        });
     }
-
     private void declineSelection(String eventId, String notificationId) {
         String uid = FirebaseAuth.getInstance().getUid();
         if (uid == null) return;
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        var selectedRef = db.collection("events").document(eventId)
-                .collection("selected").document(uid);
+        // Step 1 — detect current status
+        getUserStatus(eventId, uid, status -> {
 
-        var cancelledRef = db.collection("events").document(eventId)
-                .collection("cancelled").document(uid);
+            // We only allow moving:
+            // selected → cancelled
+            // enrolled → cancelled
+            if (!status.equals("selected") && !status.equals("enrolled")) {
+                Toast.makeText(getContext(),
+                        "You cannot decline — current status: " + status,
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
 
-        var notifRef = db.collection("profiles").document(uid)
-                .collection("notifications").document(notificationId);
+            // Build references for atomic batch
+            DocumentReference oldRef = db.collection("events")
+                    .document(eventId)
+                    .collection(status) // either selected OR enrolled
+                    .document(uid);
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("userId", uid);
-        data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            DocumentReference cancelledRef = db.collection("events")
+                    .document(eventId)
+                    .collection("cancelled")
+                    .document(uid);
 
-        WriteBatch batch = db.batch();
-        batch.delete(selectedRef);
-        batch.set(cancelledRef, data);
+            DocumentReference notifRef = db.collection("profiles")
+                    .document(uid)
+                    .collection("notifications")
+                    .document(notificationId);
 
-        // Remove notification
-        batch.delete(notifRef);
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", uid);
+            data.put("timestamp", FieldValue.serverTimestamp());
 
-        batch.commit()
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(getContext(),
-                            "❗ You declined the selection.",
-                            Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(),
-                            "❌ Failed: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
+            // Step 2 — perform atomic move
+            WriteBatch batch = db.batch();
+            batch.delete(oldRef);         // remove from selected OR enrolled
+            batch.set(cancelledRef, data); // add to cancelled
+            batch.delete(notifRef);        // remove notification
+
+            batch.commit()
+                    .addOnSuccessListener(unused ->
+                            Toast.makeText(getContext(),
+                                    "❗ You have cancelled your participation.",
+                                    Toast.LENGTH_SHORT).show()
+                    )
+                    .addOnFailureListener(e ->
+                            Toast.makeText(getContext(),
+                                    "❌ Failed to cancel: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show()
+                    );
+        });
+    }
+
+    private void getUserStatus(String eventId, String uid, StatusCallback callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Check selected
+        db.collection("events").document(eventId)
+                .collection("selected").document(uid).get()
+                .addOnSuccessListener(selectedDoc -> {
+                    if (selectedDoc.exists()) {
+                        callback.onStatus("selected");
+                    } else {
+                        // Check enrolled
+                        db.collection("events").document(eventId)
+                                .collection("enrolled").document(uid).get()
+                                .addOnSuccessListener(enrolledDoc -> {
+                                    if (enrolledDoc.exists()) {
+                                        callback.onStatus("enrolled");
+                                    } else {
+                                        // Check cancelled
+                                        db.collection("events").document(eventId)
+                                                .collection("cancelled").document(uid).get()
+                                                .addOnSuccessListener(cancelledDoc -> {
+                                                    if (cancelledDoc.exists()) {
+                                                        callback.onStatus("cancelled");
+                                                    } else {
+                                                        callback.onStatus("none");
+                                                    }
+                                                });
+                                    }
+                                });
+                    }
                 });
     }
+
+    interface StatusCallback {
+        void onStatus(String status);
+    }
+
 }
