@@ -71,6 +71,7 @@ public class ProfileUserFragmentTest {
     private MockedStatic<FirebaseAuth> mockedAuthStatic;
     private MockedStatic<FirebaseFirestore> mockedDbStatic;
     private MockedStatic<com.example.yellow.utils.DeviceIdentityManager> mockedDeviceIdentity;
+    private MockedStatic<com.example.yellow.utils.UserCleanupUtils> mockedUserCleanup;
 
     @Before
     public void setUp() {
@@ -79,6 +80,7 @@ public class ProfileUserFragmentTest {
         mockedAuthStatic = mockStatic(FirebaseAuth.class);
         mockedDbStatic = mockStatic(FirebaseFirestore.class);
         mockedDeviceIdentity = mockStatic(com.example.yellow.utils.DeviceIdentityManager.class);
+        mockedUserCleanup = mockStatic(com.example.yellow.utils.UserCleanupUtils.class);
 
         // Static singletons
         mockedAuthStatic.when(FirebaseAuth::getInstance).thenReturn(mockAuth);
@@ -134,6 +136,11 @@ public class ProfileUserFragmentTest {
             return mockQueryTask;
         });
         when(mockQueryTask.addOnFailureListener(any())).thenReturn(mockQueryTask);
+
+        // Mock UserCleanupUtils.deleteUserAndEvents
+        mockedUserCleanup
+                .when(() -> com.example.yellow.utils.UserCleanupUtils.deleteUserAndEvents(anyString(), any()))
+                .thenReturn(mockDeleteTask);
     }
 
     @After
@@ -141,6 +148,9 @@ public class ProfileUserFragmentTest {
         mockedAuthStatic.close();
         mockedDbStatic.close();
         mockedDeviceIdentity.close();
+        if (mockedUserCleanup != null) {
+            mockedUserCleanup.close();
+        }
     }
 
     // Helper to always launch fragment with app theme so Material components inflate
@@ -298,7 +308,9 @@ public class ProfileUserFragmentTest {
             View root = fragment.getView();
             root.findViewById(R.id.btnDeleteProfile).performClick();
 
-            verify(mockProfileDoc).delete();
+            // Verify UserCleanupUtils.deleteUserAndEvents was called with correct UID
+            mockedUserCleanup.verify(() -> 
+                com.example.yellow.utils.UserCleanupUtils.deleteUserAndEvents("test_user_id", mockDb));
         });
     }
 

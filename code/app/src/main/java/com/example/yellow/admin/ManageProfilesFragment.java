@@ -39,32 +39,32 @@ public class ManageProfilesFragment extends Fragment {
     /**
      * Creates and returns the Manage Profiles layout.
      *
-     * @param inflater  Layout inflater.
-     * @param container Optional parent container.
+     * @param inflater           Layout inflater.
+     * @param container          Optional parent container.
      * @param savedInstanceState Saved state, if any.
      * @return The root view for this fragment.
      */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_manage_profiles, container, false);
     }
 
     /**
      * Sets up UI elements, window insets, and starts listening to profile updates.
      *
-     * @param v The root view.
+     * @param v                  The root view.
      * @param savedInstanceState Saved state, if any.
      */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
 
-        spacer        = v.findViewById(R.id.statusBarSpacer);
-        View btnBack  = v.findViewById(R.id.btnBack);
-        scroll        = v.findViewById(R.id.scroll);
+        spacer = v.findViewById(R.id.statusBarSpacer);
+        View btnBack = v.findViewById(R.id.btnBack);
+        scroll = v.findViewById(R.id.scroll);
         listContainer = v.findViewById(R.id.listContainer);
 
         // Insets: top spacer + bottom padding on scroll
@@ -88,9 +88,7 @@ public class ManageProfilesFragment extends Fragment {
         });
 
         if (btnBack != null) {
-            btnBack.setOnClickListener(x ->
-                    requireActivity().getSupportFragmentManager().popBackStack()
-            );
+            btnBack.setOnClickListener(x -> requireActivity().getSupportFragmentManager().popBackStack());
         }
 
         db = FirebaseFirestore.getInstance();
@@ -103,7 +101,10 @@ public class ManageProfilesFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (liveReg != null) { liveReg.remove(); liveReg = null; }
+        if (liveReg != null) {
+            liveReg.remove();
+            liveReg = null;
+        }
         listContainer = null;
         scroll = null;
         spacer = null;
@@ -115,35 +116,36 @@ public class ManageProfilesFragment extends Fragment {
      */
     private void startLiveProfilesListener() {
         liveReg = db.collection("profiles")
-                //.orderBy("fullName")  // enable if you store a name and want sorting
+                // .orderBy("fullName") // enable if you store a name and want sorting
                 .addSnapshotListener((snap, err) -> {
-                    if (!isAdded()) return;
+                    if (!isAdded())
+                        return;
 
                     if (err != null) {
                         Toast.makeText(getContext(), "Load failed: " + err.getMessage(), Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    if (snap == null || listContainer == null) return;
+                    if (snap == null || listContainer == null)
+                        return;
 
                     listContainer.removeAllViews();
                     LayoutInflater inflater = LayoutInflater.from(getContext());
 
                     for (DocumentSnapshot d : snap.getDocuments()) {
-                        String uid   = d.getId();
-                        String name  = safe(d.getString("fullName"));
+                        String uid = d.getId();
+                        String name = safe(d.getString("fullName"));
                         String email = safe(d.getString("email"));
 
                         View card = inflater.inflate(R.layout.manage_profile_card_admin, listContainer, false);
 
-                        TextView tvName  = card.findViewById(R.id.name);
+                        TextView tvName = card.findViewById(R.id.name);
                         TextView tvEmail = card.findViewById(R.id.email);
                         MaterialButton btnRemove = card.findViewById(R.id.btnDeleteUser);
 
                         tvName.setText(name.isEmpty() ? "(no name)" : name);
                         tvEmail.setText(email);
 
-                        btnRemove.setOnClickListener(v ->
-                                confirmAndRemove(uid, name.isEmpty() ? uid : name));
+                        btnRemove.setOnClickListener(v -> confirmAndRemove(uid, name.isEmpty() ? uid : name));
 
                         listContainer.addView(card);
                     }
@@ -162,8 +164,8 @@ public class ManageProfilesFragment extends Fragment {
     /**
      * Shows a confirmation dialog before removing a profile.
      *
-     * @param uid      The user ID of the profile.
-     * @param display  The name or fallback label of the user.
+     * @param uid     The user ID of the profile.
+     * @param display The name or fallback label of the user.
      */
     private void confirmAndRemove(@NonNull String uid, @NonNull String display) {
         new AlertDialog.Builder(requireContext())
@@ -175,22 +177,19 @@ public class ManageProfilesFragment extends Fragment {
     }
 
     /**
-     * Deletes a user’s profile and role documents from Firestore.
+     * Deletes a user's profile and role documents from Firestore.
+     * Also deletes all events created by this user and their subcollections.
      * Does not delete their Firebase Auth account.
      *
      * @param uid The user ID to remove.
      */
     private void removeProfileDocs(@NonNull String uid) {
-        WriteBatch batch = db.batch();
-        batch.delete(db.collection("profiles").document(uid));
-        // Optional: also clear role assignment
-        batch.delete(db.collection("roles").document(uid));
-
-        batch.commit()
-                .addOnSuccessListener(unused ->
-                        Toast.makeText(getContext(), "Profile removed.", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Remove failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+        // Use cascade deletion to remove profile, events, and subcollections
+        com.example.yellow.utils.UserCleanupUtils.deleteUserAndEvents(uid, db)
+                .addOnSuccessListener(unused -> Toast
+                        .makeText(getContext(), "Profile and events removed.", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast
+                        .makeText(getContext(), "Remove failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     /**

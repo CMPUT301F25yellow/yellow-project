@@ -73,10 +73,13 @@ public class ManageProfilesFragmentTest {
     private WriteBatch mockBatch;
     @Mock
     private Task<Void> mockBatchCommitTask;
+    @Mock
+    private Task<Void> mockDeleteUserTask;
 
     private MockedStatic<FirebaseAuth> mockedAuthStatic;
     private MockedStatic<FirebaseFirestore> mockedDbStatic;
     private MockedStatic<com.example.yellow.utils.DeviceIdentityManager> mockedDeviceIdentity;
+    private MockedStatic<com.example.yellow.utils.UserCleanupUtils> mockedUserCleanup;
 
     @Before
     public void setUp() {
@@ -85,6 +88,7 @@ public class ManageProfilesFragmentTest {
         mockedAuthStatic = mockStatic(FirebaseAuth.class);
         mockedDbStatic = mockStatic(FirebaseFirestore.class);
         mockedDeviceIdentity = mockStatic(com.example.yellow.utils.DeviceIdentityManager.class);
+        mockedUserCleanup = mockStatic(com.example.yellow.utils.UserCleanupUtils.class);
 
         mockedAuthStatic.when(FirebaseAuth::getInstance).thenReturn(mockAuth);
         mockedDbStatic.when(FirebaseFirestore::getInstance).thenReturn(mockDb);
@@ -127,6 +131,12 @@ public class ManageProfilesFragmentTest {
         when(mockBatch.delete(any(DocumentReference.class))).thenReturn(mockBatch);
         when(mockBatch.commit()).thenReturn(mockBatchCommitTask);
         mockTaskSuccess(mockBatchCommitTask);
+
+        // Mock UserCleanupUtils.deleteUserAndEvents
+        mockTaskSuccess(mockDeleteUserTask);
+        mockedUserCleanup
+                .when(() -> com.example.yellow.utils.UserCleanupUtils.deleteUserAndEvents(anyString(), any()))
+                .thenReturn(mockDeleteUserTask);
     }
 
     @After
@@ -134,6 +144,9 @@ public class ManageProfilesFragmentTest {
         mockedAuthStatic.close();
         mockedDbStatic.close();
         mockedDeviceIdentity.close();
+        if (mockedUserCleanup != null) {
+            mockedUserCleanup.close();
+        }
     }
 
     @Test
@@ -232,14 +245,9 @@ public class ManageProfilesFragmentTest {
         // Ensure async tasks execute
         ShadowLooper.idleMainLooper();
 
-        // Verify batch delete was called for profile and role
-        verify(mockProfilesCollection).document("user_to_delete");
-        verify(mockRolesCollection).document("user_to_delete");
-
-        // Verify batch operations
-        verify(mockBatch).delete(mockProfileDocRef);
-        verify(mockBatch).delete(mockRoleDocRef);
-        verify(mockBatch).commit();
+        // Verify UserCleanupUtils.deleteUserAndEvents was called with correct UID
+        mockedUserCleanup
+                .verify(() -> com.example.yellow.utils.UserCleanupUtils.deleteUserAndEvents("user_to_delete", mockDb));
     }
 
     // --- Helpers ---
