@@ -44,7 +44,6 @@ public class WaitingListFragment extends Fragment {
     private Event currentEvent; // To hold the loaded event details
     private LocationHelper locationHelper;
 
-
     public WaitingListFragment() {
     }
 
@@ -52,11 +51,12 @@ public class WaitingListFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize LocationHelper here. We pass "this" as ActivityResultCaller (the Fragment),
+        // Initialize LocationHelper here. We pass "this" as ActivityResultCaller (the
+        // Fragment),
         // and requireContext() for Toasts and FusedLocationProviderClient.
         locationHelper = new LocationHelper(
-                this,               // ActivityResultCaller -> the Fragment
-                requireContext(),   // Context
+                this, // ActivityResultCaller -> the Fragment
+                requireContext(), // Context
                 location -> {
                     if (location != null) {
                         // Successfully got a location → save waiting user with coordinates
@@ -66,13 +66,10 @@ public class WaitingListFragment extends Fragment {
                         Toast.makeText(
                                 getContext(),
                                 "Failed to get location. Cannot join this event.",
-                                Toast.LENGTH_LONG
-                        ).show();
+                                Toast.LENGTH_LONG).show();
                     }
-                }
-        );
+                });
     }
-
 
     @Nullable
     @Override
@@ -134,25 +131,6 @@ public class WaitingListFragment extends Fragment {
                     }
                 });
 
-        // Auto-join waiting list (with profile check)
-        com.example.yellow.utils.ProfileUtils.checkProfile(getContext(), isComplete -> {
-            if (isComplete) {
-                joinWaitingRoom();
-            } else {
-                // If incomplete, we already showed the dialog.
-                // If they cancel, we should probably exit this screen because they can't join.
-                // But the dialog is async.
-                // For now, let's just NOT join. The user is staring at the screen but not
-                // joined.
-                // They can click "Leave" or "Back".
-            }
-        }, () -> {
-            // Navigate to profile
-            if (requireActivity() instanceof MainActivity) {
-                ((MainActivity) requireActivity()).openProfile();
-            }
-        });
-
         // Leave waiting room
         leaveButton.setOnClickListener(v -> leaveWaitingRoom());
 
@@ -160,6 +138,12 @@ public class WaitingListFragment extends Fragment {
         backArrow.setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager().popBackStack();
         });
+
+        // Lottery Guidelines button
+        Button btnLotteryGuidelines = view.findViewById(R.id.btnLotteryGuidelines);
+        if (btnLotteryGuidelines != null) {
+            btnLotteryGuidelines.setOnClickListener(v -> showLotteryGuidelinesDialog());
+        }
 
         // System back: LEAVE waiting list
         requireActivity().getOnBackPressedDispatcher().addCallback(
@@ -232,20 +216,31 @@ public class WaitingListFragment extends Fragment {
         if (currentEvent == null) {
             // Event details haven't loaded yet. This can happen if Firestore is slow.
             // We can wait a moment and try again, or just ask the user to wait.
-            Toast.makeText(getContext(), "Connecting to event...", Toast.LENGTH_SHORT).show();
-            // A more robust solution might use a listener or retry, but for now we'll just wait for user action.
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Connecting to event...", Toast.LENGTH_SHORT).show();
+            }
+            // A more robust solution might use a listener or retry, but for now we'll just
+            // wait for user action.
             return;
         }
 
         DocumentReference ref = db.collection("events").document(eventId).collection("waitingList").document(userId);
         ref.get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "You're already on the waiting list for this event",
+                            Toast.LENGTH_SHORT)
+                            .show();
+                }
                 return; // User is already in the list, do nothing.
             }
 
             if (currentEvent.isRequireGeolocation()) {
                 // --- CASE 1: LOCATION IS REQUIRED ---
-                Toast.makeText(getContext(), "Location is required, getting your position...", Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Location is required, getting your position...", Toast.LENGTH_SHORT)
+                            .show();
+                }
 
                 // Use the helper instance created in onCreate
                 if (locationHelper != null) {
@@ -266,7 +261,8 @@ public class WaitingListFragment extends Fragment {
 
     /**
      * Helper method to create and save the WaitingUser object to Firestore.
-     * @param latitude The user's latitude, or null if not provided.
+     * 
+     * @param latitude  The user's latitude, or null if not provided.
      * @param longitude The user's longitude, or null if not provided.
      */
     private void saveWaitingUser(@Nullable Double latitude, @Nullable Double longitude) {
@@ -289,9 +285,14 @@ public class WaitingListFragment extends Fragment {
 
         ref.set(entry).addOnSuccessListener(unused -> {
             db.collection("events").document(eventId).update("waitlisted", FieldValue.increment(1));
-            Toast.makeText(getContext(), "Joined waiting room!", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Successfully joined waiting list!", Toast.LENGTH_SHORT).show();
+            }
+
         }).addOnFailureListener(e -> {
-            Toast.makeText(getContext(), "Error: Could not join waiting room.", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Error: Could not join waiting room.", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -317,5 +318,28 @@ public class WaitingListFragment extends Fragment {
 
                     requireActivity().getSupportFragmentManager().popBackStack();
                 });
+    }
+
+    /**
+     * Shows a dialog with lottery criteria and guidelines
+     */
+    private void showLotteryGuidelinesDialog() {
+        if (getContext() == null)
+            return;
+
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_lottery_guidelines, null);
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setView(dialogView)
+                .setPositiveButton("Got it", (d, which) -> d.dismiss())
+                .create();
+
+        // Set the background color of the dialog window to match the card
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.color.surface_dark);
+        }
+
+        dialog.show();
     }
 }

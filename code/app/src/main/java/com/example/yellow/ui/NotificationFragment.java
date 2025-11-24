@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * Fragment that displays app notifications for the user.
  */
@@ -50,8 +49,8 @@ public class NotificationFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_notification, container, false);
     }
 
@@ -67,8 +66,7 @@ public class NotificationFragment extends Fragment {
 
         // Make status bar the same color as header
         requireActivity().getWindow().setStatusBarColor(
-                ContextCompat.getColor(requireContext(), R.color.surface_dark)
-        );
+                ContextCompat.getColor(requireContext(), R.color.surface_dark));
 
         // Size the spacer to the real status bar height
         View spacer = v.findViewById(R.id.statusBarSpacer);
@@ -85,9 +83,7 @@ public class NotificationFragment extends Fragment {
         // Back -> pop to Home (MainActivity shows Home when stack empties)
         View back = v.findViewById(R.id.btnBack);
         if (back != null) {
-            back.setOnClickListener(x ->
-                    requireActivity().getSupportFragmentManager().popBackStack()
-            );
+            back.setOnClickListener(x -> requireActivity().getSupportFragmentManager().popBackStack());
         }
 
         // (Optional) set adapter later
@@ -126,28 +122,33 @@ public class NotificationFragment extends Fragment {
                     });
         }
 
-        FirebaseFirestore.getInstance()
-                .collection("profiles")
-                .document(uid)
-                .collection("notifications")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null || value == null) return;
+        if (uid != null) {
+            FirebaseFirestore.getInstance()
+                    .collection("profiles")
+                    .document(uid)
+                    .collection("notifications")
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .addSnapshotListener((value, error) -> {
+                        if (error != null || value == null)
+                            return;
 
-                    List<NotificationItem> list = new ArrayList<>();
+                        List<NotificationItem> list = new ArrayList<>();
 
-                    for (DocumentSnapshot doc : value.getDocuments()) {
-                        NotificationItem item = doc.toObject(NotificationItem.class);
-                        list.add(item);
-                    }
+                        for (DocumentSnapshot doc : value.getDocuments()) {
+                            NotificationItem item = doc.toObject(NotificationItem.class);
+                            list.add(item);
+                        }
 
-                    adapter.setList(list);
-                });
+                        adapter.setList(list);
+                    });
+        }
 
     }
+
     private void acceptSelection(String eventId, String notificationId) {
         String uid = FirebaseAuth.getInstance().getUid();
-        if (uid == null) return;
+        if (uid == null)
+            return;
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -190,24 +191,24 @@ public class NotificationFragment extends Fragment {
 
             // Step 3 — atomic move
             WriteBatch batch = db.batch();
-            batch.delete(selectedRef);     // remove from selected
-            batch.set(enrolledRef, data);  // add to enrolled
-            batch.delete(notifRef);        // remove notification
+            batch.delete(selectedRef); // remove from selected
+            batch.set(enrolledRef, data); // add to enrolled
+            batch.delete(notifRef); // remove notification
 
             batch.commit()
-                    .addOnSuccessListener(unused ->
-                            Toast.makeText(getContext(),
-                                    "You are now enrolled in this event!",
-                                    Toast.LENGTH_SHORT).show())
-                    .addOnFailureListener(e ->
-                            Toast.makeText(getContext(),
-                                    "Failed to enroll: " + e.getMessage(),
-                                    Toast.LENGTH_LONG).show());
+                    .addOnSuccessListener(unused -> Toast.makeText(getContext(),
+                            "You are now enrolled in this event!",
+                            Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e -> Toast.makeText(getContext(),
+                            "Failed to enroll: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show());
         });
     }
+
     private void declineSelection(String eventId, String notificationId) {
         String uid = FirebaseAuth.getInstance().getUid();
-        if (uid == null) return;
+        if (uid == null)
+            return;
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -246,21 +247,17 @@ public class NotificationFragment extends Fragment {
 
             // Step 2 — perform atomic move
             WriteBatch batch = db.batch();
-            batch.delete(oldRef);         // remove from selected OR enrolled
+            batch.delete(oldRef); // remove from selected OR enrolled
             batch.set(cancelledRef, data); // add to cancelled
-            batch.delete(notifRef);        // remove notification
+            batch.delete(notifRef); // remove notification
 
             batch.commit()
-                    .addOnSuccessListener(unused ->
-                            Toast.makeText(getContext(),
-                                    "❗ You have cancelled your participation.",
-                                    Toast.LENGTH_SHORT).show()
-                    )
-                    .addOnFailureListener(e ->
-                            Toast.makeText(getContext(),
-                                    "❌ Failed to cancel: " + e.getMessage(),
-                                    Toast.LENGTH_LONG).show()
-                    );
+                    .addOnSuccessListener(unused -> Toast.makeText(getContext(),
+                            "❗ You have cancelled your participation.",
+                            Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e -> Toast.makeText(getContext(),
+                            "❌ Failed to cancel: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show());
         });
     }
 

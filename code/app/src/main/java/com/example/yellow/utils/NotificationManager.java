@@ -22,6 +22,11 @@ public class NotificationManager {
 
     public static void sendNotification(Context context, String eventId, String eventName, String message,
             List<String> userIds, OnNotificationSentListener listener) {
+        sendNotification(context, eventId, eventName, message, null, userIds, listener);
+    }
+
+    public static void sendNotification(Context context, String eventId, String eventName, String message,
+            String type, List<String> userIds, OnNotificationSentListener listener) {
         if (userIds == null || userIds.isEmpty()) {
             if (listener != null)
                 listener.onFailure(new Exception("No recipients"));
@@ -38,12 +43,13 @@ public class NotificationManager {
                 if (organizerName == null)
                     organizerName = "Unknown";
             }
-            performSend(db, eventId, eventName, organizerId, organizerName, message, userIds, listener);
+            performSend(db, eventId, eventName, organizerId, organizerName, message, type, userIds, listener);
         });
     }
 
     private static void performSend(FirebaseFirestore db, String eventId, String eventName, String organizerId,
-            String organizerName, String message, List<String> userIds, OnNotificationSentListener listener) {
+            String organizerName, String message, String type, List<String> userIds,
+            OnNotificationSentListener listener) {
 
         // 1. Send to individual users (write-only)
         WriteBatch batch = db.batch();
@@ -53,6 +59,9 @@ public class NotificationManager {
             data.put("eventId", eventId);
             data.put("timestamp", FieldValue.serverTimestamp());
             data.put("read", false);
+            if (type != null) {
+                data.put("type", type);
+            }
             batch.set(db.collection("profiles").document(userId).collection("notifications").document(), data);
         }
 

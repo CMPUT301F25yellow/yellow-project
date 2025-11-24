@@ -135,15 +135,18 @@ public class ManageProfilesFragment extends Fragment {
                         String uid = d.getId();
                         String name = safe(d.getString("fullName"));
                         String email = safe(d.getString("email"));
+                        String phone = safe(d.getString("phone"));
 
                         View card = inflater.inflate(R.layout.manage_profile_card_admin, listContainer, false);
 
                         TextView tvName = card.findViewById(R.id.name);
                         TextView tvEmail = card.findViewById(R.id.email);
+                        TextView tvPhone = card.findViewById(R.id.phone);
                         MaterialButton btnRemove = card.findViewById(R.id.btnDeleteUser);
 
                         tvName.setText(name.isEmpty() ? "(no name)" : name);
                         tvEmail.setText(email);
+                        tvPhone.setText(phone.isEmpty() ? "N/A" : phone);
 
                         btnRemove.setOnClickListener(v -> confirmAndRemove(uid, name.isEmpty() ? uid : name));
 
