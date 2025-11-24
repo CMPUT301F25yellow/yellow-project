@@ -21,19 +21,46 @@
 
     </ScrollView>
 
-    <!-- Notify Cancelled Entrants Button -->
-    <Button
-        android:id="@+id/btnNotifyEnrolled"
+    <!-- Notify Enrolled Entrants Button -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="24dp"
-        android:padding="12dp"
-        android:text="Notify Enrolled Entrants"
-        android:textColor="@color/white"
-        android:backgroundTint="@color/pink_bg"
-        android:fontFamily="@font/sfpro_semibold"
-        android:gravity="center"
-        android:layout_gravity="center_horizontal"/>
+        android:gravity="center">
+
+        <!--Date picker-->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNotifyEnrolled"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Notify Enrolled Entrants"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/pink_bg"
+            android:layout_gravity="center_horizontal"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:textColor="@color/white"/>
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="wrap_content"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExportCSV"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Export CSV"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/pink_bg"
+            android:layout_gravity="center_horizontal"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:textColor="@color/white"/>
+
+    </LinearLayout>
 
 </LinearLayout>

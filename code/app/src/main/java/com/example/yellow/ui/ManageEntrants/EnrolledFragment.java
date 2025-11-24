@@ -1,7 +1,12 @@
 package com.example.yellow.ui.ManageEntrants;
 
 import android.app.AlertDialog;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +25,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -63,6 +71,131 @@ public class EnrolledFragment extends Fragment {
         loadEnrolledEntrants();
         Button btnNotify = view.findViewById(R.id.btnNotifyEnrolled);
         btnNotify.setOnClickListener(v -> showNotificationDialog());
+
+        Button btnExport = view.findViewById(R.id.btnExportCSV);
+        btnExport.setOnClickListener(v -> exportEnrolledCSV());
+    }
+
+    private void exportEnrolledCSV() {
+
+        db.collection("events").document(eventId)
+                .collection("enrolled")
+                .get()
+                .addOnSuccessListener(enrolledSnapshot -> {
+
+                    if (enrolledSnapshot.isEmpty()) {
+                        Toast.makeText(getContext(), "No enrolled entrants", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    java.util.List<Map<String, String>> entrants = new java.util.ArrayList<>();
+                    java.util.concurrent.atomic.AtomicInteger counter = new java.util.concurrent.atomic.AtomicInteger(0);
+
+                    for (DocumentSnapshot doc : enrolledSnapshot) {
+                        String userId = doc.getString("userId");
+                        String ts = extractTimestamp(doc);
+
+                        if (userId == null) {
+                            if (counter.incrementAndGet() == enrolledSnapshot.size()) {
+                                writeToDownloadsAndShare(entrants);
+                            }
+                            continue;
+                        }
+
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    String name = profile.getString("fullName");
+                                    String email = profile.getString("email");
+
+                                    Map<String, String> row = new HashMap<>();
+                                    row.put("name", name == null ? "" : name);
+                                    row.put("email", email == null ? "" : email);
+                                    row.put("userId", userId);
+                                    row.put("timestamp", ts);
+                                    entrants.add(row);
+
+                                    if (counter.incrementAndGet() == enrolledSnapshot.size()) {
+                                        writeToDownloadsAndShare(entrants);
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    if (counter.incrementAndGet() == enrolledSnapshot.size()) {
+                                        writeToDownloadsAndShare(entrants);
+                                    }
+                                });
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(), "Failed to load entrants", Toast.LENGTH_SHORT).show());
+    }
+    private void writeToDownloadsAndShare(java.util.List<Map<String, String>> rows) {
+        if (rows.isEmpty()) {
+            Toast.makeText(getContext(), "Nothing to export", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Name,Email,UserId,EnrolledAt\n");
+
+        for (Map<String, String> r : rows) {
+            csv.append(r.get("name").replace(",", " "))
+                    .append(",")
+                    .append(r.get("email"))
+                    .append(",")
+                    .append(r.get("userId"))
+                    .append(",")
+                    .append(r.get("timestamp"))
+                    .append("\n");
+        }
+
+        saveToDownloadsAndShare(csv.toString());
+    }
+    private void saveToDownloadsAndShare(String csvContent) {
+        try {
+            String fileName = "enrolled_export_" + eventId + ".csv";
+
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+
+            Uri collection;
+
+            // Android 10+ (API 29+)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+            }
+            // Android 7–9 fallback
+            else {
+                collection = MediaStore.Files.getContentUri("external");
+            }
+
+            Uri uri = requireContext().getContentResolver().insert(collection, values);
+
+            if (uri == null) {
+                Toast.makeText(getContext(), "Failed to create file", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            try (OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri)) {
+                outputStream.write(csvContent.getBytes());
+            }
+
+            Toast.makeText(getContext(), "CSV saved to Downloads!", Toast.LENGTH_LONG).show();
+            shareCSVUri(uri);
+
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Error saving file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void shareCSVUri(Uri uri) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/csv");
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        startActivity(Intent.createChooser(intent, "Share CSV"));
     }
 
     private void loadEnrolledEntrants() {
