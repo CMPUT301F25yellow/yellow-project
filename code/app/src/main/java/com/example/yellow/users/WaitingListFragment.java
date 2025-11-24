@@ -139,6 +139,12 @@ public class WaitingListFragment extends Fragment {
             requireActivity().getSupportFragmentManager().popBackStack();
         });
 
+        // Lottery Guidelines button
+        Button btnLotteryGuidelines = view.findViewById(R.id.btnLotteryGuidelines);
+        if (btnLotteryGuidelines != null) {
+            btnLotteryGuidelines.setOnClickListener(v -> showLotteryGuidelinesDialog());
+        }
+
         // System back: LEAVE waiting list
         requireActivity().getOnBackPressedDispatcher().addCallback(
                 getViewLifecycleOwner(),
@@ -312,5 +318,28 @@ public class WaitingListFragment extends Fragment {
 
                     requireActivity().getSupportFragmentManager().popBackStack();
                 });
+    }
+
+    /**
+     * Shows a dialog with lottery criteria and guidelines
+     */
+    private void showLotteryGuidelinesDialog() {
+        if (getContext() == null)
+            return;
+
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_lottery_guidelines, null);
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setView(dialogView)
+                .setPositiveButton("Got it", (d, which) -> d.dismiss())
+                .create();
+
+        // Set the background color of the dialog window to match the card
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.color.surface_dark);
+        }
+
+        dialog.show();
     }
 }
