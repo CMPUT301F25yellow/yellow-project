@@ -231,20 +231,26 @@ public class SelectedFragment extends Fragment {
     }
 
     /** builds and adds one entrant card to the screen */
+    private boolean isSafe() {
+        return isAdded() && getContext() != null && container != null;
+    }
+
     private void addEntrantCard(String userId,
                                 String name,
                                 String email,
                                 String joinDate,
                                 String status) {
 
-        View card = LayoutInflater.from(getContext())
-                .inflate(R.layout.item_entrant_card, container, false);
+        if (!isSafe()) return;
+
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        View card = inflater.inflate(R.layout.item_entrant_card, container, false);
 
         TextView tvName = card.findViewById(R.id.tvEntrantName);
         TextView tvEmail = card.findViewById(R.id.tvEntrantEmail);
         TextView tvJoinDate = card.findViewById(R.id.tvJoinDate);
         TextView tvStatus = card.findViewById(R.id.tvStatus);
-        CheckBox cbSelected = card.findViewById(R.id.checkboxSelected); // NEW
+        CheckBox cbSelected = card.findViewById(R.id.checkboxSelected);
 
         tvName.setText(name);
         tvEmail.setText(email);
@@ -270,16 +276,16 @@ public class SelectedFragment extends Fragment {
                 break;
         }
 
-        tvStatus.getBackground().setTint(getResources().getColor(colorRes));
+        tvStatus.getBackground().setTint(requireContext().getColor(colorRes));
 
-        // Only show & use checkbox for SelectedFragment's "Selected" status
+        // Checkbox feature only in selected state
         if ("selected".equalsIgnoreCase(status) && cbSelected != null) {
             cbSelected.setVisibility(View.VISIBLE);
-
-            // Restore checked state if list was rebuilt
             cbSelected.setChecked(selectedUserIds.contains(userId));
 
             cbSelected.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (!isSafe()) return;
+
                 if (isChecked) {
                     selectedUserIds.add(userId);
                 } else {
@@ -287,13 +293,17 @@ public class SelectedFragment extends Fragment {
                 }
             });
 
-            // Tap anywhere on card toggles checkbox for nicer UX
-            card.setOnClickListener(v -> cbSelected.setChecked(!cbSelected.isChecked()));
+            // Tap anywhere toggles checkbox
+            card.setOnClickListener(v -> {
+                if (isSafe()) cbSelected.setChecked(!cbSelected.isChecked());
+            });
         } else if (cbSelected != null) {
             cbSelected.setVisibility(View.GONE);
         }
 
-        container.addView(card);
+        if (isSafe()) {
+            container.addView(card);
+        }
     }
 
     /** Called when organizer taps "Cancel Selected Entrants" */
