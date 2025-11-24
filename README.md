@@ -21,27 +21,27 @@ Lottery systems are great because you don’t have to be first to get a chance t
 
 1. Pooling System:
 
-  * Organizers can draw from a waiting list of interested event attendees as selected participants.
+    * Organizers can draw from a waiting list of interested event attendees as selected participants.
     
 2. QR Code Scanning:
 
-  * entrants can scan QR promotional code to view details about the event and also join the waiting list
+    * entrants can scan QR promotional code to view details about the event and also join the waiting list
 
 3. Firebase Integration:
 
-  * Utilize Firebase for storing event details, attendee lists, and real-time check-in status updates.
+    * Utilize Firebase for storing event details, attendee lists, and real-time check-in status updates.
 
 4. Multi-User Interaction:
 
-  * Distinguish between entrants, organizers, and admin with special roles and privileges granted to each actor.
+    * Distinguish between entrants, organizers, and admin with special roles and privileges granted to each actor.
 
 5. Image Upload:
 
-  * Allow event organizers upload event poster image
+    * Allow event organizers upload event poster image
 
 6. Geolocation Verification (Optional)
 
-  * Optionally use geolocation to verify where users are joining the waiting list from. This is the location provided by the device.
+    * Optionally use geolocation to verify where users are joining the waiting list from. This is the location provided by the device.
 
 ## Setup Instructions
 
