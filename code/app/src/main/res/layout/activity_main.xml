@@ -32,18 +32,33 @@
             android:fontFamily="sans-serif-medium" />
 
         <!-- Bell -->
-        <ImageView
-            android:id="@+id/iconNotifications"
+        <FrameLayout
+            android:id="@+id/notificationIconWrapper"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_toStartOf="@id/iconProfile"
-            android:layout_marginEnd="4dp"
-            android:adjustViewBounds="true"
-            android:clickable="true"
-            android:focusable="true"
-            android:scaleType="centerInside"
-            android:contentDescription="@string/notifications_title"
-            android:src="@drawable/ic_bell" />
+            android:layout_marginEnd="4dp">
+
+            <ImageView
+                android:id="@+id/iconNotifications"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:adjustViewBounds="true"
+                android:clickable="true"
+                android:focusable="true"
+                android:scaleType="centerInside"
+                android:contentDescription="@string/notifications_title"
+                android:src="@drawable/ic_bell" />
+
+            <!-- 🔴 RED DOT BADGE -->
+            <View
+                android:id="@+id/notificationDot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/red_dot"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <!-- Profile -->
         <ImageView

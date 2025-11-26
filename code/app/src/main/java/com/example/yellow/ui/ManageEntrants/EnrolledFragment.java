@@ -207,19 +207,23 @@ public class EnrolledFragment extends Fragment {
     }
 
     private void addEntrantCard(String name, String email, String date, String status) {
-        View card = LayoutInflater.from(getContext())
-                .inflate(R.layout.item_entrant_card, container, false);
+        if (!isSafe()) return;
+
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        View card = inflater.inflate(R.layout.item_entrant_card, container, false);
 
         ((TextView) card.findViewById(R.id.tvEntrantName)).setText(name);
         ((TextView) card.findViewById(R.id.tvEntrantEmail)).setText(email);
         ((TextView) card.findViewById(R.id.tvJoinDate)).setText("Updated: " + date);
         ((TextView) card.findViewById(R.id.tvStatus)).setText(status);
 
-        // STATUS COLOR = green
         card.findViewById(R.id.tvStatus)
                 .getBackground()
-                .setTint(getResources().getColor(R.color.green_400));
+                .setTint(requireContext().getColor(R.color.danger_red));
 
         container.addView(card);
+    }
+    private boolean isSafe() {
+        return isAdded() && getContext() != null && container != null;
     }
 }

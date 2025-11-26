@@ -34,6 +34,7 @@ import com.example.yellow.ui.QrScanFragment;
 import com.example.yellow.users.WaitingListFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -66,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         eventsContainer = findViewById(R.id.eventsContainer);
 
 
+
+
         // ---- Views ----
         View root = findViewById(R.id.main);
         header = findViewById(R.id.header_main);
@@ -81,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         View iconNotifications = findViewById(R.id.iconNotifications);
         if (iconNotifications != null)
             iconNotifications.setOnClickListener(v -> openNotifications());
+
+        View notificationDot = findViewById(R.id.notificationDot);
 
         // ---- Safe-area insets ----
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
@@ -137,6 +142,32 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return false;
             });
+        }
+
+        // ---- Notification Dot Listener ----
+        String uid = FirebaseAuth.getInstance().getUid();
+
+        if (uid != null && notificationDot != null) {
+            FirebaseFirestore.getInstance()
+                    .collection("profiles")
+                    .document(uid)
+                    .collection("notifications")
+                    .addSnapshotListener((snapshot, e) -> {
+
+                        if (snapshot == null) return;
+
+                        boolean hasUnread = false;
+
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            Boolean read = doc.getBoolean("read");
+                            if (read == null || !read) {
+                                hasUnread = true;
+                                break;
+                            }
+                        }
+
+                        notificationDot.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
+                    });
         }
 
         // ---- Restore Home UI when back stack empties ----

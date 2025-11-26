@@ -325,9 +325,19 @@ public class WaitingFragment extends Fragment {
     /**
      * Adds an entrant card to the layout
      */
-    private void addEntrantCard(String name, String email, String joinDate, String status) {
-        View card = LayoutInflater.from(getContext())
-                .inflate(R.layout.item_entrant_card, container, false);
+    private boolean isSafe() {
+        return isAdded() && getContext() != null && container != null;
+    }
+
+    private void addEntrantCard(String name,
+                                String email,
+                                String joinDate,
+                                String status) {
+
+        if (!isSafe()) return;
+
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        View card = inflater.inflate(R.layout.item_entrant_card, container, false);
 
         TextView tvName = card.findViewById(R.id.tvEntrantName);
         TextView tvEmail = card.findViewById(R.id.tvEntrantEmail);
@@ -355,8 +365,11 @@ public class WaitingFragment extends Fragment {
                 colorRes = R.color.gold;
                 break;
         }
-        tvStatus.getBackground().setTint(getResources().getColor(colorRes));
 
-        container.addView(card);
+        tvStatus.getBackground().setTint(requireContext().getColor(colorRes));
+
+        if (isSafe()) {
+            container.addView(card);
+        }
     }
 }
