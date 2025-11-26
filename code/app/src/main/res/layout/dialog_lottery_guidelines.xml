@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@color/surface_dark">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="How the lottery works"
+        android:textSize="24sp"
+        android:textColor="@color/white"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:letterSpacing="0.01" />
+
+    <!-- Scrollable Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="400dp"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingEnd="8dp"
+            android:paddingStart="4dp">
+
+            <!-- Rule 1 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1. Join the waiting list before the organizer runs a draw."
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:alpha="0.95"
+                android:layout_marginBottom="16dp"
+                android:lineSpacingExtra="6dp"
+                android:lineSpacingMultiplier="1.2" />
+
+            <!-- Rule 2 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="2. Organizers can run the lottery at any time and as many times as needed during the registration period."
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:alpha="0.95"
+                android:layout_marginBottom="16dp"
+                android:lineSpacingExtra="6dp"
+                android:lineSpacingMultiplier="1.2" />
+
+            <!-- Rule 3 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="3. Each time the organizer runs a draw, everyone currently on the waiting list has an equal chance of being selected."
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:alpha="0.95"
+                android:layout_marginBottom="16dp"
+                android:lineSpacingExtra="6dp"
+                android:lineSpacingMultiplier="1.2" />
+
+            <!-- Rule 4 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="4. Joining earlier does not increase your chances; every entrant in the list is treated equally in each draw."
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:alpha="0.95"
+                android:layout_marginBottom="16dp"
+                android:lineSpacingExtra="6dp"
+                android:lineSpacingMultiplier="1.2" />
+
+            <!-- Rule 5 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="5. If you are selected, you will receive a notification inviting you to sign up for the event."
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:alpha="0.95"
+                android:layout_marginBottom="16dp"
+                android:lineSpacingExtra="6dp"
+                android:lineSpacingMultiplier="1.2" />
+
+            <!-- Rule 6 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="6. If you are not selected in a draw, you may still be chosen in a later draw if the organizer runs additional rounds or if selected entrants decline or cancel."
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:alpha="0.95"
+                android:layout_marginBottom="16dp"
+                android:lineSpacingExtra="6dp"
+                android:lineSpacingMultiplier="1.2" />
+
+            <!-- Rule 7 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="7. You will only see updates about your status when the organizer sends a notification (e.g., Selected, Not Selected, or other updates)."
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:alpha="0.95"
+                android:lineSpacingExtra="6dp"
+                android:lineSpacingMultiplier="1.2" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

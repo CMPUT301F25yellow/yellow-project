@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Event> allEvents = new ArrayList<>();
     private LinearLayout eventsContainer;
     private String selectedDate = null;
-
+    private ListenerRegistration notificationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +65,6 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         eventsContainer = findViewById(R.id.eventsContainer);
-
-
-
 
         // ---- Views ----
         View root = findViewById(R.id.main);
@@ -144,31 +141,44 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        // ---- Notification Dot Listener ----
-        String uid = FirebaseAuth.getInstance().getUid();
+        // ---- Notification Dot Listener (Dynamic) ----
+        FirebaseAuth.getInstance().addAuthStateListener(firebaseAuth -> {
+            String uid = firebaseAuth.getUid();
+            if (uid != null && notificationDot != null) {
+                // Remove existing listener if any to avoid duplicates
+                if (notificationListener != null) {
+                    notificationListener.remove();
+                }
 
-        if (uid != null && notificationDot != null) {
-            FirebaseFirestore.getInstance()
-                    .collection("profiles")
-                    .document(uid)
-                    .collection("notifications")
-                    .addSnapshotListener((snapshot, e) -> {
+                notificationListener = FirebaseFirestore.getInstance()
+                        .collection("profiles")
+                        .document(uid)
+                        .collection("notifications")
+                        .addSnapshotListener((snapshot, e) -> {
+                            if (snapshot == null)
+                                return;
 
-                        if (snapshot == null) return;
-
-                        boolean hasUnread = false;
-
-                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                            Boolean read = doc.getBoolean("read");
-                            if (read == null || !read) {
-                                hasUnread = true;
-                                break;
+                            boolean hasUnread = false;
+                            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                                Boolean read = doc.getBoolean("read");
+                                if (read == null || !read) {
+                                    hasUnread = true;
+                                    break;
+                                }
                             }
-                        }
-
-                        notificationDot.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
-                    });
-        }
+                            notificationDot.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
+                        });
+            } else {
+                // User logged out
+                if (notificationListener != null) {
+                    notificationListener.remove();
+                    notificationListener = null;
+                }
+                if (notificationDot != null) {
+                    notificationDot.setVisibility(View.GONE);
+                }
+            }
+        });
 
         // ---- Restore Home UI when back stack empties ----
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
@@ -203,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //search bar
+        // search bar
         EditText searchBar = findViewById(R.id.searchBar);
         searchBar.addTextChangedListener(new TextWatcher() {
 
@@ -212,20 +222,23 @@ public class MainActivity extends AppCompatActivity {
                 filterEvents(s.toString());
             }
 
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
-            @Override public void afterTextChanged(Editable s) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
         });
 
-        //filter by dates
+        // filter by dates
         Button btnPickDate = findViewById(R.id.btnPickDate);
 
         btnPickDate.setOnClickListener(v -> {
 
-            MaterialDatePicker<Long> datePicker =
-                    MaterialDatePicker.Builder.datePicker()
-                            .setTitleText("Select Event Date")
-                            .build();
+            MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
+                    .setTitleText("Select Event Date")
+                    .build();
 
             datePicker.show(getSupportFragmentManager(), "DATE_PICKER");
 
@@ -234,23 +247,22 @@ public class MainActivity extends AppCompatActivity {
                 SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
                 sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                 selectedDate = sdf.format(new Date(selection));
-                btnPickDate.setText(selectedDate); //shows selected date
+                btnPickDate.setText(selectedDate); // shows selected date
 
                 // Re-filter with the new date
                 filterEvents(searchBar.getText().toString());
             });
         });
 
-        //clearing filters
+        // clearing filters
         Button btnClearFilters = findViewById(R.id.btnClearFilters);
 
         btnClearFilters.setOnClickListener(v -> {
-            selectedDate = null;        // Removes the date filter
-            searchBar.setText("");      // Clears the search bar text
+            selectedDate = null; // Removes the date filter
+            searchBar.setText(""); // Clears the search bar text
             btnPickDate.setText("Availability");
 
-
-            renderEvents(allEvents);    // Draws all events again
+            renderEvents(allEvents); // Draws all events again
         });
 
         boolean deepLinkHandled = handleDeepLink(getIntent());
@@ -414,7 +426,8 @@ public class MainActivity extends AppCompatActivity {
 
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         Event event = doc.toObject(Event.class);
-                        if (event == null) continue;
+                        if (event == null)
+                            continue;
 
                         // Store event ID for the join button
                         event.setId(doc.getId());
@@ -422,10 +435,11 @@ public class MainActivity extends AppCompatActivity {
                         allEvents.add(event);
                     }
 
-// Draw all events normally (no filter yet)
+                    // Draw all events normally (no filter yet)
                     renderEvents(allEvents);
                 });
     }
+
     private void renderEvents(List<Event> list) {
         eventsContainer.removeAllViews();
 
@@ -438,6 +452,9 @@ public class MainActivity extends AppCompatActivity {
             eventsContainer.addView(empty);
             return;
         }
+
+        String uid = FirebaseAuth.getInstance().getUid();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         for (Event event : list) {
             View card = getLayoutInflater()
@@ -460,6 +477,24 @@ public class MainActivity extends AppCompatActivity {
                 img.setImageResource(R.drawable.ic_image_icon);
             }
 
+            // Check if user is already in waiting list
+            if (uid != null) {
+                db.collection("events")
+                        .document(event.getId())
+                        .collection("waitingList")
+                        .document(uid)
+                        .get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists()) {
+                                joinButton.setText("View Waiting List");
+                            } else {
+                                joinButton.setText("Join Waiting List");
+                            }
+                        });
+            } else {
+                joinButton.setText("Join Waiting List");
+            }
+
             joinButton.setOnClickListener(v -> {
                 openWaitingRoom(event.getId());
             });
@@ -467,6 +502,7 @@ public class MainActivity extends AppCompatActivity {
             eventsContainer.addView(card);
         }
     }
+
     private void filterEvents(String keyword) {
         keyword = keyword.toLowerCase().trim();
 
@@ -474,16 +510,14 @@ public class MainActivity extends AppCompatActivity {
 
         for (Event e : allEvents) {
 
-            boolean matchesKeyword =
-                    keyword.isEmpty() ||
-                            e.getName().toLowerCase().contains(keyword) ||
-                            e.getDescription().toLowerCase().contains(keyword);
+            boolean matchesKeyword = keyword.isEmpty() ||
+                    e.getName().toLowerCase().contains(keyword) ||
+                    e.getDescription().toLowerCase().contains(keyword);
 
             String eventDate = e.getFormattedDateAndLocation();
 
-            boolean matchesDate =
-                    (selectedDate == null) ||   // no date filter → always true
-                            eventDate.contains(selectedDate);
+            boolean matchesDate = (selectedDate == null) || // no date filter → always true
+                    eventDate.contains(selectedDate);
 
             if (matchesKeyword && matchesDate) {
                 filtered.add(e);

@@ -41,8 +41,8 @@ public class WaitingFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_waiting_list, container, false);
     }
 
@@ -56,7 +56,6 @@ public class WaitingFragment extends Fragment {
 
         Button drawButton = view.findViewById(R.id.btnDraw);
         Button notifyButton = view.findViewById(R.id.btnNotifyAll);
-
 
         if (eventId == null) {
             Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -104,8 +103,10 @@ public class WaitingFragment extends Fragment {
                                         joinDate = dateFormat.format(doc.getTimestamp("timestamp").toDate());
                                     }
 
-                                    if (name == null) name = "Unnamed User";
-                                    if (email == null) email = "No email";
+                                    if (name == null)
+                                        name = "Unnamed User";
+                                    if (email == null)
+                                        email = "No email";
 
                                     addEntrantCard(name, email, joinDate, "Waiting");
                                 })
@@ -131,7 +132,7 @@ public class WaitingFragment extends Fragment {
         final EditText input = new EditText(getContext());
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
         input.setHint("Enter number to draw");
-        input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(3)});
+        input.setFilters(new InputFilter[] { new InputFilter.LengthFilter(3) });
 
         new AlertDialog.Builder(getContext())
                 .setTitle("Run Draw")
@@ -151,7 +152,8 @@ public class WaitingFragment extends Fragment {
                     }
 
                     if (drawCount > currentWaitingEntrants.size()) {
-                        Toast.makeText(getContext(), "Cannot draw more than " + currentWaitingEntrants.size(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Cannot draw more than " + currentWaitingEntrants.size(),
+                                Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -162,32 +164,28 @@ public class WaitingFragment extends Fragment {
     }
 
     private void showNotificationDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Notify Waiting Users");
+        // Fetch event name first, then send notification
+        db.collection("events").document(eventId)
+                .get()
+                .addOnSuccessListener(eventDoc -> {
+                    String eventName = eventDoc.getString("name");
+                    if (eventName == null)
+                        eventName = "this event";
 
-        final EditText input = new EditText(getContext());
-        input.setHint("Enter custom message (optional)");
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-        input.setMinLines(3);
-        builder.setView(input);
-
-        builder.setPositiveButton("Send", (dialog, which) -> {
-            String message = input.getText().toString().trim();
-            if (message.isEmpty()) {
-                message = "There is an update regarding the event you are waiting on.";
-            }
-            sendNotificationToAllWaiting(message);
-        });
-
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-        builder.show();
+                    String message = "You are on the waiting list for: " + eventName;
+                    sendNotificationToAllWaiting(message);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to load event info", Toast.LENGTH_SHORT).show();
+                });
     }
 
     /**
      * Randomly select users from the waiting list and move them to selected list
      */
     private void runDraw(int count) {
-        if (eventId == null) return;
+        if (eventId == null)
+            return;
 
         if (currentWaitingEntrants.isEmpty()) {
             Toast.makeText(getContext(), "No entrants in waiting list.", Toast.LENGTH_SHORT).show();
@@ -205,7 +203,6 @@ public class WaitingFragment extends Fragment {
             data.put("userId", userId);
             data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
             data.put("selected", true);
-
 
             com.google.firebase.firestore.WriteBatch batch = db.batch();
 
@@ -231,12 +228,11 @@ public class WaitingFragment extends Fragment {
             batch.commit()
                     .addOnSuccessListener(unused -> {
                         currentWaitingEntrants.remove(userId);
-                        loadWaitingEntrants();  // refresh UI
+                        loadWaitingEntrants(); // refresh UI
                     })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(getContext(),
-                                    "Failed to move entrant: " + e.getMessage(),
-                                    Toast.LENGTH_SHORT).show());
+                    .addOnFailureListener(e -> Toast.makeText(getContext(),
+                            "Failed to move entrant: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show());
         }
 
         Toast.makeText(getContext(),
@@ -262,13 +258,15 @@ public class WaitingFragment extends Fragment {
                     // Fetch profile settings for each user
                     for (DocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
-                        if (userId == null) continue;
+                        if (userId == null)
+                            continue;
 
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
                                     Boolean enabled = profile.getBoolean("notificationsEnabled");
-                                    if (enabled == null) enabled = true;
+                                    if (enabled == null)
+                                        enabled = true;
 
                                     if (enabled) {
                                         userIds.add(userId);
@@ -290,13 +288,15 @@ public class WaitingFragment extends Fragment {
                                 .get()
                                 .addOnSuccessListener(eventDoc -> {
                                     String eventName = eventDoc.getString("name");
-                                    if (eventName == null) eventName = "Event Update";
+                                    if (eventName == null)
+                                        eventName = "Event Update";
 
                                     com.example.yellow.utils.NotificationManager.sendNotification(
                                             getContext(),
                                             eventId,
                                             eventName,
                                             message,
+                                            "waiting_list", // Use custom card layout
                                             userIds,
                                             new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
                                                 @Override
@@ -312,8 +312,7 @@ public class WaitingFragment extends Fragment {
                                                             "Failed to send: " + e.getMessage(),
                                                             Toast.LENGTH_SHORT).show();
                                                 }
-                                            }
-                                    );
+                                            });
                                 });
 
                     }, 500); // 0.5 sec delay for profile reads
@@ -330,11 +329,12 @@ public class WaitingFragment extends Fragment {
     }
 
     private void addEntrantCard(String name,
-                                String email,
-                                String joinDate,
-                                String status) {
+            String email,
+            String joinDate,
+            String status) {
 
-        if (!isSafe()) return;
+        if (!isSafe())
+            return;
 
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         View card = inflater.inflate(R.layout.item_entrant_card, container, false);

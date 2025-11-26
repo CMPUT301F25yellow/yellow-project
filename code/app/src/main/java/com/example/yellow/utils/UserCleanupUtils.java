@@ -52,7 +52,36 @@ public class UserCleanupUtils {
                         deletionTasks.add(db.collection("events").document(eventId).delete());
                     }
 
-                    // Step 3: Delete user profile and role documents
+                    // Step 3: Delete user notifications subcollection
+                    deletionTasks.add(
+                            deleteCollection(db.collection("profiles").document(uid).collection("notifications"), db));
+
+                    // Step 4: Remove user from all waiting lists (Collection Group Query)
+                    deletionTasks.add(db.collectionGroup("waitingList")
+                            .whereEqualTo("userId", uid)
+                            .get()
+                            .continueWithTask(queryTask -> {
+                                if (!queryTask.isSuccessful()) {
+                                    return Tasks.forResult(null);
+                                }
+
+                                List<Task<Void>> updates = new ArrayList<>();
+                                for (DocumentSnapshot doc : queryTask.getResult()) {
+                                    // Delete waiting list entry
+                                    updates.add(doc.getReference().delete());
+
+                                    // Decrement event count
+                                    com.google.firebase.firestore.DocumentReference eventRef = doc.getReference()
+                                            .getParent().getParent();
+                                    if (eventRef != null) {
+                                        updates.add(eventRef.update("waitlisted",
+                                                com.google.firebase.firestore.FieldValue.increment(-1)));
+                                    }
+                                }
+                                return Tasks.whenAll(updates);
+                            }));
+
+                    // Step 5: Delete user profile and role documents
                     WriteBatch batch = db.batch();
                     batch.delete(db.collection("profiles").document(uid));
                     batch.delete(db.collection("roles").document(uid));

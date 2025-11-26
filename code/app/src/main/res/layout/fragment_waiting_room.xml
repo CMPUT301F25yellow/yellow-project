@@ -69,7 +69,7 @@
             <ImageView
                 android:id="@+id/eventBanner"
                 android:layout_width="match_parent"
-                android:layout_height="380dp"
+                android:layout_height="300dp"
                 android:scaleType="fitCenter"
                 android:adjustViewBounds="true"
                 android:src="@drawable/ic_image_icon"
@@ -123,6 +123,21 @@
                     android:textSize="14sp" />
             </LinearLayout>
         </LinearLayout>
+
+        <!-- Lottery Criteria and Guidelines Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLotteryGuidelines"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Lottery Criteria and Guidelines"
+            android:textColor="@android:color/black"
+            android:textSize="13sp"
+            android:paddingHorizontal="16dp"
+            android:layout_marginBottom="20dp"
+            android:backgroundTint="@android:color/white"
+            app:cornerRadius="8dp" />
 
         <!-- Waiting Room Icon -->
         <ImageView
