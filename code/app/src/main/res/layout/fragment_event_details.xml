@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp" />
 
-        <!-- App Bar -->
+        <!-- Header -->
         <RelativeLayout
             android:id="@+id/eventDetailsHeader"
             android:layout_width="match_parent"
@@ -27,7 +27,6 @@
             android:paddingVertical="12dp"
             android:paddingHorizontal="16dp">
 
-            <!-- Back Arrow -->
             <ImageView
                 android:id="@+id/backArrow"
                 android:layout_width="28dp"
@@ -39,7 +38,6 @@
                 android:clickable="true"
                 android:focusable="true" />
 
-            <!-- Title -->
             <TextView
                 android:id="@+id/headerTitle"
                 android:layout_width="wrap_content"
@@ -64,13 +62,14 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
                 app:cardBackgroundColor="#1E1E1E">
+
                 <ImageView
                     android:id="@+id/eventBanner"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
-                    android:contentDescription="@string/placeholder"
                     android:scaleType="centerCrop"
                     tools:src="@drawable/ic_image_icon" />
+
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Event Title and Organizer -->
@@ -89,11 +88,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:text="Downtown Recreation Centre"
-                android:textColor="#B0B0B0"
+                android:textColor="@color/subtextgrey"
                 android:textSize="14sp"
                 android:layout_marginTop="4dp"/>
 
-            <!-- Event Details -->
+            <!-- Info Rows -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -106,24 +105,22 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingHorizontal="12dp"
                     android:layout_marginBottom="8dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:contentDescription="image"
-                        android:layout_marginEnd="8dp"
-                        android:src="@drawable/ic_clock"/>
+                        android:src="@drawable/ic_calendar_today"
+                        app:tint="@color/icon_purple" />
 
                     <TextView
                         android:id="@+id/eventDateTime"
-                        android:text="July 15 - 17, 2024"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        tools:text="July 15 - 17, 2024"
                         android:textColor="@color/white"
-                        android:textSize="14sp" />
-
+                        android:textSize="14sp"
+                        android:layout_marginStart="12dp"/>
                 </LinearLayout>
 
                 <!-- Location Row -->
@@ -132,23 +129,22 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingHorizontal="12dp"
                     android:layout_marginBottom="8dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:contentDescription="image"
-                        android:layout_marginEnd="8dp"
-                        android:src="@drawable/ic_pin" />
+                        android:src="@drawable/ic_pin"
+                        app:tint="@color/icon_purple" />
 
                     <TextView
                         android:id="@+id/eventLocation"
-                        android:text="Central Park Amphitheater, Downtown"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        tools:text="Central Park Amphitheater, Downtown"
                         android:textColor="@color/white"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:layout_marginStart="12dp"/>
 
                 </LinearLayout>
 
@@ -159,16 +155,23 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingHorizontal="12dp"
                     android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_warning_outlined"
+                        app:tint="@color/icon_purple" />
 
                     <TextView
                         android:id="@+id/eventGeolocation"
-                        tools:text="Geolocation is required for check-in"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        tools:text="Geolocation is required for check-in"
                         android:textColor="@color/white"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:layout_marginStart="12dp"/>
+
                 </LinearLayout>
 
                 <!-- Max Entrants Row -->
@@ -177,39 +180,53 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingHorizontal="12dp"
                     android:layout_marginBottom="8dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_groups"
+                        app:tint="@color/icon_purple" />
 
                     <TextView
                         android:id="@+id/eventMaxEntrants"
-                        android:text="Up to 1000 entrants"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        tools:text="Up to 1000 entrants"
                         android:textColor="@color/white"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:layout_marginStart="12dp"/>
+
                 </LinearLayout>
 
                 <!-- Current Entrants Row -->
                 <LinearLayout
+                    android:id="@+id/entrantsRow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="12dp"
-                    android:layout_marginBottom="8dp">
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_group"
+                        app:tint="@color/icon_purple" />
 
                     <TextView
                         android:id="@+id/eventEntrants"
-                        android:text="Currently 0 entrants"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        tools:text="246 entrants currently in waiting list"
                         android:textColor="@color/white"
-                        android:textSize="14sp" />
+                        android:textSize="14sp"
+                        android:layout_marginStart="12dp"/>
+
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- Event Description Header -->
+            <!-- About this event -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -219,57 +236,71 @@
                 android:fontFamily="sans-serif-medium"
                 android:layout_marginTop="24dp"/>
 
-            <!-- Event Description Header -->
             <TextView
                 android:id="@+id/eventDescription"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                tools:text="Join us for an unforgettable evening of live music..."
+                tools:text="@string/test_description"
                 android:textColor="#E0E0E0"
-                android:lineSpacingExtra="4dp"/>
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="8dp"/>
 
             <!-- Lottery Criteria -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
+            <!-- Button taken from fragment_waiting_room.xml -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLotteryGuidelines"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                app:cardBackgroundColor="#2A2A2A"
-                app:cardCornerRadius="8dp">
+                android:layout_gravity="center_horizontal"
+                android:text="Lottery Criteria and Guidelines"
+                android:textColor="@android:color/black"
+                android:textSize="13sp"
+                android:paddingHorizontal="16dp"
+                android:layout_marginBottom="20dp"
+                android:backgroundTint="@android:color/white"
+                app:cornerRadius="8dp" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+<!--            <com.google.android.material.card.MaterialCardView-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="24dp"-->
+<!--                app:cardBackgroundColor="#2A2A2A"-->
+<!--                app:cardCornerRadius="8dp">-->
 
-                    <!-- Header -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Lottery Criteria &amp; Guidelines"
-                        android:textColor="@color/white"
-                        android:textSize="14sp"
-                        android:gravity="center_vertical"/>
+<!--                <LinearLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:orientation="vertical"-->
+<!--                    android:padding="16dp">-->
 
-                    <!-- Text -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/lottery_criteria"
-                        android:textColor="#E0E0E0"
-                        android:textSize="13sp" />
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="Lottery Criteria &amp; Guidelines"-->
+<!--                        android:textColor="@color/white"-->
+<!--                        android:textSize="14sp"-->
+<!--                        android:drawablePadding="8dp"-->
+<!--                        android:gravity="center_vertical"-->
+<!--                        app:drawableStartCompat="@drawable/ic_info" />-->
 
-                </LinearLayout>
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_marginTop="12dp"-->
+<!--                        android:text="@string/lottery_criteria"-->
+<!--                        android:textColor="#E0E0E0"-->
+<!--                        android:textSize="13sp" />-->
 
-            </com.google.android.material.card.MaterialCardView>
+<!--                </LinearLayout>-->
+<!--            </com.google.android.material.card.MaterialCardView>-->
 
             <!-- Spacer to push button to bottom -->
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+<!--            <View-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="0dp"-->
+<!--                android:layout_weight="1" />-->
 
         </LinearLayout>
 
@@ -286,11 +317,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Join Waiting List"
-                android:backgroundTint="@color/white"
-                android:textColor="@android:color/black"
+                android:backgroundTint="@color/pink_bg"
+                android:textColor="@android:color/white"
                 android:paddingVertical="14dp"/>
 
-            <!-- Opt out of notification button (not yet implemented) -->
 <!--            <com.google.android.material.switchmaterial.SwitchMaterial-->
 <!--                android:id="@+id/notificationSwitch"-->
 <!--                android:layout_width="wrap_content"-->

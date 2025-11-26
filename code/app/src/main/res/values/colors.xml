@@ -34,6 +34,8 @@
     <color name="light_grey">#2C2C2C</color>
     <color name="light_grey_text">#999999</color>
     <color name="pink_bg">#9C27B0</color>
+    <color name="icon_purple">#C194F7</color>
+    <color name="subtextgrey">#B0B0B0</color>
 
     <!-- color for notifs switch -->
     <style name="CustomSwitchTheme">
