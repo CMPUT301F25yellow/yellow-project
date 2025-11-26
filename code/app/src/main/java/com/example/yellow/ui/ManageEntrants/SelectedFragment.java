@@ -90,11 +90,12 @@ public class SelectedFragment extends Fragment {
 
                     if (!isSafe()) return;
 
+                    if (!isSafe()) return;
+
                     container.removeAllViews();
                     selectedUserIds.clear();
 
-                    if (e != null || snapshot == null || snapshot.isEmpty()) {
-
+                    if (snapshot == null || snapshot.isEmpty()) {
                         if (!isSafe()) return;
 
                         TextView empty = new TextView(requireContext());
@@ -111,12 +112,11 @@ public class SelectedFragment extends Fragment {
                         if (!isSafe()) return;
 
                         String userId = doc.getString("userId");
-                        if (userId == null) continue;
+                        if (userId == null || userId.isEmpty()) continue;
 
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
-
                                     if (!isSafe()) return;
 
                                     String name = profile.getString("fullName");
@@ -126,20 +126,21 @@ public class SelectedFragment extends Fragment {
 
                                     String date = extractTimestamp(doc);
 
-                                    addEntrantCard(userId, name, email, date, "Selected");
+                                    addEntrantCard(userId, name, email, dateSelected, "Selected");
                                 })
                                 .addOnFailureListener(err -> {
-
                                     if (!isSafe()) return;
 
-                                    addEntrantCard(userId,
+                                    addEntrantCard(
+                                            userId,
                                             "Unknown",
                                             "Error loading profile",
                                             "N/A",
-                                            "Selected");
+                                            "Selected"
+                                    );
                                 });
-                    }
-                });
+                    }   // ← CLOSES the for-loop
+                });      // ← CLOSES addSnapshotListener
     }
 
     private void showNotificationDialog() {
