@@ -79,7 +79,7 @@ public class SelectedFragment extends Fragment {
     /** loads all selected entrants in real time from Firestore */
     private void loadSelectedEntrants() {
         container.removeAllViews();
-        selectedUserIds.clear(); // reset selection whenever we reload
+        selectedUserIds.clear();
 
         db.collection("events").document(eventId)
                 .collection("selected")
@@ -89,13 +89,17 @@ public class SelectedFragment extends Fragment {
                         return;
                     }
 
+                    if (!isSafe()) return;
+
                     container.removeAllViews();
                     selectedUserIds.clear();
 
                     if (snapshot == null || snapshot.isEmpty()) {
-                        TextView empty = new TextView(getContext());
+                        if (!isSafe()) return;
+
+                        TextView empty = new TextView(requireContext());
                         empty.setText("No selected entrants yet");
-                        empty.setTextColor(getResources().getColor(R.color.hinty));
+                        empty.setTextColor(requireContext().getColor(R.color.hinty));
                         empty.setPadding(16, 24, 16, 24);
                         container.addView(empty);
                         return;
@@ -103,12 +107,13 @@ public class SelectedFragment extends Fragment {
 
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         String userId = doc.getString("userId");
-                        if (userId == null || userId.isEmpty())
-                            continue;
+                        if (userId == null || userId.isEmpty()) continue;
 
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
+                                    if (!isSafe()) return;
+
                                     String name = profile.getString("fullName");
                                     String email = profile.getString("email");
                                     if (name == null) name = "Unnamed Entrant";
@@ -122,17 +127,21 @@ public class SelectedFragment extends Fragment {
                                         dateSelected = dateFormat.format(new Date((Long) ts));
                                     }
 
-                                    // ⬇️ pass userId into the card now
                                     addEntrantCard(userId, name, email, dateSelected, "Selected");
                                 })
-                                .addOnFailureListener(err ->
-                                        addEntrantCard(userId,
-                                                "Unknown",
-                                                "Error loading profile",
-                                                "N/A",
-                                                "Selected"));
-                    }
-                });
+                                .addOnFailureListener(err -> {
+                                    if (!isSafe()) return;
+
+                                    addEntrantCard(
+                                            userId,
+                                            "Unknown",
+                                            "Error loading profile",
+                                            "N/A",
+                                            "Selected"
+                                    );
+                                });
+                    }   // ← CLOSES the for-loop
+                });      // ← CLOSES addSnapshotListener
     }
 
 
