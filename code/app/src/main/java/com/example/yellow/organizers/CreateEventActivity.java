@@ -311,7 +311,7 @@ public class CreateEventActivity extends AppCompatActivity {
 
             // --- 3. Generate Event ID and Deep Link ---
             String eventId = FirebaseManager.getInstance().getNewEventId();
-            String deepLink = "https://yellow-app.com/event/" + eventId;
+            String deepLink = "yellow://eventdetails/" + eventId;
             Log.d(TAG, "Generated Deep Link: " + deepLink);
 
             // --- 4. Generate QR Code Bitmap ---
