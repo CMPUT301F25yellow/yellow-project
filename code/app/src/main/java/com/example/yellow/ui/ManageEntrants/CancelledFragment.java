@@ -17,28 +17,25 @@ import androidx.fragment.app.Fragment;
 import com.example.yellow.R;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 public class CancelledFragment extends Fragment {
 
     private FirebaseFirestore db;
     private LinearLayout container;
     private String eventId;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    private final SimpleDateFormat dateFormat =
+            new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-            @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
-        // Reuse SAME layout as Selected tab
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_cancelled_list, container, false);
     }
 
@@ -51,9 +48,11 @@ public class CancelledFragment extends Fragment {
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
 
         if (eventId == null) {
-            Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            if (isSafe())
+                Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
             return;
         }
+
         loadCancelledEntrants();
 
         Button btnNotify = view.findViewById(R.id.btnNotifyCancelled);
@@ -61,28 +60,43 @@ public class CancelledFragment extends Fragment {
     }
 
     private void loadCancelledEntrants() {
+        if (!isSafe()) return;
+
         container.removeAllViews();
 
         db.collection("events").document(eventId)
                 .collection("cancelled")
                 .addSnapshotListener((snapshot, e) -> {
+
+                    if (!isSafe()) return;
+
                     container.removeAllViews();
 
                     if (e != null || snapshot == null || snapshot.isEmpty()) {
-                        TextView empty = new TextView(getContext());
+
+                        if (!isSafe()) return;
+
+                        TextView empty = new TextView(requireContext());
                         empty.setText("No cancelled entrants");
-                        empty.setTextColor(getResources().getColor(R.color.hinty));
+                        empty.setTextColor(requireContext().getColor(R.color.hinty));
                         empty.setPadding(16, 24, 16, 24);
+
                         container.addView(empty);
                         return;
                     }
 
                     for (DocumentSnapshot doc : snapshot) {
+
+                        if (!isSafe()) return;
+
                         String userId = doc.getString("userId");
 
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
+
+                                    if (!isSafe()) return;
+
                                     String name = profile.getString("fullName");
                                     String email = profile.getString("email");
                                     String date = extractTimestamp(doc);
@@ -91,22 +105,27 @@ public class CancelledFragment extends Fragment {
                                 });
                     }
                 });
-
     }
 
     private void showNotificationDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        if (!isSafe()) return;
+
+        AlertDialog.Builder builder =
+                new AlertDialog.Builder(requireContext());
         builder.setTitle("Notify Cancelled Entrants");
 
-        final android.widget.EditText input = new android.widget.EditText(getContext());
+        final android.widget.EditText input =
+                new android.widget.EditText(requireContext());
         input.setHint("Enter message");
         builder.setView(input);
 
         builder.setPositiveButton("Send", (dialog, which) -> {
+            if (!isSafe()) return;
+
             String message = input.getText().toString().trim();
-            if (message.isEmpty()) {
+            if (message.isEmpty())
                 message = "Event update from organizer.";
-            }
+
             sendNotificationToCancelled(message);
         });
 
@@ -120,15 +139,17 @@ public class CancelledFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(snapshot -> {
 
+                    if (!isSafe()) return;
+
                     if (snapshot.isEmpty()) {
                         Toast.makeText(getContext(),
-                                "No cancelled entrants to notify", Toast.LENGTH_SHORT).show();
+                                "No cancelled entrants to notify",
+                                Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     java.util.List<String> userIds = new java.util.ArrayList<>();
 
-                    // Fetch each profile and check notification settings
                     for (DocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
                         if (userId == null) continue;
@@ -136,17 +157,19 @@ public class CancelledFragment extends Fragment {
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
-                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
-                                    if (enabled == null) enabled = true; // default ON
 
-                                    if (enabled) {
-                                        userIds.add(userId);
-                                    }
+                                    if (!isSafe()) return;
+
+                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
+                                    if (enabled == null) enabled = true;
+
+                                    if (enabled) userIds.add(userId);
                                 });
                     }
 
-                    // Delay for async Firestore profile lookups
                     new android.os.Handler().postDelayed(() -> {
+
+                        if (!isSafe()) return;
 
                         if (userIds.isEmpty()) {
                             Toast.makeText(getContext(),
@@ -155,10 +178,12 @@ public class CancelledFragment extends Fragment {
                             return;
                         }
 
-                        // Fetch event name
                         db.collection("events").document(eventId)
                                 .get()
                                 .addOnSuccessListener(eventDoc -> {
+
+                                    if (!isSafe()) return;
+
                                     String eventName = eventDoc.getString("name");
                                     if (eventName == null) eventName = "Unknown Event";
 
@@ -171,26 +196,31 @@ public class CancelledFragment extends Fragment {
                                             new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
                                                 @Override
                                                 public void onSuccess() {
-                                                    Toast.makeText(getContext(),
-                                                            "Notification sent!",
-                                                            Toast.LENGTH_SHORT).show();
+                                                    if (isSafe())
+                                                        Toast.makeText(getContext(),
+                                                                "Notification sent!",
+                                                                Toast.LENGTH_SHORT).show();
                                                 }
 
                                                 @Override
                                                 public void onFailure(Exception e) {
-                                                    Toast.makeText(getContext(),
-                                                            "Failed to send: " + e.getMessage(),
-                                                            Toast.LENGTH_SHORT).show();
+                                                    if (isSafe())
+                                                        Toast.makeText(getContext(),
+                                                                "Failed to send: " + e.getMessage(),
+                                                                Toast.LENGTH_SHORT).show();
                                                 }
                                             });
                                 });
 
-                    }, 500); // half-second delay to allow profile fetches to finish
+                    }, 500);
+
                 })
-                .addOnFailureListener(e ->
+                .addOnFailureListener(e -> {
+                    if (isSafe())
                         Toast.makeText(getContext(),
                                 "Failed to fetch cancelled entrants",
-                                Toast.LENGTH_SHORT).show());
+                                Toast.LENGTH_SHORT).show();
+                });
     }
 
     private String extractTimestamp(DocumentSnapshot doc) {
@@ -201,10 +231,8 @@ public class CancelledFragment extends Fragment {
         } else if (ts instanceof Long) {
             return dateFormat.format(new Date((Long) ts));
         }
-
         return "Unknown";
     }
-
 
     private void addEntrantCard(String name, String email, String date, String status) {
         if (!isSafe()) return;
@@ -223,6 +251,7 @@ public class CancelledFragment extends Fragment {
 
         container.addView(card);
     }
+
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }

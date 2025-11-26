@@ -149,116 +149,144 @@ public class NotificationFragment extends Fragment {
     }
 
     private void acceptSelection(String eventId, String notificationId) {
+
         String uid = FirebaseAuth.getInstance().getUid();
         if (uid == null) return;
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference eventRef = db.collection("events").document(eventId);
+        DocumentReference cancelledRef = eventRef.collection("cancelled").document(uid);
 
-        db.runTransaction(transaction -> {
+        // First check: user is not cancelled already
+        cancelledRef.get().addOnSuccessListener(cancelDoc -> {
 
-                    DocumentSnapshot eventDoc = transaction.get(eventRef);
-                    Long enrolled = eventDoc.getLong("enrolled");
-                    Long max = eventDoc.getLong("maxEntrants");
+            if (cancelDoc.exists()) {
+                Toast.makeText(getContext(),
+                        "You cannot enroll because you previously cancelled.",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                    if (enrolled == null) enrolled = 0L;
-                    if (max == null) max = Long.MAX_VALUE;
+            // Now check capacity before running the transaction
+            eventRef.get().addOnSuccessListener(eventDoc -> {
+                Long enrolled = eventDoc.getLong("enrolled");
+                Long max = eventDoc.getLong("maxEntrants");
 
-                    //  No space left
-                    if (enrolled >= max) {
-                        throw new FirebaseFirestoreException(
-                                "Event is full",
-                                FirebaseFirestoreException.Code.ABORTED
-                        );
-                    }
+                if (enrolled == null) enrolled = 0L;
+                if (max == null || max <= 0) max = Long.MAX_VALUE;  // Unlimited capacity
 
-                    //  Remove from selected
-                    transaction.delete(eventRef.collection("selected").document(uid));
+                if (enrolled >= max) {
+                    Toast.makeText(getContext(), "Event is full!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                    // Add to enrolled
-                    transaction.set(
-                            eventRef.collection("enrolled").document(uid),
-                            new HashMap<String, Object>() {{
-                                put("userId", uid);
-                                put("timestamp", FieldValue.serverTimestamp());
-                            }}
-                    );
+                db.runTransaction(transaction -> {
 
-                    // Increment enrolled counter
-                    transaction.update(eventRef, "enrolled", enrolled + 1);
+                            DocumentSnapshot freshDoc = transaction.get(eventRef);
+                            Long tEnrolled = freshDoc.getLong("enrolled");
+                            Long tMax = freshDoc.getLong("maxEntrants");
 
-                    //  Remove the notification
-                    DocumentReference notifRef = db.collection("profiles")
-                            .document(uid)
-                            .collection("notifications")
-                            .document(notificationId);
-                    transaction.delete(notifRef);
+                            if (tEnrolled == null) tEnrolled = 0L;
+                            if (tMax == null || tMax <= 0) tMax = Long.MAX_VALUE;
 
-                    return null;
-                })
-                .addOnSuccessListener(v ->
-                        Toast.makeText(getContext(), "You’ve successfully enrolled!", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Event is full!", Toast.LENGTH_SHORT).show());
+                            if (tEnrolled >= tMax) {
+                                throw new FirebaseFirestoreException(
+                                        "Event is full",
+                                        FirebaseFirestoreException.Code.ABORTED
+                                );
+                            }
+
+                            // Remove from selected
+                            transaction.delete(eventRef.collection("selected").document(uid));
+
+                            // Add to enrolled
+                            transaction.set(
+                                    eventRef.collection("enrolled").document(uid),
+                                    new HashMap<String, Object>() {{
+                                        put("userId", uid);
+                                        put("timestamp", FieldValue.serverTimestamp());
+                                    }}
+                            );
+
+                            // Increment counter
+                            transaction.update(eventRef, "enrolled", tEnrolled + 1);
+
+                            // Remove notification
+                            DocumentReference notifRef = db.collection("profiles")
+                                    .document(uid)
+                                    .collection("notifications")
+                                    .document(notificationId);
+                            transaction.delete(notifRef);
+
+                            return null;
+
+                        }).addOnSuccessListener(v ->
+                                Toast.makeText(getContext(), "You’ve successfully enrolled!", Toast.LENGTH_SHORT).show())
+                        .addOnFailureListener(e ->
+                                Toast.makeText(getContext(), "Event is full!", Toast.LENGTH_SHORT).show());
+
+            });
+
+        });
     }
 
     private void declineSelection(String eventId, String notificationId) {
+
         String uid = FirebaseAuth.getInstance().getUid();
         if (uid == null) return;
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference eventRef = db.collection("events").document(eventId);
 
-
-        // get next waitlisted user via helper function
         getNextWaitlistedUser(eventId, (nextUserId, nextDoc) -> {
 
+            db.runTransaction(transaction -> {
 
-            //  then run transaction
-            db.runTransaction((Transaction.Function<Void>) transaction -> {
-
-                // Remove from selected
-                DocumentReference selectedDoc =
+                DocumentReference selectedRef =
                         eventRef.collection("selected").document(uid);
-                transaction.delete(selectedDoc);
 
-                // Add user to cancelled
-                DocumentReference cancelledDoc =
+                DocumentReference enrolledRef =
+                        eventRef.collection("enrolled").document(uid);
+
+                DocumentReference cancelledRef =
                         eventRef.collection("cancelled").document(uid);
 
+                // ALWAYS delete user from selected
+                transaction.delete(selectedRef);
+
+                // NEW: delete user from enrolled if they were there
+                transaction.delete(enrolledRef);
+
+                // Add to cancelled
                 Map<String, Object> cancelData = new HashMap<>();
                 cancelData.put("userId", uid);
                 cancelData.put("timestamp", FieldValue.serverTimestamp());
+                transaction.set(cancelledRef, cancelData);
 
-                transaction.set(cancelledDoc, cancelData);
-
-                // Promote next user if one exists
+                // Promote next user if any
                 if (nextUserId != null && nextDoc != null) {
-                    // Remove from waiting list
+
+                    // Remove them from waiting list
                     transaction.delete(nextDoc.getReference());
 
                     // Add to selected
-                    DocumentReference promotedDoc =
+                    DocumentReference promotedRef =
                             eventRef.collection("selected").document(nextUserId);
 
                     Map<String, Object> promoteData = new HashMap<>();
                     promoteData.put("userId", nextUserId);
                     promoteData.put("timestamp", FieldValue.serverTimestamp());
-
-                    transaction.set(promotedDoc, promoteData);
+                    transaction.set(promotedRef, promoteData);
                 }
 
                 return null;
+
             }).addOnSuccessListener(v -> {
-
-
-                // Outside of transaction — notify the next user
 
                 if (nextUserId != null) {
                     sendRejoinNotification(eventId, nextUserId);
                 }
 
-                // Remove old notification
                 removeNotification(notificationId);
 
                 Toast.makeText(getContext(),
@@ -266,9 +294,11 @@ public class NotificationFragment extends Fragment {
                         Toast.LENGTH_SHORT).show();
 
             }).addOnFailureListener(e -> {
+
                 Toast.makeText(getContext(),
                         "Failed to process decline: " + e.getMessage(),
                         Toast.LENGTH_LONG).show();
+
             });
         });
     }

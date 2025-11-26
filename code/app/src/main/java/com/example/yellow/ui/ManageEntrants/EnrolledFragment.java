@@ -25,8 +25,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,9 +42,8 @@ public class EnrolledFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-            @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
-        // Reuse SAME layout as Selected tab
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_enrolled_entrants, container, false);
     }
 
@@ -58,17 +55,16 @@ public class EnrolledFragment extends Fragment {
         container = view.findViewById(R.id.enrolledContainer);
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
 
-        // REMOVE BUTTON — Cancelled tab should NOT have notify button
         View btn = view.findViewById(R.id.btnSendNotification);
-        if (btn != null)
-            btn.setVisibility(View.GONE);
+        if (btn != null) btn.setVisibility(View.GONE);
 
         if (eventId == null) {
-            Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
+            if (isSafe()) Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
             return;
         }
 
         loadEnrolledEntrants();
+
         Button btnNotify = view.findViewById(R.id.btnNotifyEnrolled);
         btnNotify.setOnClickListener(v -> showNotificationDialog());
 
@@ -77,14 +73,15 @@ public class EnrolledFragment extends Fragment {
     }
 
     private void exportEnrolledCSV() {
-
         db.collection("events").document(eventId)
                 .collection("enrolled")
                 .get()
                 .addOnSuccessListener(enrolledSnapshot -> {
 
+                    if (!isSafe()) return;
+
                     if (enrolledSnapshot.isEmpty()) {
-                        Toast.makeText(getContext(), "No enrolled entrants", Toast.LENGTH_SHORT).show();
+                        if (isSafe()) Toast.makeText(getContext(), "No enrolled entrants", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -96,7 +93,7 @@ public class EnrolledFragment extends Fragment {
                         String ts = extractTimestamp(doc);
 
                         if (userId == null) {
-                            if (counter.incrementAndGet() == enrolledSnapshot.size()) {
+                            if (counter.incrementAndGet() == enrolledSnapshot.size() && isSafe()) {
                                 writeToDownloadsAndShare(entrants);
                             }
                             continue;
@@ -105,6 +102,8 @@ public class EnrolledFragment extends Fragment {
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
+                                    if (!isSafe()) return;
+
                                     String name = profile.getString("fullName");
                                     String email = profile.getString("email");
 
@@ -115,21 +114,26 @@ public class EnrolledFragment extends Fragment {
                                     row.put("timestamp", ts);
                                     entrants.add(row);
 
-                                    if (counter.incrementAndGet() == enrolledSnapshot.size()) {
+                                    if (counter.incrementAndGet() == enrolledSnapshot.size() && isSafe()) {
                                         writeToDownloadsAndShare(entrants);
                                     }
                                 })
                                 .addOnFailureListener(e -> {
-                                    if (counter.incrementAndGet() == enrolledSnapshot.size()) {
+                                    if (counter.incrementAndGet() == enrolledSnapshot.size() && isSafe()) {
                                         writeToDownloadsAndShare(entrants);
                                     }
                                 });
                     }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Failed to load entrants", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    if (isSafe())
+                        Toast.makeText(getContext(), "Failed to load entrants", Toast.LENGTH_SHORT).show();
+                });
     }
+
     private void writeToDownloadsAndShare(java.util.List<Map<String, String>> rows) {
+        if (!isSafe()) return;
+
         if (rows.isEmpty()) {
             Toast.makeText(getContext(), "Nothing to export", Toast.LENGTH_SHORT).show();
             return;
@@ -151,7 +155,10 @@ public class EnrolledFragment extends Fragment {
 
         saveToDownloadsAndShare(csv.toString());
     }
+
     private void saveToDownloadsAndShare(String csvContent) {
+        if (!isSafe()) return;
+
         try {
             String fileName = "enrolled_export_" + eventId + ".csv";
 
@@ -160,21 +167,11 @@ public class EnrolledFragment extends Fragment {
             values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
             values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
 
-            Uri collection;
-
-            // Android 10+ (API 29+)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
-            }
-            // Android 7–9 fallback
-            else {
-                collection = MediaStore.Files.getContentUri("external");
-            }
-
+            Uri collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
             Uri uri = requireContext().getContentResolver().insert(collection, values);
 
             if (uri == null) {
-                Toast.makeText(getContext(), "Failed to create file", Toast.LENGTH_SHORT).show();
+                if (isSafe()) Toast.makeText(getContext(), "Failed to create file", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -182,14 +179,17 @@ public class EnrolledFragment extends Fragment {
                 outputStream.write(csvContent.getBytes());
             }
 
-            Toast.makeText(getContext(), "CSV saved to Downloads!", Toast.LENGTH_LONG).show();
-            shareCSVUri(uri);
+            if (isSafe()) Toast.makeText(getContext(), "CSV saved to Downloads!", Toast.LENGTH_LONG).show();
+            if (isSafe()) shareCSVUri(uri);
 
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Error saving file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            if (isSafe()) Toast.makeText(getContext(), "Error saving file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
     private void shareCSVUri(Uri uri) {
+        if (!isSafe()) return;
+
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/csv");
         intent.putExtra(Intent.EXTRA_STREAM, uri);
@@ -199,28 +199,42 @@ public class EnrolledFragment extends Fragment {
     }
 
     private void loadEnrolledEntrants() {
+        if (!isSafe()) return;
+
         container.removeAllViews();
 
         db.collection("events").document(eventId)
                 .collection("enrolled")
                 .addSnapshotListener((snapshot, e) -> {
+
+                    if (!isSafe()) return;
+
                     container.removeAllViews();
 
                     if (e != null || snapshot == null || snapshot.isEmpty()) {
-                        TextView empty = new TextView(getContext());
+
+                        if (!isSafe()) return;
+
+                        TextView empty = new TextView(requireContext());
                         empty.setText("No Enrolled entrants");
-                        empty.setTextColor(getResources().getColor(R.color.hinty));
+                        empty.setTextColor(requireContext().getColor(R.color.hinty));
                         empty.setPadding(16, 24, 16, 24);
+
                         container.addView(empty);
                         return;
                     }
 
                     for (DocumentSnapshot doc : snapshot) {
+
+                        if (!isSafe()) return;
+
                         String userId = doc.getString("userId");
 
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
+                                    if (!isSafe()) return;
+
                                     String name = profile.getString("fullName");
                                     String email = profile.getString("email");
                                     String date = extractTimestamp(doc);
@@ -232,18 +246,20 @@ public class EnrolledFragment extends Fragment {
     }
 
     private void showNotificationDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        if (!isSafe()) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Notify Enrolled Entrants");
 
-        final android.widget.EditText input = new android.widget.EditText(getContext());
+        final android.widget.EditText input = new android.widget.EditText(requireContext());
         input.setHint("Enter message");
         builder.setView(input);
 
         builder.setPositiveButton("Send", (dialog, which) -> {
+            if (!isSafe()) return;
+
             String message = input.getText().toString().trim();
-            if (message.isEmpty()) {
-                message = "Event update from organizer.";
-            }
+            if (message.isEmpty()) message = "Event update from organizer.";
             sendNotificationToEnrolled(message);
         });
 
@@ -257,6 +273,8 @@ public class EnrolledFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(snapshot -> {
 
+                    if (!isSafe()) return;
+
                     if (snapshot.isEmpty()) {
                         Toast.makeText(getContext(),
                                 "No enrolled entrants to notify", Toast.LENGTH_SHORT).show();
@@ -265,7 +283,6 @@ public class EnrolledFragment extends Fragment {
 
                     java.util.List<String> userIds = new java.util.ArrayList<>();
 
-                    // Fetch each profile and check notification settings
                     for (DocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
                         if (userId == null) continue;
@@ -273,17 +290,18 @@ public class EnrolledFragment extends Fragment {
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
-                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
-                                    if (enabled == null) enabled = true; // default ON
+                                    if (!isSafe()) return;
 
-                                    if (enabled) {
-                                        userIds.add(userId);
-                                    }
+                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
+                                    if (enabled == null) enabled = true;
+
+                                    if (enabled) userIds.add(userId);
                                 });
                     }
 
-                    // Delay to allow async Firestore profile reads to complete
                     new android.os.Handler().postDelayed(() -> {
+
+                        if (!isSafe()) return;
 
                         if (userIds.isEmpty()) {
                             Toast.makeText(getContext(),
@@ -291,10 +309,12 @@ public class EnrolledFragment extends Fragment {
                             return;
                         }
 
-                        // Fetch event name
                         db.collection("events").document(eventId)
                                 .get()
                                 .addOnSuccessListener(eventDoc -> {
+
+                                    if (!isSafe()) return;
+
                                     String eventName = eventDoc.getString("name");
                                     if (eventName == null) eventName = "Unknown Event";
 
@@ -307,24 +327,28 @@ public class EnrolledFragment extends Fragment {
                                             new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
                                                 @Override
                                                 public void onSuccess() {
-                                                    Toast.makeText(getContext(),
-                                                            "Notification sent!", Toast.LENGTH_SHORT).show();
+                                                    if (isSafe())
+                                                        Toast.makeText(getContext(),
+                                                                "Notification sent!", Toast.LENGTH_SHORT).show();
                                                 }
 
                                                 @Override
                                                 public void onFailure(Exception e) {
-                                                    Toast.makeText(getContext(),
-                                                            "Failed to send: " + e.getMessage(),
-                                                            Toast.LENGTH_SHORT).show();
+                                                    if (isSafe())
+                                                        Toast.makeText(getContext(),
+                                                                "Failed to send: " + e.getMessage(),
+                                                                Toast.LENGTH_SHORT).show();
                                                 }
                                             });
                                 });
 
-                    }, 500); // half-second delay to wait for profile fetches
+                    }, 500);
                 })
-                .addOnFailureListener(e ->
+                .addOnFailureListener(e -> {
+                    if (isSafe())
                         Toast.makeText(getContext(),
-                                "Failed to fetch enrolled users", Toast.LENGTH_SHORT).show());
+                                "Failed to fetch enrolled users", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private String extractTimestamp(DocumentSnapshot doc) {
@@ -352,10 +376,11 @@ public class EnrolledFragment extends Fragment {
 
         card.findViewById(R.id.tvStatus)
                 .getBackground()
-                .setTint(requireContext().getColor(R.color.danger_red));
+                .setTint(requireContext().getColor(R.color.green_400));
 
         container.addView(card);
     }
+
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }
