@@ -287,7 +287,7 @@ public class CreateEventActivity extends AppCompatActivity {
      * </p>
      */
     private void onCreateEvent() {
-        // --- 1. Validate Form Inputs ---
+        // Validate Form Inputs
         String name = textOf(eventNameInput);
         String desc = textOf(descriptionInput);
         String loc = textOf(locationInput);
@@ -299,10 +299,7 @@ public class CreateEventActivity extends AppCompatActivity {
             eventNameInput.requestFocus();
             return;
         }
-        if (selectedPosterUri == null) {
-            toast("Please select a poster image");
-            return;
-        }
+
         if (endCal.before(startCal)) {
             toast("End date cannot be before start date");
             return;
@@ -363,10 +360,10 @@ public class CreateEventActivity extends AppCompatActivity {
             String organizerId, String organizerName) {
         toast("Creating event...");
         try {
-            // --- 2. Encode Poster Image ---
-            String posterDataUri = encodeImageUriToDataUri(selectedPosterUri);
-            if (posterDataUri == null) {
-                throw new Exception("Could not read poster image.");
+            // --- 2. Encode Poster Image (optional) ---
+            String posterDataUri = null;
+            if (selectedPosterUri != null) {
+                posterDataUri = encodeImageUriToDataUri(selectedPosterUri);
             }
 
             // --- 3. Generate Event ID and Deep Link ---

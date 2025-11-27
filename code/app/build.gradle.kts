@@ -37,14 +37,14 @@ android {
 
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
-    // Firebase libraries - No versions needed because of the BoM
+    // Firebase libraries
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
 
     // Google Play Services for Maps and Auth
-    implementation("com.google.android.gms:play-services-maps:18.2.0") // <-- ADD THIS FOR MAPS
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
 

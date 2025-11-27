@@ -237,7 +237,8 @@ public class Event {
         m.put("maxEntrants", getMaxEntrants());
         m.put("requireGeolocation", isRequireGeolocation());
         m.put("createdAt", createdAt);
-
+        if (posterImageUrl != null)
+            m.put("posterImageUrl", posterImageUrl);
         if (qrDeepLink != null)
             m.put("qrDeepLink", qrDeepLink);
         if (qrImagePng != null)

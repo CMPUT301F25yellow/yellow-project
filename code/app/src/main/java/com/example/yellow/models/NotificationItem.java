@@ -21,7 +21,10 @@ public class NotificationItem {
     public NotificationItem() {
     }
 
-    // Getters
+    /**
+     * Constructor for a notification.
+     * @return notification
+     */
     public String getMessage() {
         return message;
     }
@@ -44,5 +47,9 @@ public class NotificationItem {
 
     public String getType() {
         return type;
+    }
+
+    public void setNotificationId(String id) {
+        this.notificationId = id;
     }
 }

@@ -39,11 +39,20 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     private static final int TYPE_DEFAULT = 0;
     private static final int TYPE_WAITING_LIST = 1;
 
+    /**
+     * Sets the list of notifications.
+     * @param newList
+     */
     public void setList(List<NotificationItem> newList) {
         list = newList;
         notifyDataSetChanged();
     }
 
+    /**
+     * Returns the view type of the item at position for the purposes of view recycling.
+     * @param position position to query
+     * @return
+     */
     @Override
     public int getItemViewType(int position) {
         NotificationItem item = list.get(position);
@@ -58,6 +67,14 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return isWaitingList ? TYPE_WAITING_LIST : TYPE_DEFAULT;
     }
 
+    /**
+     * Called when RecyclerView needs a new {@link NotifVH} of the given type to represent
+     * an item.
+     * @param parent   The ViewGroup into which the new View will be added after it is bound to
+     *                 an adapter position.
+     * @param viewType The view type of the new View.
+     * @return
+     */
     @NonNull
     @Override
     public NotifVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -70,40 +87,87 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return new NotifVH(v);
     }
 
+    /**
+     * Called by RecyclerView to display the data at the specified position.
+     * @param holder   The ViewHolder which should be updated to represent the contents of the
+     *                 item at the given position in the data set.
+     * @param position The position of the item within the adapter's data set.
+     */
     @Override
     public void onBindViewHolder(@NonNull NotifVH holder, int position) {
         NotificationItem item = list.get(position);
         int viewType = getItemViewType(position);
 
+        // Normalize type string
+        String type = item.getType() != null ? item.getType() : "";
+
+        boolean isLotteryNotSelected = type.equalsIgnoreCase("lottery_not_selected");
+        boolean isCancelledEntrant  = type.equalsIgnoreCase("entrant_cancelled");
+
+        // ----- Title -----
         if (viewType == TYPE_DEFAULT) {
-            holder.tvTitle.setText("New Notification");
+            if (isLotteryNotSelected) {
+                holder.tvTitle.setText("Lottery Result");
+            } else if (isCancelledEntrant) {
+                holder.tvTitle.setText("Selection Cancelled");
+            } else {
+                holder.tvTitle.setText("New Notification");
+            }
         }
         // For TYPE_WAITING_LIST, title is set in XML ("Waiting List")
 
+        // ----- Message & time -----
         holder.tvMessage.setText(item.getMessage());
         holder.tvTime.setText(formatTime(item.getTimestamp()));
 
-        // Only handle buttons if they exist (TYPE_DEFAULT)
+        // ----- Action buttons (Accept / Decline) -----
         if (holder.actionButtons != null) {
-            if (item.getEventId() != null && !item.getEventId().isEmpty()) {
+            boolean hasEventId = item.getEventId() != null && !item.getEventId().isEmpty();
+
+            // Only appears if:
+            //  - eventId is there
+            //  - is NOT a lottery_not_selected
+            //  - is NOT an entrant_cancelled
+            boolean isActionable = hasEventId
+                    && !isLotteryNotSelected
+                    && !isCancelledEntrant;
+
+            if (isActionable) {
                 holder.actionButtons.setVisibility(View.VISIBLE);
 
-                holder.btnAccept
-                        .setOnClickListener(v -> listener.onAccept(item.getEventId(), item.getNotificationId()));
-
-                holder.btnDecline
-                        .setOnClickListener(v -> listener.onDecline(item.getEventId(), item.getNotificationId()));
+                holder.btnAccept.setOnClickListener(
+                        v -> listener.onAccept(item.getEventId(), item.getNotificationId())
+                );
+                holder.btnDecline.setOnClickListener(
+                        v -> listener.onDecline(item.getEventId(), item.getNotificationId())
+                );
             } else {
                 holder.actionButtons.setVisibility(View.GONE);
             }
         }
     }
 
+
+    /**
+     * Returns the total number of items in the data set held by the adapter.
+     * @return The total number of items in this adapter.
+     */
     @Override
     public int getItemCount() {
         return list.size();
     }
 
+    /**
+     * Clears the list.
+     */
+    public void clear() {
+        list.clear();
+        notifyDataSetChanged();
+    }
+
+    /**
+     * ViewHolder for a notification item.
+     */
     static class NotifVH extends RecyclerView.ViewHolder {
 
         ImageView imgType;
@@ -126,6 +190,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
     }
 
+    /**
+     * Formats a timestamp into a human-readable string.
+     * @return formatted string
+     */
     private String formatTime(Timestamp ts) {
         if (ts == null)
             return "";

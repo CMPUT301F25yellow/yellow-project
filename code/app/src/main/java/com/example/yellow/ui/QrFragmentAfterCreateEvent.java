@@ -26,6 +26,12 @@ public class QrFragmentAfterCreateEvent extends Fragment {
     private TextView tvDeepLink;
     private EventViewModel eventViewModel;
 
+    /**
+     * Called to have the fragment instantiate its user interface view.
+     * This is optional, and non-graphical fragments can return null.
+     * @param savedInstanceState If the fragment is being re-created from
+     * a previous saved state, this is the state.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +39,19 @@ public class QrFragmentAfterCreateEvent extends Fragment {
         eventViewModel = new ViewModelProvider(requireActivity()).get(EventViewModel.class);
     }
 
+    /**
+     * Called to have the fragment instantiate its user interface view.
+     * This is optional, and non-graphical fragments can return null.
+     * @param inflater The LayoutInflater object that can be used to inflate
+     * any views in the fragment,
+     * @param container If non-null, this is the parent view that the fragment's
+     * UI should be attached to.  The fragment should not add the view itself,
+     * but this can be used to generate the LayoutParams of the view.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     * from a previous saved state as given here.
+     *
+     * @return Return the View for the fragment's UI, or null.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -62,6 +81,10 @@ public class QrFragmentAfterCreateEvent extends Fragment {
         return view;
     }
 
+    /**
+     * Display the QR code in the ImageView.
+     * @param qrDataUri
+     */
     private void displayQrCode(@Nullable String qrDataUri) {
         if (qrDataUri == null || qrDataUri.trim().isEmpty()) {
             // Handle the case where the QR code data is missing

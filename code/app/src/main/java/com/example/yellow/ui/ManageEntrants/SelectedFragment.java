@@ -343,6 +343,17 @@ public class SelectedFragment extends Fragment {
 
             batch.set(cancelledRef, data);
             batch.delete(selectedRef);
+
+            Map<String, Object> notif = new HashMap<>();
+            notif.put("message", "Your selection for this event was cancelled by the organizer.");
+            notif.put("eventId", eventId);
+            notif.put("timestamp", FieldValue.serverTimestamp());
+            notif.put("type", "entrant_cancelled");   // <-- IMPORTANT
+
+            db.collection("profiles")
+                    .document(userId)
+                    .collection("notifications")
+                    .add(notif);
         }
 
         batch.commit()

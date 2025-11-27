@@ -21,14 +21,17 @@ import com.example.yellow.R;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class WaitingFragment extends Fragment {
 
@@ -197,6 +200,10 @@ public class WaitingFragment extends Fragment {
         Collections.shuffle(entrantsCopy);
         List<String> selected = entrantsCopy.subList(0, Math.min(count, entrantsCopy.size()));
 
+        // Determine which entrants were *not* selected in this draw
+        Set<String> notSelected = new HashSet<>(currentWaitingEntrants);
+        notSelected.removeAll(selected);
+
         for (String userId : selected) {
 
             Map<String, Object> data = new HashMap<>();
@@ -319,6 +326,37 @@ public class WaitingFragment extends Fragment {
                 })
                 .addOnFailureListener(
                         e -> Toast.makeText(getContext(), "Failed to fetch waiting users", Toast.LENGTH_SHORT).show());
+    }
+
+    /**
+     * Creates in-app notifications for all entrants who were NOT selected
+     * in the lottery draw. These will appear in the entrant's Notifications tab.
+     *
+     * @param loserIds userIds of entrants who were not selected
+     */
+    private void notifyNotSelectedEntrants(Set<String> loserIds) {
+        if (loserIds == null || loserIds.isEmpty()) {
+            return;
+        }
+
+        for (String userId : loserIds) {
+            if (userId == null || userId.isEmpty()) continue;
+
+            Map<String, Object> notif = new HashMap<>();
+            notif.put("message", "You were not selected in the lottery for this event.");
+            notif.put("eventId", eventId);
+            notif.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            notif.put("type", "lottery_not_selected");
+
+            // Store under the user's profile-specific notifications subcollection
+            db.collection("profiles")
+                    .document(userId)
+                    .collection("notifications")
+                    .add(notif)
+                    .addOnFailureListener(e -> {
+                        // Fail silently (add later)
+                    });
+        }
     }
 
     /**

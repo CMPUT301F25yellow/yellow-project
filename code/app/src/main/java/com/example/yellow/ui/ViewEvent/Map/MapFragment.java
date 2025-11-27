@@ -61,6 +61,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         setupObservers();
     }
 
+    /**
+     * Sets up observers for the ViewModel.
+     * This method is called after the map is ready.
+     */
     private void setupObservers() {
         // First, get the event ID from the shared EventViewModel
         eventViewModel.getEvent().observe(getViewLifecycleOwner(), event -> {
@@ -79,7 +83,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         });
     }
 
-    // This method now receives a List<WaitingUser>
+    /**
+     * Updates the map markers with the list of entrants.
+     * @param entrants
+     */
     private void updateMapMarkers(List<WaitingUser> entrants) {
         if (googleMap == null) return; // Don't do anything if the map isn't ready
         googleMap.clear(); // Clear any old markers
