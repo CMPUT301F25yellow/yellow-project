@@ -126,7 +126,7 @@ public class SelectedFragment extends Fragment {
 
                                     String date = extractTimestamp(doc);
 
-                                    addEntrantCard(userId, name, email, dateSelected, "Selected");
+                                    addEntrantCard(userId, name, email, date, "Selected");
                                 })
                                 .addOnFailureListener(err -> {
                                     if (!isSafe()) return;
@@ -362,6 +362,9 @@ public class SelectedFragment extends Fragment {
         DocumentReference eventRef = db.collection("events").document(eventId);
         WriteBatch batch = db.batch();
 
+        // Copy to avoid concurrent modification issues later
+        java.util.List<String> userIdsToNotify = new java.util.ArrayList<>(selectedUserIds);
+
         for (String userId : selectedUserIds) {
             DocumentReference selectedRef =
                     eventRef.collection("selected").document(userId);
@@ -378,10 +381,11 @@ public class SelectedFragment extends Fragment {
 
         batch.commit()
                 .addOnSuccessListener(unused -> {
-                    if (isSafe())
+                    if (isSafe()) {
                         Toast.makeText(getContext(),
                                 "Cancelled selected entrants.",
                                 Toast.LENGTH_SHORT).show();
+                    }
                 })
                 .addOnFailureListener(e -> {
                     if (isSafe())
@@ -390,6 +394,77 @@ public class SelectedFragment extends Fragment {
                                 Toast.LENGTH_SHORT).show();
                 });
     }
+
+    private void sendCancellationNotifications(java.util.List<String> userIds) {
+        if (!isSafe() || userIds == null || userIds.isEmpty()) return;
+
+        // First load event name
+        db.collection("events").document(eventId)
+                .get()
+                .addOnSuccessListener(eventDoc -> {
+                    if (!isSafe()) return;
+
+                    String eventName = eventDoc.getString("name");
+                    if (eventName == null) eventName = "this event";
+
+                    String message = "Your selection for " + eventName +
+                            " was cancelled by the organizer.";
+
+                    // Respect per-user notification preferences
+                    java.util.List<String> enabledUserIds = new java.util.ArrayList<>();
+
+                    for (String userId : userIds) {
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    if (!isSafe()) return;
+
+                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
+                                    if (enabled == null) enabled = true;
+
+                                    if (enabled) {
+                                        enabledUserIds.add(profile.getId());
+                                    }
+                                });
+                    }
+
+                    // Give profile fetches a moment, then send via NotificationManager
+                    String finalEventName = eventName;
+                    new android.os.Handler().postDelayed(() -> {
+                        if (!isSafe()) return;
+
+                        if (enabledUserIds.isEmpty()) {
+                            // Silent: everyone turned off notifications
+                            return;
+                        }
+
+                        com.example.yellow.utils.NotificationManager.sendNotification(
+                                getContext(),
+                                eventId,
+                                finalEventName,
+                                message,
+                                "entrant_cancelled",   // 👈 IMPORTANT type
+                                enabledUserIds,
+                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        // optional toast
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        if (isSafe()) {
+                                            Toast.makeText(getContext(),
+                                                    "Failed to send cancellation notices: " + e.getMessage(),
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }
+                        );
+                    }, 500);
+                });
+    }
+
 
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;

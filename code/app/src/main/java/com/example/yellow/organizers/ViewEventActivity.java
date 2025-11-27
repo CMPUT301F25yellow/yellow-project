@@ -132,8 +132,7 @@ public class ViewEventActivity extends AppCompatActivity {
             switch (position) {
                 case 0: tab.setText("Entrants"); break;
                 case 1: tab.setText("Map"); break;
-                case 2: tab.setText("Notify"); break;
-                case 3: tab.setText("QR Code"); break;
+                case 2: tab.setText("QR Code"); break;
             }
         }).attach(); // The .attach() call makes the tabs appear.
 

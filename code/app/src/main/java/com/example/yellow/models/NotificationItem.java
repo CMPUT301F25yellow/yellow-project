@@ -45,4 +45,8 @@ public class NotificationItem {
     public String getType() {
         return type;
     }
+
+    public void setNotificationId(String id) {
+        this.notificationId = id;
+    }
 }

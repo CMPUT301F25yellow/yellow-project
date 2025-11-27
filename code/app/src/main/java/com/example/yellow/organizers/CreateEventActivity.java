@@ -299,10 +299,7 @@ public class CreateEventActivity extends AppCompatActivity {
             eventNameInput.requestFocus();
             return;
         }
-        if (selectedPosterUri == null) {
-            toast("Please select a poster image");
-            return;
-        }
+
         if (endCal.before(startCal)) {
             toast("End date cannot be before start date");
             return;
@@ -364,9 +361,9 @@ public class CreateEventActivity extends AppCompatActivity {
         toast("Creating event...");
         try {
             // --- 2. Encode Poster Image ---
-            String posterDataUri = encodeImageUriToDataUri(selectedPosterUri);
-            if (posterDataUri == null) {
-                throw new Exception("Could not read poster image.");
+            String posterDataUri = null;
+            if (selectedPosterUri != null) {
+                posterDataUri = encodeImageUriToDataUri(selectedPosterUri);
             }
 
             // --- 3. Generate Event ID and Deep Link ---

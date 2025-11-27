@@ -8,14 +8,16 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
-
 import androidx.recyclerview.widget.LinearLayoutManager;
+
+import com.example.yellow.R;
 import com.example.yellow.models.NotificationItem;
 import com.example.yellow.ui.notifications.NotificationAdapter;
 import com.google.firebase.auth.FirebaseAuth;
@@ -25,10 +27,6 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
-
-import com.example.yellow.R;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.Transaction;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
@@ -41,31 +39,23 @@ import java.util.Map;
  */
 public class NotificationFragment extends Fragment {
 
-    /**
-     * Inflates the notification layout.
-     *
-     * @param inflater           LayoutInflater used to inflate the view.
-     * @param container          Optional parent container.
-     * @param savedInstanceState Previously saved state, if any.
-     * @return The root view for this fragment.
-     */
+    // 🔹 Make db + adapter fields so we can reuse them (e.g. in clearAllNotifications)
+    private FirebaseFirestore db;
+    private NotificationAdapter adapter;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-            @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_notification, container, false);
     }
 
-    /**
-     * Sets up the UI, status bar color, and navigation behavior.
-     *
-     * @param v                  The root view of the fragment.
-     * @param savedInstanceState Previously saved state, if any.
-     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
+
+        db = FirebaseFirestore.getInstance();
 
         // Make status bar the same color as header
         requireActivity().getWindow().setStatusBarColor(
@@ -86,14 +76,15 @@ public class NotificationFragment extends Fragment {
         // Back -> pop to Home (MainActivity shows Home when stack empties)
         View back = v.findViewById(R.id.btnBack);
         if (back != null) {
-            back.setOnClickListener(x -> requireActivity().getSupportFragmentManager().popBackStack());
+            back.setOnClickListener(x ->
+                    requireActivity().getSupportFragmentManager().popBackStack());
         }
 
-        // (Optional) set adapter later
+        // RecyclerView + adapter
         RecyclerView rv = v.findViewById(R.id.rvNotifications);
-        NotificationAdapter adapter = new NotificationAdapter();
-        rv.setAdapter(adapter);
+        adapter = new NotificationAdapter();
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
+        rv.setAdapter(adapter);
 
         adapter.setActionListener(new NotificationAdapter.ActionListener() {
             @Override
@@ -110,7 +101,6 @@ public class NotificationFragment extends Fragment {
         // ---- Mark all unread notifications as read when opening this screen ----
         String uid = FirebaseAuth.getInstance().getUid();
         if (uid != null) {
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
             db.collection("profiles")
                     .document(uid)
                     .collection("notifications")
@@ -125,27 +115,40 @@ public class NotificationFragment extends Fragment {
                     });
         }
 
+        // ---- Listen for notifications in real time ----
         if (uid != null) {
-            FirebaseFirestore.getInstance()
-                    .collection("profiles")
+            db.collection("profiles")
                     .document(uid)
                     .collection("notifications")
                     .orderBy("timestamp", Query.Direction.DESCENDING)
                     .addSnapshotListener((value, error) -> {
-                        if (error != null || value == null)
-                            return;
+                        if (error != null || value == null) return;
 
                         List<NotificationItem> list = new ArrayList<>();
-
                         for (DocumentSnapshot doc : value.getDocuments()) {
                             NotificationItem item = doc.toObject(NotificationItem.class);
-                            list.add(item);
+                            if (item != null) {
+                                // If you store notificationId, set it here:
+                                item.setNotificationId(doc.getId());
+                                list.add(item);
+                            }
                         }
-
                         adapter.setList(list);
                     });
         }
 
+        // ---- Clear all notifications button ----
+        View btnClearAll = v.findViewById(R.id.btnClearAll);
+        if (btnClearAll != null) {
+            btnClearAll.setOnClickListener(view ->
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Clear all notifications?")
+                            .setMessage("This will permanently delete all notifications.")
+                            .setPositiveButton("Clear", (dialog, which) -> clearAllNotifications())
+                            .setNegativeButton("Cancel", null)
+                            .show()
+            );
+        }
     }
 
     private void acceptSelection(String eventId, String notificationId) {
@@ -254,7 +257,7 @@ public class NotificationFragment extends Fragment {
                 // ALWAYS delete user from selected
                 transaction.delete(selectedRef);
 
-                // NEW: delete user from enrolled if they were there
+                // delete from enrolled if they were there
                 transaction.delete(enrolledRef);
 
                 // Add to cancelled
@@ -347,14 +350,39 @@ public class NotificationFragment extends Fragment {
                         callback.onResult(userId, doc);
                     }
                 })
-                .addOnFailureListener(e -> {
-                    callback.onResult(null, null);
-                });
+                .addOnFailureListener(e -> callback.onResult(null, null));
     }
 
     public interface NextUserCallback {
         void onResult(String nextUserId, DocumentSnapshot docSnapshot);
     }
 
+    // 🔹 Clear all notifications for the current user
+    private void clearAllNotifications() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
 
+        db.collection("profiles")
+                .document(uid)
+                .collection("notifications")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    WriteBatch batch = db.batch();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        batch.delete(doc.getReference());
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> {
+                                // Clear list locally for instant UI feedback
+                                adapter.setList(new ArrayList<>());
+                                Toast.makeText(getContext(),
+                                        "Notifications cleared.",
+                                        Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(getContext(),
+                                            "Failed to clear notifications: " + e.getMessage(),
+                                            Toast.LENGTH_SHORT).show());
+                });
+    }
 }
