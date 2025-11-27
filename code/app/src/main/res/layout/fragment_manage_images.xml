@@ -54,28 +54,15 @@
             android:fontFamily="sans-serif-medium"/>
     </RelativeLayout>
 
-    <!-- Scrollable list -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scroll"
+    <!-- RecyclerView for images -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/listContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="16dp"
-        android:fillViewport="true"
+        android:padding="8dp"
+        android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/header"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <GridLayout
-            android:id="@+id/listContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:columnCount="2"
-            android:rowCount="1000"
-            android:alignmentMode="alignMargins"
-            android:columnOrderPreserved="false"
-            android:orientation="horizontal">
-
-        </GridLayout>
-    </androidx.core.widget.NestedScrollView>
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
