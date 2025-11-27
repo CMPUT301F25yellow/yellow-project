@@ -200,21 +200,42 @@ public class WaitingFragment extends Fragment {
         if (!isSafe()) return;
 
         if (currentWaitingEntrants.isEmpty()) {
-            Toast.makeText(requireContext(), "No entrants in waiting list.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(),
+                    "No entrants in waiting list.",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // 1. Shuffle a copy of current waiting entrants
         List<String> entrantsCopy = new ArrayList<>(currentWaitingEntrants);
         Collections.shuffle(entrantsCopy);
-        List<String> selected = entrantsCopy.subList(0, Math.min(count, entrantsCopy.size()));
+
+        // 2. Pick selected
+        List<String> selected = entrantsCopy.subList(
+                0,
+                Math.min(count, entrantsCopy.size())
+        );
+
+        if (selected.isEmpty()) {
+            Toast.makeText(requireContext(),
+                    "No entrants could be selected.",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 3. Everyone else becomes "non-selected" for this draw
+        List<String> nonSelected = new ArrayList<>(entrantsCopy);
+        nonSelected.removeAll(selected);
+
+        // 4. Single batch to move all selected from waitingList -> selected
+        com.google.firebase.firestore.WriteBatch batch = db.batch();
 
         for (String userId : selected) {
             Map<String, Object> data = new HashMap<>();
             data.put("userId", userId);
-            data.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            data.put("timestamp",
+                    com.google.firebase.firestore.FieldValue.serverTimestamp());
             data.put("selected", true);
-
-            com.google.firebase.firestore.WriteBatch batch = db.batch();
 
             var selectedRef = db.collection("events")
                     .document(eventId)
@@ -228,29 +249,34 @@ public class WaitingFragment extends Fragment {
 
             batch.set(selectedRef, data);
             batch.delete(waitingRef);
-
-            batch.commit()
-                    .addOnSuccessListener(unused -> {
-                        if (!isSafe()) return;
-
-                        currentWaitingEntrants.remove(userId);
-                        loadWaitingEntrants();
-                    })
-                    .addOnFailureListener(e -> {
-                        if (isSafe()) {
-                            Toast.makeText(getContext(),
-                                    "Failed to move entrant: " + e.getMessage(),
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    });
         }
 
-        if (isSafe()) {
-            Toast.makeText(requireContext(),
-                    "Selected " + selected.size() + " entrants.",
-                    Toast.LENGTH_SHORT).show();
-        }
+        batch.commit()
+                .addOnSuccessListener(unused -> {
+                    if (!isSafe()) return;
+
+                    // Update local cache + UI
+                    currentWaitingEntrants.removeAll(selected);
+                    loadWaitingEntrants();
+
+                    Toast.makeText(requireContext(),
+                            "Selected " + selected.size() + " entrants.",
+                            Toast.LENGTH_SHORT).show();
+
+                    // 5. AUTOMATICALLY notify the non-selected entrants
+                    if (!nonSelected.isEmpty()) {
+                        notifyNonSelectedEntrants(nonSelected);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (isSafe()) {
+                        Toast.makeText(getContext(),
+                                "Failed to move entrants: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
+
 
     /** Sends a notification to every waiting user. */
     private void sendNotificationToAllWaiting(String message) {
@@ -343,6 +369,97 @@ public class WaitingFragment extends Fragment {
                 });
     }
 
+    /**
+     * Automatically notifies all entrants who were NOT selected in the most recent draw.
+     */
+    private void notifyNonSelectedEntrants(List<String> nonSelectedUserIds) {
+        if (!isSafe()) return;
+        if (nonSelectedUserIds == null || nonSelectedUserIds.isEmpty()) return;
+
+        // First get the event name for a nicer message
+        db.collection("events").document(eventId)
+                .get()
+                .addOnSuccessListener(eventDoc -> {
+                    if (!isSafe()) return;
+
+                    String eventName = eventDoc.getString("name");
+                    if (eventName == null) eventName = "this event";
+
+                    String message = "Unfortunately, you were not selected for "
+                            + eventName + " this time.";
+
+                    List<String> userIdsToNotify = new ArrayList<>();
+
+                    // Respect per-user notification preferences
+                    for (String userId : nonSelectedUserIds) {
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    if (!isSafe()) return;
+
+                                    Boolean enabled =
+                                            profile.getBoolean("notificationsEnabled");
+                                    if (enabled == null) enabled = true;
+
+                                    if (enabled) {
+                                        userIdsToNotify.add(userId);
+                                    }
+                                });
+                    }
+
+                    // Give the profile fetches a moment to complete
+                    String finalEventName = eventName;
+                    new android.os.Handler().postDelayed(() -> {
+                        if (!isSafe()) return;
+
+                        if (userIdsToNotify.isEmpty()) {
+                            Toast.makeText(getContext(),
+                                    "No non-selected users to notify " +
+                                            "(all notifications off?)",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        com.example.yellow.utils.NotificationManager.sendNotification(
+                                getContext(),
+                                eventId,
+                                finalEventName,
+                                message,
+                                "loterry_non_selected",   // notification type/tag
+                                userIdsToNotify,
+                                new com.example.yellow.utils.NotificationManager
+                                        .OnNotificationSentListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        if (isSafe()) {
+                                            Toast.makeText(getContext(),
+                                                    "Notified non-selected entrants.",
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        if (isSafe()) {
+                                            Toast.makeText(getContext(),
+                                                    "Failed to notify non-selected: "
+                                                            + e.getMessage(),
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }
+                        );
+                    }, 500);
+                })
+                .addOnFailureListener(e -> {
+                    if (isSafe()) {
+                        Toast.makeText(getContext(),
+                                "Failed to load event info for notifications",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
     /** Adds an entrant card to the layout */
     private void addEntrantCard(String name,
                                 String email,
@@ -381,4 +498,6 @@ public class WaitingFragment extends Fragment {
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }
+
+
 }

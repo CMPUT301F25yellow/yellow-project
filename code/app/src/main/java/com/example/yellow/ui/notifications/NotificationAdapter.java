@@ -75,29 +75,72 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         NotificationItem item = list.get(position);
         int viewType = getItemViewType(position);
 
-        if (viewType == TYPE_DEFAULT) {
-            holder.tvTitle.setText("New Notification");
-        }
-        // For TYPE_WAITING_LIST, title is set in XML ("Waiting List")
+        // --- Safely normalize fields ---
+        String rawType = item.getType();
+        String type = rawType != null ? rawType : "";
+        String msg = item.getMessage() != null ? item.getMessage().toLowerCase() : "";
 
+        // --- Detect "non-selected" (lost lottery) notifications ---
+        boolean isLotteryNotSelected =
+                type.equalsIgnoreCase("lottery_not_selected")       // ideal
+                        || type.equalsIgnoreCase("non_selected")    // legacy / mismatch
+                        || msg.contains("you were not selected")    // fallback by message
+                        || msg.contains("not selected in the lottery");
+
+        // --- Detect "cancelled entrant" notifications ---
+        boolean isCancelledEntrant =
+                type.equalsIgnoreCase("entrant_cancelled")          // ideal
+                        || msg.contains("your selection for") && msg.contains("was cancelled")
+                        || msg.contains("selection was cancelled");
+
+        // ----- Title -----
+        if (viewType == TYPE_DEFAULT) {
+            if (isLotteryNotSelected) {
+                holder.tvTitle.setText("Lottery Result");
+            } else if (isCancelledEntrant) {
+                holder.tvTitle.setText("Selection Cancelled");
+            } else {
+                holder.tvTitle.setText("New Notification");
+            }
+        }
+        // TYPE_WAITING_LIST uses its own XML title
+
+        // ----- Message & time -----
         holder.tvMessage.setText(item.getMessage());
         holder.tvTime.setText(formatTime(item.getTimestamp()));
 
-        // Only handle buttons if they exist (TYPE_DEFAULT)
+        // ----- Action buttons (Accept / Decline) -----
         if (holder.actionButtons != null) {
-            if (item.getEventId() != null && !item.getEventId().isEmpty()) {
+
+            boolean hasEventId = item.getEventId() != null && !item.getEventId().isEmpty();
+
+            // Only actionable if:
+            //  - it has an eventId
+            //  - and is NOT a lottery_not_selected
+            //  - and is NOT an entrant_cancelled
+            boolean isActionable = hasEventId
+                    && !isLotteryNotSelected
+                    && !isCancelledEntrant;
+
+            if (isActionable && listener != null) {
                 holder.actionButtons.setVisibility(View.VISIBLE);
 
-                holder.btnAccept
-                        .setOnClickListener(v -> listener.onAccept(item.getEventId(), item.getNotificationId()));
-
-                holder.btnDecline
-                        .setOnClickListener(v -> listener.onDecline(item.getEventId(), item.getNotificationId()));
+                holder.btnAccept.setOnClickListener(
+                        v -> listener.onAccept(item.getEventId(), item.getNotificationId())
+                );
+                holder.btnDecline.setOnClickListener(
+                        v -> listener.onDecline(item.getEventId(), item.getNotificationId())
+                );
             } else {
                 holder.actionButtons.setVisibility(View.GONE);
+                // Optional: remove old listeners for safety
+                if (holder.btnAccept != null) holder.btnAccept.setOnClickListener(null);
+                if (holder.btnDecline != null) holder.btnDecline.setOnClickListener(null);
             }
         }
     }
+
+
 
     @Override
     public int getItemCount() {
