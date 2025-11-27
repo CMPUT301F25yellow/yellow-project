@@ -6,9 +6,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.GridLayout;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -17,6 +15,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.yellow.R;
@@ -26,6 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,8 +44,9 @@ import java.util.Map;
 public class ManageImagesFragment extends Fragment {
 
     private FirebaseFirestore db;
-    private GridLayout listContainer;
-    private View spacer, scroll;
+    private RecyclerView recyclerView;
+    private ManageImagesAdapter adapter;
+    private View spacer; // Removed scroll view reference as RecyclerView handles scrolling
     private ListenerRegistration reg;
 
     @Nullable
@@ -65,8 +67,12 @@ public class ManageImagesFragment extends Fragment {
         super.onViewCreated(v, savedInstanceState);
 
         spacer = v.findViewById(R.id.statusBarSpacer);
-        scroll = v.findViewById(R.id.scroll);
-        listContainer = v.findViewById(R.id.listContainer);
+        recyclerView = v.findViewById(R.id.listContainer);
+
+        // Setup RecyclerView
+        adapter = new ManageImagesAdapter(getContext(), this::confirmRemovePosterImage);
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        recyclerView.setAdapter(adapter);
 
         // Insets: top spacer + bottom padding (same pattern as ManageEventsFragment)
         ViewCompat.setOnApplyWindowInsetsListener(v, (view, insets) -> {
@@ -78,12 +84,19 @@ public class ManageImagesFragment extends Fragment {
                     spacer.setLayoutParams(lp);
                 }
             }
-            if (scroll != null) {
-                int ps = scroll.getPaddingStart();
-                int pt = scroll.getPaddingTop();
-                int pe = scroll.getPaddingEnd();
-                int pb = scroll.getPaddingBottom();
-                scroll.setPaddingRelative(ps, pt, pe, pb + bars.bottom);
+            // Add bottom padding to RecyclerView for navigation bar
+            if (recyclerView != null) {
+                int ps = recyclerView.getPaddingStart();
+                int pt = recyclerView.getPaddingTop();
+                int pe = recyclerView.getPaddingEnd();
+                int pb = recyclerView.getPaddingBottom(); // Original bottom padding
+                // We want to add bars.bottom to the original padding, but we need to be careful
+                // not to keep adding it if this runs multiple times.
+                // However, standard practice is just setting it.
+                // Since we defined padding="8dp" in XML, we should respect that.
+                // Let's just set padding bottom to 8dp + bars.bottom
+                int basePadding = (int) (8 * getResources().getDisplayMetrics().density);
+                recyclerView.setPaddingRelative(ps, pt, pe, basePadding + bars.bottom);
             }
             return insets;
         });
@@ -106,8 +119,7 @@ public class ManageImagesFragment extends Fragment {
             reg = null;
         }
         spacer = null;
-        scroll = null;
-        listContainer = null;
+        recyclerView = null;
     }
 
     /**
@@ -124,13 +136,9 @@ public class ManageImagesFragment extends Fragment {
                         toast("Failed to load images.");
                         return;
                     }
-                    if (listContainer == null)
-                        return;
 
-                    listContainer.removeAllViews();
-                    LayoutInflater inflater = LayoutInflater.from(getContext());
+                    List<ManageImagesAdapter.ImageItem> items = new java.util.ArrayList<>();
 
-                    int count = 0;
                     for (DocumentSnapshot d : snap.getDocuments()) {
                         String eventId = d.getId();
                         String name = safe(d.getString("name"));
@@ -138,55 +146,19 @@ public class ManageImagesFragment extends Fragment {
                         String posterUri = safe(d.getString("posterImageUrl"));
 
                         // Only care about events that actually HAVE a poster
-                        if (TextUtils.isEmpty(posterUri)) {
-                            continue;
+                        if (!TextUtils.isEmpty(posterUri)) {
+                            items.add(new ManageImagesAdapter.ImageItem(eventId, name, organizerName, posterUri));
                         }
-
-                        count++;
-
-                        View card = inflater.inflate(
-                                R.layout.manage_images_card_admin, listContainer, false);
-
-                        // Set grid layout params (width 0, weight 1)
-                        // We cast the params because inflate returns the parent's param type
-                        // (GridLayout.LayoutParams)
-                        GridLayout.LayoutParams params = (GridLayout.LayoutParams) card.getLayoutParams();
-                        params.width = 0;
-                        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-                        params.setMargins(8, 8, 8, 8);
-                        card.setLayoutParams(params);
-
-                        ImageView ivThumb = card.findViewById(R.id.posterThumb);
-                        TextView tvTitle = card.findViewById(R.id.title);
-                        TextView tvUploaderName = card.findViewById(R.id.tvUploaderName);
-                        View btnDelete = card.findViewById(R.id.btnDeleteImage); // Now an ImageView/View
-
-                        tvTitle.setText("Event : " + (!name.isEmpty() ? name : "(untitled)"));
-                        tvUploaderName.setText("by " + (!organizerName.isEmpty() ? organizerName : "Unknown"));
-
-                        try {
-                            Glide.with(this)
-                                    .load(posterUri)
-                                    .placeholder(R.drawable.ic_image_icon)
-                                    .error(R.drawable.ic_image_icon)
-                                    .centerCrop()
-                                    .into(ivThumb);
-                        } catch (Throwable t) {
-                            ivThumb.setImageResource(R.drawable.ic_image_icon);
-                        }
-
-                        btnDelete.setOnClickListener(v -> confirmRemovePosterImage(eventId, name));
-
-                        listContainer.addView(card);
                     }
 
-                    if (count == 0) {
-                        TextView empty = new TextView(getContext());
-                        empty.setText("No poster images found.");
-                        empty.setTextColor(getResources().getColor(R.color.white));
-                        empty.setAlpha(0.7f);
-                        empty.setPadding(8, 16, 8, 0);
-                        listContainer.addView(empty);
+                    if (adapter != null) {
+                        adapter.setItems(items);
+                    }
+
+                    // Handle empty state if needed (optional, could show a TextView)
+                    if (items.isEmpty()) {
+                        // We could show a toast or toggle a "No images" view visibility
+                        // For now, just clearing the list is enough as per requirement
                     }
                 });
     }
