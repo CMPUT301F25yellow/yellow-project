@@ -1,6 +1,7 @@
 package com.example.yellow;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -24,6 +25,7 @@ import androidx.fragment.app.FragmentManager;
 import com.bumptech.glide.Glide;
 import com.example.yellow.organizers.CreateEventActivity;
 import com.example.yellow.organizers.Event;
+import com.example.yellow.ui.EventDetailsFragment;
 import com.example.yellow.ui.HistoryFragment;
 import com.example.yellow.ui.MyEventsFragment;
 import com.example.yellow.ui.NotificationFragment;
@@ -180,11 +182,21 @@ public class MainActivity extends AppCompatActivity {
 
         // ---- Restore Home UI when back stack empties ----
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
-            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+            int backStackCount = getSupportFragmentManager().getBackStackEntryCount();
+            if (backStackCount == 0) {
                 showHomeUI(true);
                 if (bottomNav != null) {
                     bottomNav.getMenu().setGroupCheckable(0, true, true);
                     bottomNav.setSelectedItemId(R.id.nav_home);
+                }
+            } else {
+                // Used to fix bug where QR Scan had no bottomNav
+                String topFragmentTag = getSupportFragmentManager().getBackStackEntryAt(backStackCount - 1).getName();
+
+                if ("QR_SCAN".equals(topFragmentTag) || "MyEvents".equals(topFragmentTag) || "History".equals(topFragmentTag)) {
+                    if (bottomNav != null) {
+                        bottomNav.setVisibility(View.VISIBLE);
+                    }
                 }
             }
         });
@@ -253,8 +265,11 @@ public class MainActivity extends AppCompatActivity {
             renderEvents(allEvents); // Draws all events again
         });
 
-        // Start live events feed
-        startLiveEventsListener();
+        boolean deepLinkHandled = handleDeepLink(getIntent());
+
+        if (!deepLinkHandled) {
+            startLiveEventsListener();
+        }
 
         // [NEW] Register Device for Admin Identity
         com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
@@ -262,6 +277,38 @@ public class MainActivity extends AppCompatActivity {
         if (user != null) {
             com.example.yellow.utils.DeviceIdentityManager.ensureDeviceDocument(this, user);
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleDeepLink(intent);
+    }
+
+    // Handles deep link intents
+    private boolean handleDeepLink(Intent intent) {
+        if (intent != null && intent.getData() != null) {
+            Uri data = intent.getData();
+            if ("yellow".equals(data.getScheme()) && "eventdetails".equals(data.getHost())) {
+                String eventId = data.getLastPathSegment();
+                if (eventId != null) {
+                    openEventDetails(eventId);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Open Event Details (Fragment) from QR code with eventId
+    private void openEventDetails(String eventId) {
+        Bundle bundle = new Bundle();
+        bundle.putString("qr_code_data", eventId);
+
+        EventDetailsFragment eventDetailsFragment = new EventDetailsFragment();
+        eventDetailsFragment.setArguments(bundle);
+
+        openFragment(eventDetailsFragment, "EventDetails", false);
     }
 
     @Override
