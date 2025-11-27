@@ -109,7 +109,7 @@
                 android:layout_marginBottom="16dp"
                 android:drawableStart="@android:drawable/ic_menu_search"
                 android:drawablePadding="8dp"
-                android:hint="Search events"
+                android:hint="Search Interests"
                 android:padding="12dp"
                 android:textColor="@color/white"
                 android:textColorHint="@color/hinty" />
