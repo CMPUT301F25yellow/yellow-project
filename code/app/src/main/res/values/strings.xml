@@ -57,6 +57,14 @@
     <string name="event_poster_update">Update Event Poster</string>
     <string name="manage_entrants">Manage Entrants</string>
     <string name="event_details">Event Details</string>
+    <string name="lottery_criteria">
+        • Participants are randomly selected after registration closes.\n\n
+        • Selected Entrants are randomly selected through the app.\n\n
+        • You have 24 hours to accept or decline your spot.\n\n
+        • Declining frees your spot for another entrant.
+    </string>
+    <string name="placeholder">placeholder image</string>
+    <string name="test_description">Join us for an unforgettable evening of live music under the stars. This annual festival features a lineup of incredible artists, delicious food trucks, and a vibrant atmosphere you won\'t want to miss</string>
 
     <string name="clear_all_noti">Clear All Notifications</string>
 </resources>
