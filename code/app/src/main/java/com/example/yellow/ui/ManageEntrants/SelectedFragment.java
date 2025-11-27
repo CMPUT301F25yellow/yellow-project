@@ -126,7 +126,7 @@ public class SelectedFragment extends Fragment {
 
                                     String date = extractTimestamp(doc);
 
-                                    addEntrantCard(userId, name, email, dateSelected, "Selected");
+                                    addEntrantCard(userId, name, email, date, "Selected");
                                 })
                                 .addOnFailureListener(err -> {
                                     if (!isSafe()) return;
