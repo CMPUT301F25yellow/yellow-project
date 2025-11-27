@@ -38,6 +38,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     private static final int TYPE_DEFAULT = 0;
     private static final int TYPE_WAITING_LIST = 1;
+    private static final int TYPE_LOTTERY_LOSER  = 2;
+    private static final int TYPE_CANCELLED      = 3;
 
     public void setList(List<NotificationItem> newList) {
         list = newList;
@@ -47,28 +49,60 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     @Override
     public int getItemViewType(int position) {
         NotificationItem item = list.get(position);
-        boolean isWaitingList = false;
 
-        if (item.getType() != null && item.getType().equalsIgnoreCase("waiting_list")) {
-            isWaitingList = true;
-        } else if (item.getMessage() != null && item.getMessage().toLowerCase().contains("waiting list")) {
-            isWaitingList = true;
+        String type = item.getType() != null ? item.getType() : "";
+        String msg  = item.getMessage() != null ? item.getMessage().toLowerCase() : "";
+
+        // Waiting-list
+        if (type.equalsIgnoreCase("waiting_list") ||
+                msg.contains("waiting list")) {
+            return TYPE_WAITING_LIST;
         }
 
-        return isWaitingList ? TYPE_WAITING_LIST : TYPE_DEFAULT;
+        // Lottery not selected
+        if (type.equalsIgnoreCase("lottery_not_selected") ||
+                type.equalsIgnoreCase("non_selected") ||
+                msg.contains("you were not selected") ||
+                msg.contains("not selected in the lottery")) {
+            return TYPE_LOTTERY_LOSER;
+        }
+
+        // Selection cancelled
+        if (type.equalsIgnoreCase("entrant_cancelled") ||
+                (msg.contains("your selection for") && msg.contains("was cancelled")) ||
+                msg.contains("selection was cancelled")) {
+            return TYPE_CANCELLED;
+        }
+
+        return TYPE_DEFAULT;
     }
+
 
     @NonNull
     @Override
     public NotifVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        int layoutId = (viewType == TYPE_WAITING_LIST)
-                ? R.layout.item_notification_waiting_list
-                : R.layout.item_notification;
+        int layoutId;
+        switch (viewType) {
+            case TYPE_WAITING_LIST:
+                layoutId = R.layout.item_notification_waiting_list;
+                break;
+            case TYPE_LOTTERY_LOSER:
+                layoutId = R.layout.item_notification_lottery_loser;
+                break;
+            case TYPE_CANCELLED:
+                layoutId = R.layout.item_notification_cancelled_entrants;
+                break;
+            case TYPE_DEFAULT:
+            default:
+                layoutId = R.layout.item_notification;
+                break;
+        }
 
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(layoutId, parent, false);
         return new NotifVH(v);
     }
+
 
     @Override
     public void onBindViewHolder(@NonNull NotifVH holder, int position) {
@@ -103,7 +137,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 holder.tvTitle.setText("New Notification");
             }
         }
-        // TYPE_WAITING_LIST uses its own XML title
 
         // ----- Message & time -----
         holder.tvMessage.setText(item.getMessage());
