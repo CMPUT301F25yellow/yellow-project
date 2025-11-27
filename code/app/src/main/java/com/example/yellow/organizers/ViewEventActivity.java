@@ -25,6 +25,12 @@ import com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import android.view.ViewGroup;
+
 public class ViewEventActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
@@ -41,6 +47,24 @@ public class ViewEventActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_event);
+
+        // Match the status bar color to the header
+        getWindow().setStatusBarColor(
+                ContextCompat.getColor(this, R.color.surface_dark));
+
+        // Size the spacer to the exact status bar height for a perfect top band
+        View spacer = findViewById(R.id.statusBarSpacer);
+        if (spacer != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (view, insets) -> {
+                Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                ViewGroup.LayoutParams lp = spacer.getLayoutParams();
+                if (lp.height != bars.top) {
+                    lp.height = bars.top;
+                    spacer.setLayoutParams(lp);
+                }
+                return insets;
+            });
+        }
 
         // --- 1. Bind all UI components ---
         try {
@@ -105,7 +129,8 @@ public class ViewEventActivity extends AppCompatActivity {
     }
 
     /**
-     * This method is responsible for setting or resetting ALL UI elements that depend on the event.
+     * This method is responsible for setting or resetting ALL UI elements that
+     * depend on the event.
      */
     private void updateUiWithEvent(Event event) {
         // Set the current event object for fragments to access
@@ -130,10 +155,18 @@ public class ViewEventActivity extends AppCompatActivity {
         // This will connect the tabs to the view pager.
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             switch (position) {
-                case 0: tab.setText("Entrants"); break;
-                case 1: tab.setText("Map"); break;
-                case 2: tab.setText("Notify"); break;
-                case 3: tab.setText("QR Code"); break;
+                case 0:
+                    tab.setText("Entrants");
+                    break;
+                case 1:
+                    tab.setText("Map");
+                    break;
+                case 2:
+                    tab.setText("Notify");
+                    break;
+                case 3:
+                    tab.setText("QR Code");
+                    break;
             }
         }).attach(); // The .attach() call makes the tabs appear.
 
@@ -144,11 +177,13 @@ public class ViewEventActivity extends AppCompatActivity {
         });
 
     }
+
     private void extractEventId() {
         Uri data = getIntent().getData();
         eventId = null;
 
-        if (data != null && "yellow".equalsIgnoreCase(data.getScheme()) && "event".equalsIgnoreCase(data.getHost()) && data.getPathSegments() != null && !data.getPathSegments().isEmpty()) {
+        if (data != null && "yellow".equalsIgnoreCase(data.getScheme()) && "event".equalsIgnoreCase(data.getHost())
+                && data.getPathSegments() != null && !data.getPathSegments().isEmpty()) {
             eventId = data.getPathSegments().get(data.getPathSegments().size() - 1);
         }
 
