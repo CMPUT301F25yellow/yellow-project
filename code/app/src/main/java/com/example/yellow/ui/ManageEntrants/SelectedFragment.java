@@ -314,25 +314,8 @@ public class SelectedFragment extends Fragment {
 
         tvStatus.getBackground().setTint(requireContext().getColor(colorRes));
 
-        if (status.equalsIgnoreCase("selected")) {
-            cb.setVisibility(View.VISIBLE);
-            cb.setChecked(selectedUserIds.contains(userId));
-
-            cb.setOnCheckedChangeListener((b, isChecked) -> {
-                if (!isSafe()) return;
-
-                if (isChecked)
-                    selectedUserIds.add(userId);
-                else
-                    selectedUserIds.remove(userId);
-            });
-
-            card.setOnClickListener(v -> {
-                if (isSafe()) cb.setChecked(!cb.isChecked());
-            });
-        } else {
-            cb.setVisibility(View.GONE);
-        }
+        // 🔥 Checkbox selection removed — always hide checkbox
+        cb.setVisibility(View.GONE);
 
         container.addView(card);
     }
