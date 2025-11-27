@@ -228,34 +228,50 @@ public class WaitingListFragment extends Fragment {
         ref.get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "You're already on the waiting list for this event",
-                            Toast.LENGTH_SHORT)
-                            .show();
-                }
-                return; // User is already in the list, do nothing.
-            }
-
-            if (currentEvent.isRequireGeolocation()) {
-                // --- CASE 1: LOCATION IS REQUIRED ---
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Location is required, getting your position...", Toast.LENGTH_SHORT)
-                            .show();
-                }
-
-                // Use the helper instance created in onCreate
-                if (locationHelper != null) {
-                    locationHelper.getCurrentLocation();
-                } else {
-                    // Fallback safety – should not normally happen
                     Toast.makeText(getContext(),
-                            "Location helper not initialized. Cannot join this event.",
-                            Toast.LENGTH_LONG).show();
+                            "You're already on the waiting list for this event",
+                            Toast.LENGTH_SHORT).show();
                 }
-
-            } else {
-                // --- CASE 2: LOCATION IS NOT REQUIRED ---
-                saveWaitingUser(null, null);
+                return;
             }
+
+            // STEP 1 — Check current waiting list size
+            db.collection("events").document(eventId)
+                    .collection("waitingList")
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+
+                        int currentSize = snapshot.size();
+                        int maxSize = currentEvent.getMaxEntrants(); // using maxEntrants as the limit
+
+                        if (currentSize >= maxSize) {
+                            Toast.makeText(getContext(),
+                                    "The waiting list is full (max " + maxSize + ")",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        // STEP 2 — If not full, join normally
+                        if (currentEvent.isRequireGeolocation()) {
+                            if (getContext() != null) {
+                                Toast.makeText(getContext(),
+                                        "Location is required, getting your position...",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+
+                            if (locationHelper != null) {
+                                locationHelper.getCurrentLocation();
+                            } else {
+                                Toast.makeText(getContext(),
+                                        "Location helper not initialized. Cannot join this event.",
+                                        Toast.LENGTH_LONG).show();
+                            }
+
+                        } else {
+                            saveWaitingUser(null, null);
+                        }
+
+                    });
         });
     }
 
