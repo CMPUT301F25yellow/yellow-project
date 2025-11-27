@@ -193,7 +193,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvMessage = itemView.findViewById(R.id.tvMessage);
-            tvAction = itemView.findViewById(R.id.tvAction);
 
             // These will be null for item_notification_waiting_list
             actionButtons = itemView.findViewById(R.id.actionButtons);
