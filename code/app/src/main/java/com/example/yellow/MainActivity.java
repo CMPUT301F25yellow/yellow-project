@@ -1,7 +1,9 @@
 package com.example.yellow;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,6 +18,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -38,6 +41,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -64,6 +68,30 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        // ---- Request Notification Permission (Android 13+) ----
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS},
+                        1001
+                );
+            }
+        }
+        FirebaseMessaging.getInstance().getToken()
+                .addOnSuccessListener(token -> {
+                    String uid = FirebaseAuth.getInstance().getUid();
+                    if (uid != null) {
+                        FirebaseFirestore.getInstance()
+                                .collection("profiles")
+                                .document(uid)
+                                .update("fcmToken", token);
+                    }
+                });
         eventsContainer = findViewById(R.id.eventsContainer);
 
         // ---- Views ----
