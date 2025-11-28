@@ -23,7 +23,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
 
 import com.example.yellow.R;
-import com.example.yellow.organizers.Event;
 import com.example.yellow.utils.FirebaseManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -45,18 +44,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
-
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.MultiFormatWriter;
-import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
-import android.graphics.Color;
-import java.util.Collections;
-import com.google.zxing.EncodeHintType;
 
 /**
  * Screen for organizers to create a new {@link Event}.
@@ -97,6 +85,7 @@ public class CreateEventActivity extends AppCompatActivity {
     private TextInputEditText startDateInput;
     private TextInputEditText endDateInput;
     private TextInputEditText maxEntrantsInput;
+    private TextInputEditText maxParticipantsInput;
     private SwitchMaterial geolocationSwitch;
     private MaterialButton createEventButton;
 
@@ -218,6 +207,7 @@ public class CreateEventActivity extends AppCompatActivity {
             startDateInput = requireView(R.id.startDateInput, "startDateInput");
             endDateInput = requireView(R.id.endDateInput, "endDateInput");
             maxEntrantsInput = requireView(R.id.maxEntrantsInput, "maxEntrantsInput");
+            maxParticipantsInput = requireView(R.id.maxParticipantsInput, "maxParticipantsInput");
             geolocationSwitch = requireView(R.id.geolocationSwitch, "geolocationSwitch");
             createEventButton = requireView(R.id.createEventButton, "createEventButton");
 
@@ -315,7 +305,8 @@ public class CreateEventActivity extends AppCompatActivity {
         String name = textOf(eventNameInput);
         String desc = textOf(descriptionInput);
         String loc = textOf(locationInput);
-        String maxStr = textOf(maxEntrantsInput);
+        String maxEntrantsStr = textOf(maxEntrantsInput);
+        String maxParticipantsStr = textOf(maxParticipantsInput);
         boolean requireGeo = geolocationSwitch.isChecked();
 
         if (TextUtils.isEmpty(name)) {
@@ -324,23 +315,52 @@ public class CreateEventActivity extends AppCompatActivity {
             return;
         }
 
+        // --- Validate required maxParticipants (selected/enrolled limit) ---
+        if (TextUtils.isEmpty(maxParticipantsStr)) {
+            maxParticipantsInput.setError("Required");
+            maxParticipantsInput.requestFocus();
+            return;
+        }
+
+        int maxParticipants;
+        try {
+            maxParticipants = Integer.parseInt(maxParticipantsStr);
+            if (maxParticipants <= 0) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            maxParticipantsInput.setError("Invalid number");
+            maxParticipantsInput.requestFocus();
+            return;
+        }
+
         if (endCal.before(startCal)) {
             toast("End date cannot be before start date");
             return;
         }
 
-        int maxEntrants = 0;
-        if (!TextUtils.isEmpty(maxStr)) {
+        // --- Validate optional maxEntrants (waiting list limit) ---
+        int maxEntrants = 0;  // 0 = no limit
+        if (!TextUtils.isEmpty(maxEntrantsStr)) {
             try {
-                maxEntrants = Integer.parseInt(maxStr);
-                if (maxEntrants < 0)
+                maxEntrants = Integer.parseInt(maxEntrantsStr);
+                if (maxEntrants < 0) {
                     throw new NumberFormatException();
+                }
             } catch (NumberFormatException e) {
                 maxEntrantsInput.setError("Invalid number");
                 maxEntrantsInput.requestFocus();
                 return;
             }
         }
+
+        // If organizer set both, ensure waiting-list cap >= participants cap
+        if (maxEntrants != 0 && maxEntrants < maxParticipants) {
+            maxEntrantsInput.setError("Must be ≥ max participants");
+            maxEntrantsInput.requestFocus();
+            return;
+        }
+
 
         com.google.firebase.auth.FirebaseUser user = auth.getCurrentUser();
         if (user == null) {
@@ -352,6 +372,7 @@ public class CreateEventActivity extends AppCompatActivity {
         toast("Verifying profile...");
 
         final int finalMaxEntrants = maxEntrants;
+        final int finalMaxParticipants = maxParticipants;
 
         // Check if user has a profile
         com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore
@@ -367,8 +388,17 @@ public class CreateEventActivity extends AppCompatActivity {
                         }
 
                         // Profile exists and has a name, proceed with event creation
-                        proceedWithEventCreation(name, desc, loc, finalMaxEntrants, requireGeo, user.getUid(),
-                                profileName);
+                        proceedWithEventCreation(
+                                name,
+                                desc,
+                                loc,
+                                finalMaxEntrants,
+                                finalMaxParticipants,
+                                requireGeo,
+                                user.getUid(),
+                                profileName
+                        );
+
                     } else {
                         createEventButton.setEnabled(true);
                         toast("You must create a profile before creating an event.");
@@ -380,7 +410,7 @@ public class CreateEventActivity extends AppCompatActivity {
                 });
     }
 
-    private void proceedWithEventCreation(String name, String desc, String loc, int maxEntrants, boolean requireGeo,
+    private void proceedWithEventCreation(String name, String desc, String loc, int maxEntrants, int maxParticipants, boolean requireGeo,
             String organizerId, String organizerName) {
         toast("Creating event...");
         try {
@@ -428,6 +458,7 @@ public class CreateEventActivity extends AppCompatActivity {
                     endDate,
                     posterDataUri,
                     maxEntrants,
+                    maxParticipants,
                     organizerId,
                     organizerName,
                     requireGeo,

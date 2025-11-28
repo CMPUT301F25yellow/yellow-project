@@ -288,6 +288,33 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Max Participants (required) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/maxParticipantsLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Maximum Participants"
+                android:textColorHint="@color/light_grey_text"
+                app:boxBackgroundColor="@color/surface_dark"
+                app:boxStrokeColor="@color/pink_bg"
+                app:hintTextColor="@color/pink_bg"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/maxParticipantsInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/white"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
             <!-- Geolocation Switch -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"

@@ -31,6 +31,7 @@ public class Event {
     private Timestamp endDate;
 
     private Integer maxEntrants;
+    private Integer maxParticipants;
     private Boolean requireGeolocation;
 
     private Timestamp createdAt;
@@ -49,7 +50,7 @@ public class Event {
      */
     public Event(String id, String name, String description, String location,
             Timestamp startDate, Timestamp endDate, String posterImageUrl,
-            int maxEntrants, String organizerId, String organizerName,
+            int maxEntrants, int maxParticipants, String organizerId, String organizerName,
             boolean requireGeolocation, String qrDeepLink, String qrImagePng) {
         this.id = id;
         this.name = name;
@@ -59,6 +60,7 @@ public class Event {
         this.endDate = endDate;
         this.posterImageUrl = posterImageUrl; // Correctly sets the single poster field
         this.maxEntrants = maxEntrants;
+        this.maxParticipants = maxParticipants;
         this.organizerId = organizerId;
         this.organizerName = organizerName;
         this.requireGeolocation = requireGeolocation;
@@ -159,6 +161,13 @@ public class Event {
         this.maxEntrants = maxEntrants;
     }
 
+    public int getMaxParticipants() {
+        return maxParticipants == null ? 0 : maxParticipants;
+    }
+
+    public void setMaxParticipants(Integer maxParticipants) {
+        this.maxParticipants = maxParticipants;
+    }
     public boolean isRequireGeolocation() {
         return requireGeolocation != null && requireGeolocation;
     }
@@ -233,8 +242,11 @@ public class Event {
             m.put("organizerName", organizerName);
         m.put("startDate", startDate);
         m.put("endDate", endDate);
+        if (posterImageUrl != null)
+            m.put("posterImageUrl", posterImageUrl);
         // Use safe defaults for missing fields
         m.put("maxEntrants", getMaxEntrants());
+        m.put("maxParticipants", getMaxParticipants());
         m.put("requireGeolocation", isRequireGeolocation());
         m.put("createdAt", createdAt);
 
@@ -242,6 +254,7 @@ public class Event {
             m.put("qrDeepLink", qrDeepLink);
         if (qrImagePng != null)
             m.put("qrImagePng", qrImagePng);
+
 
         return m;
     }
