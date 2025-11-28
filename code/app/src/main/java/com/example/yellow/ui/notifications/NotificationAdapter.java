@@ -1,4 +1,4 @@
-package com.example.yellow.ui.notifications;
+    package com.example.yellow.ui.notifications;
 
 import android.view.LayoutInflater;
 import android.view.View;

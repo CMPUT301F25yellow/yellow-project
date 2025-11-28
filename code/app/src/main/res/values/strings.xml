@@ -48,7 +48,7 @@
     <string name="event_name">Event Name</string>
     <string name="location">Location</string>
     <string name="description">Description</string>
-    <string name="max_entrants">Maximum Entrants</string>
+    <string name="max_entrants">Maximum Entrants (Optional)</string>
 
     <string name="qr_code">Event QR Code</string>
     <string name="qr_code_manual">Attendees can scan this to view event details or check in.</string>
