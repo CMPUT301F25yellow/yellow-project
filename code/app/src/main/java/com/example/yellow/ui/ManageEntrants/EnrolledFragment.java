@@ -72,6 +72,7 @@ public class EnrolledFragment extends Fragment {
         btnExport.setOnClickListener(v -> exportEnrolledCSV());
     }
 
+    //export to csv
     private void exportEnrolledCSV() {
         db.collection("events").document(eventId)
                 .collection("enrolled")

@@ -19,7 +19,6 @@ import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -37,8 +36,9 @@ public class WaitingFragment extends Fragment {
     private LinearLayout container;
     private String eventId;
     private final List<String> currentWaitingEntrants = new ArrayList<>();
-    private final SimpleDateFormat dateFormat =
-            new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    private TextView waitingCount;
+
 
     @Nullable
     @Override
@@ -49,137 +49,111 @@ public class WaitingFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         db = FirebaseFirestore.getInstance();
         container = view.findViewById(R.id.waitingContainer);
+        waitingCount = view.findViewById(R.id.waitingCount);
+
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
 
         if (eventId == null) {
             if (isSafe()) {
-                Toast.makeText(getContext(),
-                        "Missing event ID", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Missing event ID", Toast.LENGTH_SHORT).show();
             }
             return;
         }
 
-        Button btnRunDraw = view.findViewById(R.id.btnDraw);
-        Button btnNotify = view.findViewById(R.id.btnNotifyAll);
-
-        btnRunDraw.setOnClickListener(v -> showDrawDialog());
-        btnNotify.setOnClickListener(v -> showNotificationDialog());
+        Button drawButton = view.findViewById(R.id.btnDraw);
+        Button notifyButton = view.findViewById(R.id.btnNotifyAll);
 
         loadWaitingEntrants();
+
+        drawButton.setOnClickListener(v -> showDrawDialog());
+        notifyButton.setOnClickListener(v -> showNotificationDialog());
     }
 
-    private boolean isSafe() {
-        return getContext() != null && isAdded();
-    }
-
+    /** Loads all waiting entrants and displays their profile info */
     private void loadWaitingEntrants() {
         if (!isSafe()) return;
 
         container.removeAllViews();
+        waitingCount.setText("0 people waiting");
         currentWaitingEntrants.clear();
 
         db.collection("events").document(eventId)
                 .collection("waitingList")
-                .addSnapshotListener((snapshot, e) -> {
+                .get()
+                .addOnSuccessListener(snapshot -> {
 
                     if (!isSafe()) return;
 
-                    container.removeAllViews();
-                    currentWaitingEntrants.clear();
+                    if (snapshot.isEmpty()) {
+                        currentWaitingEntrants.clear();
+                        waitingCount.setText("0 people waiting");
 
-                    if (e != null || snapshot == null || snapshot.isEmpty()) {
                         TextView empty = new TextView(requireContext());
-                        empty.setText("No entrants waiting yet");
-                        empty.setTextColor(requireContext().getColor(R.color.light_grey_text));
+                        empty.setText("No waiting entrants.");
+                        empty.setTextColor(getResources().getColor(R.color.hinty));
                         container.addView(empty);
                         return;
                     }
 
+                    // 1️⃣ FIRST pass → collect userIds for count
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        String userId = doc.getString("userId");
+                        if (userId != null)
+                            currentWaitingEntrants.add(userId);
+                    }
+
+                    // 2️⃣ update count IMMEDIATELY (before async profile loading)
+                    waitingCount.setText(currentWaitingEntrants.size() + " people waiting");
+
+                    // 3️⃣ SECOND pass → fetch profile details + populate cards
                     for (QueryDocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
                         if (userId == null) continue;
 
-                        currentWaitingEntrants.add(userId);
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profileDoc -> {
+                                    if (!isSafe()) return;
 
-                        String joinDate = extractTimestamp(doc);
-                        String name = doc.getString("name");
-                        if (name == null) name = "Unknown";
+                                    String name = profileDoc.getString("fullName");
+                                    String email = profileDoc.getString("email");
+                                    String joinDate = "Unknown date";
 
-                        String email = doc.getString("email");
-                        if (email == null) email = "No email";
+                                    if (doc.getTimestamp("timestamp") != null) {
+                                        joinDate = dateFormat.format(doc.getTimestamp("timestamp").toDate());
+                                    }
 
-                        addEntrantCard(userId, name, email, joinDate, "Waiting");
+                                    if (name == null) name = "Unnamed User";
+                                    if (email == null) email = "No email";
+
+                                    addEntrantCard(name, email, joinDate, "Waiting");
+                                })
+                                .addOnFailureListener(e -> {
+                                    if (!isSafe()) return;
+                                    addEntrantCard("Unknown User", "Error loading email", "N/A", "Waiting");
+                                });
+                    }
+
+                })
+                .addOnFailureListener(e -> {
+                    if (isSafe()) {
+                        Toast.makeText(getContext(), "Failed to load entrants", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    private String extractTimestamp(DocumentSnapshot doc) {
-        com.google.firebase.Timestamp ts = doc.getTimestamp("timestamp");
-        if (ts == null) {
-            return "Unknown date";
-        }
-        return dateFormat.format(ts.toDate());
-    }
 
-    private void addEntrantCard(
-            String userId,
-            String name,
-            String email,
-            String joinDate,
-            String status
-    ) {
-        if (!isSafe()) return;
-
-        View card = LayoutInflater.from(getContext())
-                .inflate(R.layout.item_entrant_card, container, false);
-
-        TextView tvName = card.findViewById(R.id.tvEntrantName);
-        TextView tvEmail = card.findViewById(R.id.tvEntrantEmail);
-        TextView tvJoinDate = card.findViewById(R.id.tvJoinDate);
-        TextView tvStatus = card.findViewById(R.id.tvStatus);
-
-        tvName.setText(name);
-        tvEmail.setText(email);
-        tvJoinDate.setText("Joined: " + joinDate);
-        tvStatus.setText(status);
-
-        int colorRes;
-        switch (status.toLowerCase()) {
-            case "waiting":
-                colorRes = R.color.hinty;
-                break;
-            case "selected":
-                colorRes = R.color.gold;
-                break;
-            case "enrolled":
-                colorRes = R.color.green_400;
-                break;
-            case "cancelled":
-                colorRes = R.color.danger_red;
-                break;
-            default:
-                colorRes = R.color.hinty;
-                break;
-        }
-
-        tvStatus.getBackground().setTint(requireContext().getColor(colorRes));
-        container.addView(card);
-    }
-
-    /** Dialog to ask how many users to draw */
+    /** Opens dialog to ask how many users to draw */
     private void showDrawDialog() {
         if (!isSafe()) return;
 
         if (currentWaitingEntrants.isEmpty()) {
-            Toast.makeText(getContext(),
-                    "No entrants to draw from.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "No entrants to draw from.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -197,26 +171,13 @@ public class WaitingFragment extends Fragment {
 
                     String value = input.getText().toString().trim();
                     if (value.isEmpty()) {
-                        Toast.makeText(requireContext(),
-                                "Please enter a number",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Please enter a number", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    int drawCount;
-                    try {
-                        drawCount = Integer.parseInt(value);
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(requireContext(),
-                                "Invalid number",
-                                Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
+                    int drawCount = Integer.parseInt(value);
                     if (drawCount <= 0) {
-                        Toast.makeText(requireContext(),
-                                "Number must be greater than 0",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Number must be greater than 0", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -227,107 +188,28 @@ public class WaitingFragment extends Fragment {
                         return;
                     }
 
-                    // Apply participant capacity (maxParticipants) before running the draw
-                    runDrawWithCapacity(drawCount);
+                    runDraw(drawCount);
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
-    /**
-     * Checks the event's maxParticipants and the current number of selected + enrolled
-     * entrants, then runs the draw with an adjusted count that does not exceed the
-     * remaining participant capacity.
-     */
-    private void runDrawWithCapacity(int requestedCount) {
-        if (!isSafe()) return;
-
-        if (eventId == null) {
-            Toast.makeText(getContext(),
-                    "Missing event ID", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Fetch event to read maxParticipants
-        FirebaseFirestore.getInstance()
-                .collection("events")
-                .document(eventId)
+    /** With crash protection */
+    private void showNotificationDialog() {
+        db.collection("events").document(eventId)
                 .get()
                 .addOnSuccessListener(eventDoc -> {
                     if (!isSafe()) return;
 
-                    Long maxParticipantsLong = eventDoc.getLong("maxParticipants");
-                    int maxParticipants = (maxParticipantsLong != null)
-                            ? maxParticipantsLong.intValue()
-                            : 0;
+                    String eventName = eventDoc.getString("name");
+                    if (eventName == null) eventName = "this event";
 
-                    // If no participant cap is set (0 = unlimited), just run the draw as requested
-                    if (maxParticipants <= 0) {
-                        runDraw(requestedCount);
-                        return;
-                    }
-
-                    // Count currently selected entrants
-                    FirebaseFirestore.getInstance()
-                            .collection("events")
-                            .document(eventId)
-                            .collection("selected")
-                            .get()
-                            .addOnSuccessListener(selectedSnap -> {
-                                if (!isSafe()) return;
-
-                                final int selectedCount = selectedSnap.size();
-
-                                // Count currently enrolled entrants
-                                FirebaseFirestore.getInstance()
-                                        .collection("events")
-                                        .document(eventId)
-                                        .collection("enrolled")
-                                        .get()
-                                        .addOnSuccessListener(enrolledSnap -> {
-                                            if (!isSafe()) return;
-
-                                            int enrolledCount = enrolledSnap.size();
-                                            int currentParticipants = selectedCount + enrolledCount;
-                                            int remainingSlots = maxParticipants - currentParticipants;
-
-                                            if (remainingSlots <= 0) {
-                                                Toast.makeText(getContext(),
-                                                        "Participant limit reached. No more entrants can be selected.",
-                                                        Toast.LENGTH_SHORT).show();
-                                                return;
-                                            }
-
-                                            int actualCount = Math.min(requestedCount, remainingSlots);
-                                            if (actualCount < requestedCount) {
-                                                Toast.makeText(getContext(),
-                                                        "Only " + actualCount + " entrants can be selected due to participant limit.",
-                                                        Toast.LENGTH_SHORT).show();
-                                            }
-
-                                            runDraw(actualCount);
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            if (isSafe()) {
-                                                Toast.makeText(getContext(),
-                                                        "Failed to check enrolled entrants.",
-                                                        Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                            })
-                            .addOnFailureListener(e -> {
-                                if (isSafe()) {
-                                    Toast.makeText(getContext(),
-                                            "Failed to check selected entrants.",
-                                            Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                    String message = "You are on the waiting list for: " + eventName;
+                    sendNotificationToAllWaiting(message);
                 })
                 .addOnFailureListener(e -> {
                     if (isSafe()) {
-                        Toast.makeText(getContext(),
-                                "Failed to load event capacity.",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Failed to load event info", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -343,6 +225,61 @@ public class WaitingFragment extends Fragment {
             return;
         }
 
+        // 🔥 0. Check event capacity BEFORE drawing
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(eventDoc -> {
+
+                    Long maxParticipants = eventDoc.getLong("maxParticipants");
+                    if (maxParticipants == null) maxParticipants = 0L;
+
+                    // Count enrolled
+                    Long finalMaxParticipants = maxParticipants;
+                    db.collection("events").document(eventId)
+                            .collection("enrolled")
+                            .get()
+                            .addOnSuccessListener(enrolledSnap -> {
+
+                                int enrolledCount = enrolledSnap.size();
+
+                                // Count selected (they should reserve spots)
+                                db.collection("events").document(eventId)
+                                        .collection("selected")
+                                        .get()
+                                        .addOnSuccessListener(selectedSnap -> {
+
+                                            int selectedCount = selectedSnap.size();
+
+                                            int currentCount = enrolledCount + selectedCount;
+
+                                            // Unlimited capacity
+                                            if (finalMaxParticipants == 0L) {
+                                                actuallyRunDraw(count);
+                                                return;
+                                            }
+
+                                            long remaining = finalMaxParticipants - currentCount;
+
+                                            if (remaining <= 0) {
+                                                Toast.makeText(getContext(),
+                                                        "Event is full (" + finalMaxParticipants + " spots)",
+                                                        Toast.LENGTH_LONG).show();
+                                                return;
+                                            }
+
+                                            if (count > remaining) {
+                                                Toast.makeText(getContext(),
+                                                        "Only " + remaining +
+                                                                " spots left. Reduce draw amount.",
+                                                        Toast.LENGTH_LONG).show();
+                                                return;
+                                            }
+
+                                            actuallyRunDraw(count);
+                                        });
+                            });
+                });
+    }
+    private void actuallyRunDraw(int count) {
         // 1. Shuffle a copy of current waiting entrants
         List<String> entrantsCopy = new ArrayList<>(currentWaitingEntrants);
         Collections.shuffle(entrantsCopy);
@@ -370,7 +307,8 @@ public class WaitingFragment extends Fragment {
         for (String userId : selected) {
             Map<String, Object> data = new HashMap<>();
             data.put("userId", userId);
-            data.put("timestamp", FieldValue.serverTimestamp());
+            data.put("timestamp",
+                    com.google.firebase.firestore.FieldValue.serverTimestamp());
             data.put("selected", true);
 
             var selectedRef = db.collection("events")
@@ -407,51 +345,13 @@ public class WaitingFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     if (isSafe()) {
                         Toast.makeText(getContext(),
-                                "Failed to move entrants to selected list.",
+                                "Failed to move entrants: " + e.getMessage(),
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    /** With crash protection */
-    private void showNotificationDialog() {
-        db.collection("events").document(eventId)
-                .get()
-                .addOnSuccessListener(eventDoc -> {
-                    if (!isSafe()) return;
-
-                    String eventName = eventDoc.getString("name");
-                    if (eventName == null) eventName = "Event Update";
-
-                    final EditText input = new EditText(requireContext());
-                    input.setInputType(InputType.TYPE_CLASS_TEXT);
-                    input.setHint("Enter your message");
-
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle("Notify Waiting Entrants")
-                            .setMessage("Message to send to all waiting entrants for " + eventName)
-                            .setView(input)
-                            .setPositiveButton("Send", (dialog, which) -> {
-                                String msg = input.getText().toString().trim();
-                                if (msg.isEmpty()) {
-                                    Toast.makeText(getContext(),
-                                            "Message cannot be empty",
-                                            Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                sendNotificationToAllWaiting(msg);
-                            })
-                            .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                            .show();
-                })
-                .addOnFailureListener(e -> {
-                    if (isSafe()) {
-                        Toast.makeText(getContext(),
-                                "Unable to load event info", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
+    /** Sends a notification to every waiting user. */
     private void sendNotificationToAllWaiting(String message) {
         db.collection("events").document(eventId)
                 .collection("waitingList")
@@ -461,9 +361,7 @@ public class WaitingFragment extends Fragment {
                     if (!isSafe()) return;
 
                     if (snapshot.isEmpty()) {
-                        Toast.makeText(getContext(),
-                                "No waiting entrants to notify",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "No waiting users to notify", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -517,7 +415,7 @@ public class WaitingFragment extends Fragment {
                                                 public void onSuccess() {
                                                     if (isSafe()) {
                                                         Toast.makeText(getContext(),
-                                                                "Notifications sent.",
+                                                                "Notifications sent!",
                                                                 Toast.LENGTH_SHORT).show();
                                                     }
                                                 }
@@ -526,25 +424,20 @@ public class WaitingFragment extends Fragment {
                                                 public void onFailure(Exception e) {
                                                     if (isSafe()) {
                                                         Toast.makeText(getContext(),
-                                                                "Failed to send notifications: " + e.getMessage(),
+                                                                "Failed to send: " + e.getMessage(),
                                                                 Toast.LENGTH_SHORT).show();
                                                     }
                                                 }
-                                            }
-                                    );
-                                })
-                                .addOnFailureListener(e -> {
-                                    if (isSafe()) {
-                                        Toast.makeText(getContext(),
-                                                "Failed to load event name", Toast.LENGTH_SHORT).show();
-                                    }
+                                            });
                                 });
-                    }, 1500);
+
+                    }, 500);
                 })
                 .addOnFailureListener(e -> {
                     if (isSafe()) {
                         Toast.makeText(getContext(),
-                                "Failed to load waiting entrants", Toast.LENGTH_SHORT).show();
+                                "Failed to fetch waiting users",
+                                Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -557,8 +450,7 @@ public class WaitingFragment extends Fragment {
         if (nonSelectedUserIds == null || nonSelectedUserIds.isEmpty()) return;
 
         // First get the event name for a nicer message
-        db.collection("events")
-                .document(eventId)
+        db.collection("events").document(eventId)
                 .get()
                 .addOnSuccessListener(eventDoc -> {
                     if (!isSafe()) return;
@@ -566,32 +458,37 @@ public class WaitingFragment extends Fragment {
                     String eventName = eventDoc.getString("name");
                     if (eventName == null) eventName = "this event";
 
-                    String message = "Unfortunately, you were not selected in the latest draw for " + eventName + ".";
+                    String message = "Unfortunately, you were not selected for "
+                            + eventName + " this time.";
 
-                    List<String> enabledUserIds = new ArrayList<>();
+                    List<String> userIdsToNotify = new ArrayList<>();
 
+                    // Respect per-user notification preferences
                     for (String userId : nonSelectedUserIds) {
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
                                     if (!isSafe()) return;
 
-                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
+                                    Boolean enabled =
+                                            profile.getBoolean("notificationsEnabled");
                                     if (enabled == null) enabled = true;
 
                                     if (enabled) {
-                                        enabledUserIds.add(userId);
+                                        userIdsToNotify.add(userId);
                                     }
                                 });
                     }
 
+                    // Give the profile fetches a moment to complete
                     String finalEventName = eventName;
                     new android.os.Handler().postDelayed(() -> {
                         if (!isSafe()) return;
 
-                        if (enabledUserIds.isEmpty()) {
+                        if (userIdsToNotify.isEmpty()) {
                             Toast.makeText(getContext(),
-                                    "No non-selected users to notify (all have notifications off)",
+                                    "No non-selected users to notify " +
+                                            "(all notifications off?)",
                                     Toast.LENGTH_SHORT).show();
                             return;
                         }
@@ -601,14 +498,15 @@ public class WaitingFragment extends Fragment {
                                 eventId,
                                 finalEventName,
                                 message,
-                                "waiting_list_non_selected",
-                                enabledUserIds,
-                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                "loterry_non_selected",   // notification type/tag
+                                userIdsToNotify,
+                                new com.example.yellow.utils.NotificationManager
+                                        .OnNotificationSentListener() {
                                     @Override
                                     public void onSuccess() {
                                         if (isSafe()) {
                                             Toast.makeText(getContext(),
-                                                    "Non-selected entrants notified.",
+                                                    "Notified non-selected entrants.",
                                                     Toast.LENGTH_SHORT).show();
                                         }
                                     }
@@ -617,20 +515,62 @@ public class WaitingFragment extends Fragment {
                                     public void onFailure(Exception e) {
                                         if (isSafe()) {
                                             Toast.makeText(getContext(),
-                                                    "Failed to notify non-selected entrants: " + e.getMessage(),
+                                                    "Failed to notify non-selected: "
+                                                            + e.getMessage(),
                                                     Toast.LENGTH_SHORT).show();
                                         }
                                     }
                                 }
                         );
-                    }, 1500);
+                    }, 500);
                 })
                 .addOnFailureListener(e -> {
                     if (isSafe()) {
                         Toast.makeText(getContext(),
-                                "Failed to load event for notifications",
+                                "Failed to load event info for notifications",
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
     }
+
+    /** Adds an entrant card to the layout */
+    private void addEntrantCard(String name,
+                                String email,
+                                String joinDate,
+                                String status) {
+
+        if (!isSafe()) return;
+
+        View card = LayoutInflater.from(requireContext())
+                .inflate(R.layout.item_entrant_card, container, false);
+
+        ((TextView) card.findViewById(R.id.tvEntrantName)).setText(name);
+        ((TextView) card.findViewById(R.id.tvEntrantEmail)).setText(email);
+        ((TextView) card.findViewById(R.id.tvJoinDate)).setText("Joined: " + joinDate);
+        ((TextView) card.findViewById(R.id.tvStatus)).setText(status);
+
+        int colorRes;
+        switch (status.toLowerCase()) {
+            case "selected": colorRes = R.color.brand_primary; break;
+            case "enrolled": colorRes = R.color.green_400; break;
+            case "cancelled": colorRes = R.color.danger_red; break;
+            case "waiting":
+            default: colorRes = R.color.gold; break;
+        }
+
+        card.findViewById(R.id.tvStatus)
+                .getBackground()
+                .setTint(requireContext().getColor(colorRes));
+
+        if (isSafe()) {
+            container.addView(card);
+        }
+    }
+
+    /** Reusable safety check */
+    private boolean isSafe() {
+        return isAdded() && getContext() != null && container != null;
+    }
+
+
 }

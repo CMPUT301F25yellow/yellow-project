@@ -162,7 +162,7 @@ public class Event {
     }
 
     public int getMaxParticipants() {
-        return maxParticipants == null ? 0 : maxParticipants;
+        return maxParticipants;
     }
 
     public void setMaxParticipants(Integer maxParticipants) {
