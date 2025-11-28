@@ -37,63 +37,52 @@ public class WaitingListFragment extends Fragment {
     private FirebaseUser user;
     private String eventId;
     private String userId;
+
     private TextView titleText;
     private TextView dateText;
     private TextView locationText;
-    private ImageView bannerImage; // 🆕 poster banner
-    private Event currentEvent; // To hold the loaded event details
+    private ImageView bannerImage;
+    private TextView userCountText;
+
+    private Event currentEvent;
     private LocationHelper locationHelper;
 
     public WaitingListFragment() {
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        // Initialize LocationHelper here. We pass "this" as ActivityResultCaller (the
-        // Fragment),
-        // and requireContext() for Toasts and FusedLocationProviderClient.
-        locationHelper = new LocationHelper(
-                this, // ActivityResultCaller -> the Fragment
-                requireContext(), // Context
-                location -> {
-                    if (location != null) {
-                        // Successfully got a location → save waiting user with coordinates
-                        saveWaitingUser(location.getLatitude(), location.getLongitude());
-                    } else {
-                        // Could not get location (permission denied, GPS error, etc.)
-                        Toast.makeText(
-                                getContext(),
-                                "Failed to get location. Cannot join this event.",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
+    public static WaitingListFragment newInstance(String eventId) {
+        WaitingListFragment fragment = new WaitingListFragment();
+        Bundle args = new Bundle();
+        args.putString("eventId", eventId);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-            @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
 
         return inflater.inflate(R.layout.fragment_waiting_room, container, false);
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         // status bar spacer
         View spacer = view.findViewById(R.id.statusBarSpacer);
-
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v2, insets) -> {
-            Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            ViewGroup.LayoutParams lp = spacer.getLayoutParams();
-            lp.height = bars.top; // push content below the notch/status bar
-            spacer.setLayoutParams(lp);
-            return insets;
-        });
+        if (spacer != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(view, (v2, insets) -> {
+                Insets bars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+                ViewGroup.LayoutParams lp = spacer.getLayoutParams();
+                lp.height = bars.top; // push content below the status bar
+                spacer.setLayoutParams(lp);
+                return insets;
+            });
+        }
 
         // Firestore + User
         db = FirebaseFirestore.getInstance();
@@ -111,41 +100,39 @@ public class WaitingListFragment extends Fragment {
         // UI
         Button leaveButton = view.findViewById(R.id.leaveButton);
         ImageView backArrow = view.findViewById(R.id.backArrow);
-        TextView userCount = view.findViewById(R.id.userCount);
+        userCountText = view.findViewById(R.id.userCount);
 
         // Header UI
         titleText = view.findViewById(R.id.eventTitle);
         dateText = view.findViewById(R.id.eventDateTime);
         locationText = view.findViewById(R.id.eventLocation);
-        bannerImage = view.findViewById(R.id.eventBanner); // 🆕
+        bannerImage = view.findViewById(R.id.eventBanner);
 
-        loadEventDetails();
-
-        // Real-time waiting list count
-        db.collection("events")
-                .document(eventId)
-                .collection("waitingList")
-                .addSnapshotListener((snapshot, e) -> {
-                    if (snapshot != null) {
-                        userCount.setText(String.valueOf(snapshot.size()));
+        // Initialize LocationHelper with your actual API (Consumer<Location>)
+        locationHelper = new LocationHelper(
+                this,                    // ActivityResultCaller -> Fragment
+                requireContext(),        // Context
+                location -> {
+                    if (location != null) {
+                        // Successfully got a location → save waiting user with coordinates
+                        saveWaitingUser(location.getLatitude(), location.getLongitude());
+                    } else {
+                        // Could not get location (permission denied, GPS error, etc.)
+                        Toast.makeText(
+                                getContext(),
+                                "Failed to get location. Cannot join this event.",
+                                Toast.LENGTH_LONG
+                        ).show();
                     }
                 });
 
-        // Leave waiting room
+        // Back arrow: leave waiting room
+        backArrow.setOnClickListener(v -> leaveWaitingRoom());
+
+        // Leave button: leave waiting room
         leaveButton.setOnClickListener(v -> leaveWaitingRoom());
 
-        // Back arrow: go back but stay in waiting list
-        backArrow.setOnClickListener(v -> {
-            requireActivity().getSupportFragmentManager().popBackStack();
-        });
-
-        // Lottery Guidelines button
-        Button btnLotteryGuidelines = view.findViewById(R.id.btnLotteryGuidelines);
-        if (btnLotteryGuidelines != null) {
-            btnLotteryGuidelines.setOnClickListener(v -> showLotteryGuidelinesDialog());
-        }
-
-        // System back: LEAVE waiting list
+        // System back: leave waiting room
         requireActivity().getOnBackPressedDispatcher().addCallback(
                 getViewLifecycleOwner(),
                 new OnBackPressedCallback(true) {
@@ -154,6 +141,18 @@ public class WaitingListFragment extends Fragment {
                         leaveWaitingRoom();
                     }
                 });
+
+        // Real-time waiting list count
+        db.collection("events")
+                .document(eventId)
+                .collection("waitingList")
+                .addSnapshotListener((snapshot, e) -> {
+                    if (snapshot != null && userCountText != null) {
+                        userCountText.setText(String.valueOf(snapshot.size()));
+                    }
+                });
+
+        loadEventDetails();
     }
 
     private void loadEventDetails() {
@@ -172,101 +171,114 @@ public class WaitingListFragment extends Fragment {
                     titleText.setText(currentEvent.getName());
 
                     // Date WITHOUT "@ location"
-                    String dateAndLoc = currentEvent.getFormattedDateAndLocation();
-                    int atIndex = dateAndLoc.indexOf('@');
-                    String dateOnly = (atIndex >= 0)
-                            ? dateAndLoc.substring(0, atIndex).trim()
-                            : dateAndLoc;
-                    dateText.setText(dateOnly);
+                    if (currentEvent.getStartDate() != null) {
+                        java.text.SimpleDateFormat fmt =
+                                new java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
+                        String dateStr = fmt.format(currentEvent.getStartDate().toDate());
+                        dateText.setText(dateStr);
+                    }
 
-                    // Location label
+                    // Location
                     locationText.setText(currentEvent.getLocation());
 
-                    // 🆕 Poster image
-                    if (bannerImage != null) {
-                        String poster = currentEvent.getPosterImageUrl();
-                        if (poster != null && !poster.isEmpty()) {
-                            Glide.with(this)
-                                    .load(poster)
-                                    .centerCrop()
-                                    .placeholder(R.drawable.ic_image_icon)
-                                    .error(R.drawable.ic_image_icon)
-                                    .into(bannerImage);
-                        } else {
-                            bannerImage.setImageResource(R.drawable.ic_image_icon);
-                        }
+                    // Poster banner
+                    String poster = currentEvent.getPosterImageUrl();
+                    if (poster != null && !poster.isEmpty()) {
+                        Glide.with(this)
+                                .load(poster)
+                                .centerCrop()
+                                .into(bannerImage);
+                    } else {
+                        bannerImage.setImageResource(R.drawable.ic_image_icon);
                     }
-                    ProfileUtils.checkProfile(getContext(), isComplete -> {
-                        if (isComplete) {
-                            joinWaitingRoom(); // This will now have access to currentEvent
-                        }
-                    }, () -> {
-                        // Navigate to profile
-                        if (requireActivity() instanceof MainActivity) {
-                            ((MainActivity) requireActivity()).openProfile();
-                        }
-                    });
+
+                    // After loading event, ensure user has a profile, then join
+                    ProfileUtils.checkProfile(
+                            getContext(),
+                            isComplete -> {
+                                if (isComplete) {
+                                    joinWaitingRoom(); // This will now have access to currentEvent
+                                }
+                            },
+                            () -> {
+                                // Navigate to profile
+                                if (requireActivity() instanceof MainActivity) {
+                                    ((MainActivity) requireActivity()).openProfile();
+                                }
+                            });
                 })
                 .addOnFailureListener(
-                        e -> Toast.makeText(getContext(), "Failed to load event info", Toast.LENGTH_SHORT).show());
+                        e -> Toast.makeText(getContext(),
+                                "Failed to load event info", Toast.LENGTH_SHORT).show());
     }
 
     // Join waiting list
     private void joinWaitingRoom() {
         if (currentEvent == null) {
-            // Event details haven't loaded yet. This can happen if Firestore is slow.
-            // We can wait a moment and try again, or just ask the user to wait.
             if (getContext() != null) {
-                Toast.makeText(getContext(), "Connecting to event...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(),
+                        "Connecting to event...", Toast.LENGTH_SHORT).show();
             }
-            // A more robust solution might use a listener or retry, but for now we'll just
-            // wait for user action.
             return;
         }
 
-        DocumentReference ref = db.collection("events").document(eventId).collection("waitingList").document(userId);
+        DocumentReference ref = db.collection("events")
+                .document(eventId)
+                .collection("waitingList")
+                .document(userId);
+
         ref.get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "You're already on the waiting list for this event",
-                            Toast.LENGTH_SHORT)
-                            .show();
+                    Toast.makeText(getContext(),
+                            "You're already on the waiting list for this event",
+                            Toast.LENGTH_SHORT).show();
                 }
-                return; // User is already in the list, do nothing.
+                return;
             }
 
+            // Check if geolocation is required
             if (currentEvent.isRequireGeolocation()) {
-                // --- CASE 1: LOCATION IS REQUIRED ---
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "Location is required, getting your position...", Toast.LENGTH_SHORT)
-                            .show();
+                    Toast.makeText(getContext(),
+                            "Location is required, getting your position...",
+                            Toast.LENGTH_SHORT).show();
                 }
 
-                // Use the helper instance created in onCreate
                 if (locationHelper != null) {
                     locationHelper.getCurrentLocation();
                 } else {
-                    // Fallback safety – should not normally happen
                     Toast.makeText(getContext(),
                             "Location helper not initialized. Cannot join this event.",
                             Toast.LENGTH_LONG).show();
                 }
-
             } else {
-                // --- CASE 2: LOCATION IS NOT REQUIRED ---
+                // CASE 2: location NOT required
                 saveWaitingUser(null, null);
             }
         });
     }
 
     /**
-     * Helper method to create and save the WaitingUser object to Firestore.
-     * 
+     * Helper method to create and save the WaitingUser object to Firestore,
+     * while enforcing the event's maxEntrants (waiting list capacity).
+     *
      * @param latitude  The user's latitude, or null if not provided.
      * @param longitude The user's longitude, or null if not provided.
      */
     private void saveWaitingUser(@Nullable Double latitude, @Nullable Double longitude) {
-        DocumentReference ref = db.collection("events").document(eventId).collection("waitingList").document(userId);
+        if (eventId == null || userId == null) {
+            if (getContext() != null) {
+                Toast.makeText(getContext(),
+                        "Missing event or user information.",
+                        Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        // References for event (for capacity) and this user's waiting-list entry
+        DocumentReference eventRef = db.collection("events").document(eventId);
+        DocumentReference ref = eventRef.collection("waitingList").document(userId);
 
         WaitingUser entry = new WaitingUser(userId, eventId);
 
@@ -283,17 +295,60 @@ public class WaitingListFragment extends Fragment {
             entry.setLongitude(longitude);
         }
 
-        ref.set(entry).addOnSuccessListener(unused -> {
-            db.collection("events").document(eventId).update("waitlisted", FieldValue.increment(1));
-            if (getContext() != null) {
-                Toast.makeText(getContext(), "Successfully joined waiting list!", Toast.LENGTH_SHORT).show();
-            }
+        // Check the event's maxEntrants against current waitlisted count
+        eventRef.get()
+                .addOnSuccessListener(eventDoc -> {
+                    if (getContext() == null) return;
 
-        }).addOnFailureListener(e -> {
-            if (getContext() != null) {
-                Toast.makeText(getContext(), "Error: Could not join waiting room.", Toast.LENGTH_SHORT).show();
-            }
-        });
+                    if (!eventDoc.exists()) {
+                        Toast.makeText(getContext(),
+                                "Event no longer exists.",
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    Long maxEntrantsLong = eventDoc.getLong("maxEntrants");
+                    int maxEntrants = (maxEntrantsLong != null)
+                            ? maxEntrantsLong.intValue()
+                            : 0;
+
+                    if (maxEntrants > 0) {
+                        Long waitlistedLong = eventDoc.getLong("waitlisted");
+                        long waitlisted = (waitlistedLong != null) ? waitlistedLong : 0L;
+
+                        if (waitlisted >= maxEntrants) {
+                            Toast.makeText(getContext(),
+                                    "The waiting list for this event is full.",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
+
+                    // Capacity OK – save entry and increment waitlisted counter
+                    ref.set(entry)
+                            .addOnSuccessListener(unused -> {
+                                eventRef.update("waitlisted", FieldValue.increment(1));
+                                if (getContext() != null) {
+                                    Toast.makeText(getContext(),
+                                            "Successfully joined waiting list!",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                if (getContext() != null) {
+                                    Toast.makeText(getContext(),
+                                            "Error: Could not join waiting room.",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(),
+                                "Error: Could not check event capacity.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     // Leave waiting room
@@ -310,7 +365,8 @@ public class WaitingListFragment extends Fragment {
                             .update("waitlisted", FieldValue.increment(-1));
 
                     Toast.makeText(getContext(),
-                            "You left the waiting room", Toast.LENGTH_SHORT).show();
+                            "You left the waiting room",
+                            Toast.LENGTH_SHORT).show();
 
                     if (requireActivity() instanceof MainActivity) {
                         ((MainActivity) requireActivity()).showHomeUI(true);
@@ -320,9 +376,6 @@ public class WaitingListFragment extends Fragment {
                 });
     }
 
-    /**
-     * Shows a dialog with lottery criteria and guidelines
-     */
     private void showLotteryGuidelinesDialog() {
         if (getContext() == null)
             return;
@@ -330,10 +383,11 @@ public class WaitingListFragment extends Fragment {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_lottery_guidelines, null);
 
-        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(getContext())
-                .setView(dialogView)
-                .setPositiveButton("Got it", (d, which) -> d.dismiss())
-                .create();
+        androidx.appcompat.app.AlertDialog dialog =
+                new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                        .setView(dialogView)
+                        .setPositiveButton("Got it", (d, which) -> d.dismiss())
+                        .create();
 
         // Set the background color of the dialog window to match the card
         if (dialog.getWindow() != null) {
