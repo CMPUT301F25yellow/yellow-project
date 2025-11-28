@@ -37,6 +37,8 @@ public class WaitingFragment extends Fragment {
     private String eventId;
     private final List<String> currentWaitingEntrants = new ArrayList<>();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+    private TextView waitingCount;
+
 
     @Nullable
     @Override
@@ -52,6 +54,8 @@ public class WaitingFragment extends Fragment {
 
         db = FirebaseFirestore.getInstance();
         container = view.findViewById(R.id.waitingContainer);
+        waitingCount = view.findViewById(R.id.waitingCount);
+
         eventId = getArguments() != null ? getArguments().getString("eventId") : null;
 
         if (eventId == null) {
@@ -75,6 +79,7 @@ public class WaitingFragment extends Fragment {
         if (!isSafe()) return;
 
         container.removeAllViews();
+        waitingCount.setText("0 people waiting");
         currentWaitingEntrants.clear();
 
         db.collection("events").document(eventId)
@@ -85,7 +90,8 @@ public class WaitingFragment extends Fragment {
                     if (!isSafe()) return;
 
                     if (snapshot.isEmpty()) {
-                        if (!isSafe()) return;
+                        currentWaitingEntrants.clear();
+                        waitingCount.setText("0 people waiting");
 
                         TextView empty = new TextView(requireContext());
                         empty.setText("No waiting entrants.");
@@ -94,9 +100,20 @@ public class WaitingFragment extends Fragment {
                         return;
                     }
 
+                    // 1️⃣ FIRST pass → collect userIds for count
                     for (QueryDocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
-                        currentWaitingEntrants.add(userId);
+                        if (userId != null)
+                            currentWaitingEntrants.add(userId);
+                    }
+
+                    // 2️⃣ update count IMMEDIATELY (before async profile loading)
+                    waitingCount.setText(currentWaitingEntrants.size() + " people waiting");
+
+                    // 3️⃣ SECOND pass → fetch profile details + populate cards
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        String userId = doc.getString("userId");
+                        if (userId == null) continue;
 
                         db.collection("profiles").document(userId)
                                 .get()
@@ -121,6 +138,7 @@ public class WaitingFragment extends Fragment {
                                     addEntrantCard("Unknown User", "Error loading email", "N/A", "Waiting");
                                 });
                     }
+
                 })
                 .addOnFailureListener(e -> {
                     if (isSafe()) {
@@ -128,6 +146,7 @@ public class WaitingFragment extends Fragment {
                     }
                 });
     }
+
 
     /** Opens dialog to ask how many users to draw */
     private void showDrawDialog() {
@@ -206,6 +225,61 @@ public class WaitingFragment extends Fragment {
             return;
         }
 
+        // 🔥 0. Check event capacity BEFORE drawing
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(eventDoc -> {
+
+                    Long maxParticipants = eventDoc.getLong("maxParticipants");
+                    if (maxParticipants == null) maxParticipants = 0L;
+
+                    // Count enrolled
+                    Long finalMaxParticipants = maxParticipants;
+                    db.collection("events").document(eventId)
+                            .collection("enrolled")
+                            .get()
+                            .addOnSuccessListener(enrolledSnap -> {
+
+                                int enrolledCount = enrolledSnap.size();
+
+                                // Count selected (they should reserve spots)
+                                db.collection("events").document(eventId)
+                                        .collection("selected")
+                                        .get()
+                                        .addOnSuccessListener(selectedSnap -> {
+
+                                            int selectedCount = selectedSnap.size();
+
+                                            int currentCount = enrolledCount + selectedCount;
+
+                                            // Unlimited capacity
+                                            if (finalMaxParticipants == 0L) {
+                                                actuallyRunDraw(count);
+                                                return;
+                                            }
+
+                                            long remaining = finalMaxParticipants - currentCount;
+
+                                            if (remaining <= 0) {
+                                                Toast.makeText(getContext(),
+                                                        "Event is full (" + finalMaxParticipants + " spots)",
+                                                        Toast.LENGTH_LONG).show();
+                                                return;
+                                            }
+
+                                            if (count > remaining) {
+                                                Toast.makeText(getContext(),
+                                                        "Only " + remaining +
+                                                                " spots left. Reduce draw amount.",
+                                                        Toast.LENGTH_LONG).show();
+                                                return;
+                                            }
+
+                                            actuallyRunDraw(count);
+                                        });
+                            });
+                });
+    }
+    private void actuallyRunDraw(int count) {
         // 1. Shuffle a copy of current waiting entrants
         List<String> entrantsCopy = new ArrayList<>(currentWaitingEntrants);
         Collections.shuffle(entrantsCopy);
@@ -276,7 +350,6 @@ public class WaitingFragment extends Fragment {
                     }
                 });
     }
-
 
     /** Sends a notification to every waiting user. */
     private void sendNotificationToAllWaiting(String message) {
