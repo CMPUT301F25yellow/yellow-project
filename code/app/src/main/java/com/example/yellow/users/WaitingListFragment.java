@@ -286,6 +286,20 @@ public class WaitingListFragment extends Fragment {
                         int currentSize = snapshot.size();
                         int maxSize = currentEvent.getMaxEntrants();
 
+                        //blank = unlimited
+                        if (maxSize <= 0) {
+                            // skip capacity check entirely
+                            if (currentEvent.isRequireGeolocation()) {
+                                Toast.makeText(getContext(),
+                                        "Location is required, getting your position...",
+                                        Toast.LENGTH_SHORT).show();
+                                locationHelper.getCurrentLocation();
+                            } else {
+                                saveWaitingUser(null, null);
+                            }
+                            return;
+                        }
+
                         if (currentSize >= maxSize) {
                             Toast.makeText(getContext(),
                                     "The waiting list is full (max " + maxSize + ")",
