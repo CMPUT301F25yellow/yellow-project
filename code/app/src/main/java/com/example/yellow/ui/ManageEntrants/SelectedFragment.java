@@ -315,7 +315,19 @@ public class SelectedFragment extends Fragment {
         tvStatus.getBackground().setTint(requireContext().getColor(colorRes));
 
         // 🔥 Checkbox selection removed — always hide checkbox
-        cb.setVisibility(View.GONE);
+        cb.setVisibility(View.VISIBLE);
+
+        cb.setOnCheckedChangeListener(null); // avoid old listeners
+        cb.setChecked(selectedUserIds.contains(userId));
+
+        // Update selectedUserIds when user toggles checkbox
+        cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                selectedUserIds.add(userId);
+            } else {
+                selectedUserIds.remove(userId);
+            }
+        });
 
         container.addView(card);
     }
@@ -369,6 +381,8 @@ public class SelectedFragment extends Fragment {
                                 "Cancelled selected entrants.",
                                 Toast.LENGTH_SHORT).show();
                     }
+                    // Send cancellation notifications (this is only for automatic message)
+                    // sendCancellationNotifications(userIdsToNotify);
                 })
                 .addOnFailureListener(e -> {
                     if (isSafe())
@@ -426,7 +440,7 @@ public class SelectedFragment extends Fragment {
                                 eventId,
                                 finalEventName,
                                 message,
-                                "entrant_cancelled",   // 👈 IMPORTANT type
+                                "entrant_cancelled",
                                 enabledUserIds,
                                 new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
                                     @Override

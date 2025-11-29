@@ -14,7 +14,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Top Row: Name + Status + (NEW) Checkbox -->
+        <!-- Top Row: Name + Status on the left, Checkbox on the right -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -22,26 +22,36 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="4dp">
 
-            <TextView
-                android:id="@+id/tvEntrantName"
+            <!-- Left group: Name + Status -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="John Doe"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/tvStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/status_badge"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="4dp"
-                android:text="Waiting"
-                android:textColor="@color/white"
-                android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/tvEntrantName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="John Doe"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/status_badge"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="4dp"
+                    android:text="Waiting"
+                    android:textColor="@color/white"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
             <!-- Checkbox (hidden by default for all other tabs) -->
             <CheckBox

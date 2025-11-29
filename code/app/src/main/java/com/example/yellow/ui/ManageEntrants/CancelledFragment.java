@@ -156,7 +156,7 @@ public class CancelledFragment extends Fragment {
                                 eventId,
                                 eventName,
                                 message,
-                                "entrant_cancelled",   // 👈 IMPORTANT: mark as cancelled-type
+                                "entrant_cancelled",
                                 userIds,
                                 new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
                                     @Override
