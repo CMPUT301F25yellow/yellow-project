@@ -231,16 +231,38 @@ public class ProfileUserFragment extends Fragment {
         String email = safe(inputEmail);
         String phone = safe(inputPhone);
 
-        // (Optional) quick client-side validation
-        if (TextUtils.isEmpty(name) && TextUtils.isEmpty(email) && TextUtils.isEmpty(phone)) {
-            toast("Nothing to save.");
+        // Reset errors
+        inputFullName.setError(null);
+        inputEmail.setError(null);
+        inputPhone.setError(null);
+
+        boolean isValid = true;
+
+        // Validate Name (Mandatory)
+        if (TextUtils.isEmpty(name)) {
+            inputFullName.setError("Full Name is required");
+            isValid = false;
+        }
+
+        // Validate Email (Mandatory)
+        if (TextUtils.isEmpty(email)) {
+            inputEmail.setError("Email is required");
+            isValid = false;
+        }
+
+        // Phone is optional, so no validation needed for emptiness.
+        // (You could add format validation here if desired, but requirements say just
+        // optional)
+
+        if (!isValid) {
+            toast("Please fix the errors above.");
             return;
         }
 
         Map<String, Object> data = new HashMap<>();
         data.put("fullName", name);
         data.put("email", email);
-        data.put("phone", phone);
+        data.put("phone", phone); // Optional
         data.put("updatedAt", Timestamp.now());
 
         db.collection("profiles")
