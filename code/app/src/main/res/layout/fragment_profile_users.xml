@@ -98,6 +98,7 @@
 
             <!-- Full name -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutFullName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Full Name"
@@ -112,6 +113,7 @@
 
             <!-- Email -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -128,6 +130,7 @@
 
             <!-- Phone -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutPhone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"

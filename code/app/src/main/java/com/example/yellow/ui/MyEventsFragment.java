@@ -51,8 +51,8 @@ public class MyEventsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_my_events, container, false);
     }
 
@@ -84,6 +84,21 @@ public class MyEventsFragment extends Fragment {
             return;
         }
 
+        // [NEW] Check Profile before loading events
+        com.example.yellow.utils.ProfileUtils.checkProfile(getContext(), isComplete -> {
+            if (isComplete) {
+                setupEventsListener(db, currentUser);
+            }
+        }, () -> {
+            // Navigate to ProfileUserFragment
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainer, new ProfileUserFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
+    }
+
+    private void setupEventsListener(FirebaseFirestore db, FirebaseUser currentUser) {
         // remove any previous listener to avoid duplicate updates
         if (registration != null) {
             registration.remove();
@@ -94,7 +109,8 @@ public class MyEventsFragment extends Fragment {
                 .whereEqualTo("organizerId", currentUser.getUid())
                 .addSnapshotListener((querySnapshot, e) -> {
                     if (e != null) {
-                        Toast.makeText(getContext(), "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT)
+                                .show();
                         return;
                     }
 
@@ -113,7 +129,8 @@ public class MyEventsFragment extends Fragment {
 
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         Event event = doc.toObject(Event.class);
-                        if (event == null) continue;
+                        if (event == null)
+                            continue;
 
                         View card = inflater.inflate(R.layout.item_event_card, myEventsContainer, false);
 
@@ -185,7 +202,8 @@ public class MyEventsFragment extends Fragment {
 
                 for (DocumentSnapshot doc : documents) {
                     Event event = doc.toObject(Event.class);
-                    if (event != null) addEventCard(event);
+                    if (event != null)
+                        addEventCard(event);
                 }
             }
 
@@ -202,7 +220,8 @@ public class MyEventsFragment extends Fragment {
      * @param event the event object to display
      */
     private void addEventCard(Event event) {
-        if (getContext() == null) return;
+        if (getContext() == null)
+            return;
 
         CardView card = new CardView(getContext());
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
