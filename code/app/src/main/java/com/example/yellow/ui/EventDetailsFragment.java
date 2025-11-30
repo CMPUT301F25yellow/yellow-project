@@ -34,7 +34,7 @@ import java.util.Locale;
  * Fragment that handles the event details screen layout and appearance.
  * Provides Event details based on the provided event ID
  *
- * @author Marcus Lau
+ * @author Marcus Lau mdlau
  */
 public class EventDetailsFragment extends Fragment {
 
