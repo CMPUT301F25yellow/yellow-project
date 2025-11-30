@@ -1,4 +1,4 @@
-package com.example.yellow.ui.notifications;
+    package com.example.yellow.ui.notifications;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,6 +38,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     private static final int TYPE_DEFAULT = 0;
     private static final int TYPE_WAITING_LIST = 1;
+    private static final int TYPE_LOTTERY_LOSER  = 2;
+    private static final int TYPE_CANCELLED      = 3;
 
     public void setList(List<NotificationItem> newList) {
         list = newList;
@@ -47,57 +49,131 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     @Override
     public int getItemViewType(int position) {
         NotificationItem item = list.get(position);
-        boolean isWaitingList = false;
 
-        if (item.getType() != null && item.getType().equalsIgnoreCase("waiting_list")) {
-            isWaitingList = true;
-        } else if (item.getMessage() != null && item.getMessage().toLowerCase().contains("waiting list")) {
-            isWaitingList = true;
+        String type = item.getType() != null ? item.getType() : "";
+        String msg  = item.getMessage() != null ? item.getMessage().toLowerCase() : "";
+
+        // Waiting-list
+        if (type.equalsIgnoreCase("waiting_list") ||
+                msg.contains("waiting list")) {
+            return TYPE_WAITING_LIST;
         }
 
-        return isWaitingList ? TYPE_WAITING_LIST : TYPE_DEFAULT;
+        // Lottery not selected
+        if (type.equalsIgnoreCase("lottery_not_selected") ||
+                type.equalsIgnoreCase("non_selected") ||
+                msg.contains("you were not selected") ||
+                msg.contains("not selected in the lottery")) {
+            return TYPE_LOTTERY_LOSER;
+        }
+
+        // Selection cancelled
+        if (type.equalsIgnoreCase("entrant_cancelled") ||
+                (msg.contains("your selection for") && msg.contains("was cancelled")) ||
+                msg.contains("selection was cancelled")) {
+            return TYPE_CANCELLED;
+        }
+
+        return TYPE_DEFAULT;
     }
+
 
     @NonNull
     @Override
     public NotifVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        int layoutId = (viewType == TYPE_WAITING_LIST)
-                ? R.layout.item_notification_waiting_list
-                : R.layout.item_notification;
+        int layoutId;
+        switch (viewType) {
+            case TYPE_WAITING_LIST:
+                layoutId = R.layout.item_notification_waiting_list;
+                break;
+            case TYPE_LOTTERY_LOSER:
+                layoutId = R.layout.item_notification_lottery_loser;
+                break;
+            case TYPE_CANCELLED:
+                layoutId = R.layout.item_notification_cancelled_entrants;
+                break;
+            case TYPE_DEFAULT:
+            default:
+                layoutId = R.layout.item_notification;
+                break;
+        }
 
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(layoutId, parent, false);
         return new NotifVH(v);
     }
 
+
     @Override
     public void onBindViewHolder(@NonNull NotifVH holder, int position) {
         NotificationItem item = list.get(position);
         int viewType = getItemViewType(position);
 
-        if (viewType == TYPE_DEFAULT) {
-            holder.tvTitle.setText("New Notification");
-        }
-        // For TYPE_WAITING_LIST, title is set in XML ("Waiting List")
+        // --- Safely normalize fields ---
+        String rawType = item.getType();
+        String type = rawType != null ? rawType : "";
+        String msg = item.getMessage() != null ? item.getMessage().toLowerCase() : "";
 
+        // --- Detect "non-selected" (lost lottery) notifications ---
+        boolean isLotteryNotSelected =
+                type.equalsIgnoreCase("lottery_not_selected")       // ideal
+                        || type.equalsIgnoreCase("non_selected")    // legacy / mismatch
+                        || msg.contains("you were not selected")    // fallback by message
+                        || msg.contains("not selected in the lottery");
+
+        // --- Detect "cancelled entrant" notifications ---
+        boolean isCancelledEntrant =
+                type.equalsIgnoreCase("entrant_cancelled")          // ideal
+                        || msg.contains("your selection for") && msg.contains("was cancelled")
+                        || msg.contains("selection was cancelled");
+
+        // ----- Title -----
+        if (viewType == TYPE_DEFAULT) {
+            if (isLotteryNotSelected) {
+                holder.tvTitle.setText("Lottery Result");
+            } else if (isCancelledEntrant) {
+                holder.tvTitle.setText("Selection Cancelled");
+            } else {
+                holder.tvTitle.setText("New Notification");
+            }
+        }
+
+        // ----- Message & time -----
         holder.tvMessage.setText(item.getMessage());
         holder.tvTime.setText(formatTime(item.getTimestamp()));
 
-        // Only handle buttons if they exist (TYPE_DEFAULT)
+        // ----- Action buttons (Accept / Decline) -----
         if (holder.actionButtons != null) {
-            if (item.getEventId() != null && !item.getEventId().isEmpty()) {
+
+            boolean hasEventId = item.getEventId() != null && !item.getEventId().isEmpty();
+
+            // Only actionable if:
+            //  - it has an eventId
+            //  - and is NOT a lottery_not_selected
+            //  - and is NOT an entrant_cancelled
+            boolean isActionable = hasEventId
+                    && !isLotteryNotSelected
+                    && !isCancelledEntrant;
+
+            if (isActionable && listener != null) {
                 holder.actionButtons.setVisibility(View.VISIBLE);
 
-                holder.btnAccept
-                        .setOnClickListener(v -> listener.onAccept(item.getEventId(), item.getNotificationId()));
-
-                holder.btnDecline
-                        .setOnClickListener(v -> listener.onDecline(item.getEventId(), item.getNotificationId()));
+                holder.btnAccept.setOnClickListener(
+                        v -> listener.onAccept(item.getEventId(), item.getNotificationId())
+                );
+                holder.btnDecline.setOnClickListener(
+                        v -> listener.onDecline(item.getEventId(), item.getNotificationId())
+                );
             } else {
                 holder.actionButtons.setVisibility(View.GONE);
+                // Optional: remove old listeners for safety
+                if (holder.btnAccept != null) holder.btnAccept.setOnClickListener(null);
+                if (holder.btnDecline != null) holder.btnDecline.setOnClickListener(null);
             }
         }
     }
+
+
 
     @Override
     public int getItemCount() {
@@ -117,7 +193,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvMessage = itemView.findViewById(R.id.tvMessage);
-            tvAction = itemView.findViewById(R.id.tvAction);
 
             // These will be null for item_notification_waiting_list
             actionButtons = itemView.findViewById(R.id.actionButtons);

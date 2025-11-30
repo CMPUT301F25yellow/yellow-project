@@ -223,42 +223,101 @@ public class WaitingListFragment extends Fragment {
             // wait for user action.
             return;
         }
+        // 🔥 CHECK 1 — Is user already enrolled?
+        db.collection("events").document(eventId)
+                .collection("enrolled").document(userId)
+                .get()
+                .addOnSuccessListener(enrolledSnap -> {
+                    if (enrolledSnap.exists()) {
+                        Toast.makeText(getContext(),
+                                "You are already enrolled in this event.",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
 
-        DocumentReference ref = db.collection("events").document(eventId).collection("waitingList").document(userId);
+                    // 🔥 CHECK 2 — Is user selected (won the lottery)?
+                    db.collection("events").document(eventId)
+                            .collection("selected").document(userId)
+                            .get()
+                            .addOnSuccessListener(selectedSnap -> {
+                                if (selectedSnap.exists()) {
+                                    Toast.makeText(getContext(),
+                                            "You have already been selected for this event.",
+                                            Toast.LENGTH_LONG).show();
+                                    return;
+                                }
+
+                                // 🔥 CHECK 3 — Is user cancelled? (Optional)
+                                db.collection("events").document(eventId)
+                                        .collection("cancelled").document(userId)
+                                        .get()
+                                        .addOnSuccessListener(cancelSnap -> {
+                                            if (cancelSnap.exists()) {
+                                                Toast.makeText(getContext(),
+                                                        "You cannot rejoin the waiting list.",
+                                                        Toast.LENGTH_LONG).show();
+                                                return;
+                                            }
+
+                                            // 🔥 PASS — Now continue to your existing logic
+                                            continueJoinWaitingRoom();
+                                        });
+                            });
+                });
+    }
+    private void continueJoinWaitingRoom() {
+        DocumentReference ref = db.collection("events").document(eventId)
+                .collection("waitingList").document(userId);
+
         ref.get().addOnSuccessListener(doc -> {
             if (doc.exists()) {
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "You're already on the waiting list for this event",
-                            Toast.LENGTH_SHORT)
-                            .show();
-                }
-                return; // User is already in the list, do nothing.
+                Toast.makeText(getContext(),
+                        "You're already on the waiting list for this event",
+                        Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            if (currentEvent.isRequireGeolocation()) {
-                // --- CASE 1: LOCATION IS REQUIRED ---
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Location is required, getting your position...", Toast.LENGTH_SHORT)
-                            .show();
-                }
+            // (your existing code for checking max waiting list size)
+            db.collection("events").document(eventId)
+                    .collection("waitingList")
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
 
-                // Use the helper instance created in onCreate
-                if (locationHelper != null) {
-                    locationHelper.getCurrentLocation();
-                } else {
-                    // Fallback safety – should not normally happen
-                    Toast.makeText(getContext(),
-                            "Location helper not initialized. Cannot join this event.",
-                            Toast.LENGTH_LONG).show();
-                }
+                        int currentSize = snapshot.size();
+                        int maxSize = currentEvent.getMaxEntrants();
 
-            } else {
-                // --- CASE 2: LOCATION IS NOT REQUIRED ---
-                saveWaitingUser(null, null);
-            }
+                        //blank = unlimited
+                        if (maxSize <= 0) {
+                            // skip capacity check entirely
+                            if (currentEvent.isRequireGeolocation()) {
+                                Toast.makeText(getContext(),
+                                        "Location is required, getting your position...",
+                                        Toast.LENGTH_SHORT).show();
+                                locationHelper.getCurrentLocation();
+                            } else {
+                                saveWaitingUser(null, null);
+                            }
+                            return;
+                        }
+
+                        if (currentSize >= maxSize) {
+                            Toast.makeText(getContext(),
+                                    "The waiting list is full (max " + maxSize + ")",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        if (currentEvent.isRequireGeolocation()) {
+                            Toast.makeText(getContext(),
+                                    "Location is required, getting your position...",
+                                    Toast.LENGTH_SHORT).show();
+                            locationHelper.getCurrentLocation();
+                        } else {
+                            saveWaitingUser(null, null);
+                        }
+                    });
         });
     }
-
     /**
      * Helper method to create and save the WaitingUser object to Firestore.
      * 

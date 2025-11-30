@@ -510,20 +510,28 @@ public class MainActivity extends AppCompatActivity implements EventDetailsFragm
     }
 
     private void filterEvents(String keyword) {
+        if (keyword == null) keyword = "";
         keyword = keyword.toLowerCase().trim();
 
         List<Event> filtered = new ArrayList<>();
 
         for (Event e : allEvents) {
 
-            boolean matchesKeyword = keyword.isEmpty() ||
-                    e.getName().toLowerCase().contains(keyword) ||
-                    e.getDescription().toLowerCase().contains(keyword);
+            // Safe values for null fields
+            String name = (e.getName() != null) ? e.getName().toLowerCase() : "";
+            String desc = (e.getDescription() != null) ? e.getDescription().toLowerCase() : "";
+
+            boolean matchesKeyword =
+                    keyword.isEmpty() ||
+                            name.contains(keyword) ||
+                            desc.contains(keyword);
 
             String eventDate = e.getFormattedDateAndLocation();
+            if (eventDate == null) eventDate = "";
 
-            boolean matchesDate = (selectedDate == null) || // no date filter → always true
-                    eventDate.contains(selectedDate);
+            boolean matchesDate =
+                    (selectedDate == null) ||
+                            eventDate.contains(selectedDate);
 
             if (matchesKeyword && matchesDate) {
                 filtered.add(e);

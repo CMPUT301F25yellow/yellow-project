@@ -32,14 +32,13 @@ public class ViewEventPageAdapter extends FragmentStateAdapter {
                 entrantsFragment.setArguments(args);
                 return entrantsFragment;
             case 1: return new MapFragment();
-            case 2: return new NotifyFragment();
-            case 3: return new QrFragmentAfterCreateEvent();
+            case 2: return new QrFragmentAfterCreateEvent();
             default: return new EntrantsFragment();
         }
     }
 
     @Override
     public int getItemCount() {
-        return 4;
+        return 3;
     }
 }

@@ -1,9 +1,9 @@
-package com.example.yellow;
+package com.example.yellow.organizers;
 
 import android.content.Intent;
 import android.net.Uri;
 
-import com.example.yellow.organizers.CreateEventActivity;
+import com.example.yellow.R;
 import com.google.android.material.textfield.TextInputEditText;
 import org.junit.Before;
 import org.junit.Test;
