@@ -1,10 +1,9 @@
-package com.example.yellow;
+package com.example.yellow.organizers;
 
 import android.content.Intent;
 import android.net.Uri;
 import androidx.test.core.app.ApplicationProvider;
 import com.example.yellow.R;
-import com.example.yellow.organizers.ViewEventActivity;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -117,4 +117,34 @@ public class NotificationManager {
                     });
                 });
     }
+
+    /**
+     * Builds recipient display names for the notification log.
+     *
+     * For each uid in userIds (up to maxCount), if a non-empty name exists in nameMap,
+     * that name is used. Otherwise, we fall back to "User " + first 6 chars of uid.
+     */
+    static java.util.List<String> buildRecipientNames(
+            java.util.List<String> userIds,
+            java.util.Map<String, String> nameMap,
+            int maxCount
+    ) {
+        java.util.List<String> result = new java.util.ArrayList<>();
+        if (userIds == null || userIds.isEmpty() || maxCount <= 0) {
+            return result;
+        }
+
+        int count = Math.min(userIds.size(), maxCount);
+        for (int i = 0; i < count; i++) {
+            String uid = userIds.get(i);
+            String name = nameMap != null ? nameMap.get(uid) : null;
+            if (name != null && !name.isEmpty()) {
+                result.add(name);
+            } else {
+                String prefix = uid == null ? "" : uid.substring(0, Math.min(uid.length(), 6));
+                result.add("User " + prefix);
+            }
+        }
+        return result;
+    }
 }
