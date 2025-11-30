@@ -9,9 +9,8 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /**
- * Tests for the QrUtils class.
- * Uses Robolectric to run the tests in a simulated Android environment.
  * Tests the deep link parsing logic for host, scheme, and event id.
+ * Uses Robolectric to run the tests in a simulated Android environment.
  *
  * @author Marcus Lau mdlau
  */

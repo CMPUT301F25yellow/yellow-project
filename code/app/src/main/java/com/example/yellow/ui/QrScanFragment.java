@@ -49,7 +49,7 @@ public class QrScanFragment extends Fragment {
     private PreviewView previewView;
     private BarcodeScanner scanner;
     private Camera camera;
-    private volatile boolean isScanning = true;
+    volatile boolean isScanning = true;
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -85,6 +85,8 @@ public class QrScanFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
+
+        isScanning = true; // Reset scanning state
 
         // Match the status bar color with the header
         requireActivity().getWindow().setStatusBarColor(
@@ -178,7 +180,7 @@ public class QrScanFragment extends Fragment {
      *
      * @param rawValue The raw value of the scanned QR code.
      */
-    private void handleScannedQrCode(String rawValue) {
+    void handleScannedQrCode(String rawValue) {
         String eventId = QrUtils.getEventIdFromUri(rawValue);
 
         if (eventId != null) {

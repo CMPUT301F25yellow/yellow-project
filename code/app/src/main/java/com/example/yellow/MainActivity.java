@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements EventDetailsFragment.OnJoinWaitlistClickListener {
 
     private BottomNavigationView bottomNav;
     private View header;
@@ -303,7 +303,8 @@ public class MainActivity extends AppCompatActivity {
     // Open Event Details (Fragment) from QR code with eventId
     private void openEventDetails(String eventId) {
         Bundle bundle = new Bundle();
-        bundle.putString("qr_code_data", eventId);
+        String qrData = "yellow://eventdetails/" + eventId;
+        bundle.putString("qr_code_data", qrData);
 
         EventDetailsFragment eventDetailsFragment = new EventDetailsFragment();
         eventDetailsFragment.setArguments(bundle);
@@ -385,6 +386,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void openMyEvents() {
         openFragment(new MyEventsFragment(), "MyEvents", /* keepBottomNavVisible= */true);
+    }
+
+    @Override
+    public void onJoinWaitlistClicked(String eventId) {
+        openWaitingRoom(eventId);
     }
 
     public void openWaitingRoom(String eventId) {

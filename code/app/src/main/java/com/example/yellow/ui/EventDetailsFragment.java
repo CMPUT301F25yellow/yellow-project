@@ -1,5 +1,6 @@
 package com.example.yellow.ui;
 
+import android.content.Context;
 import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,6 +41,39 @@ public class EventDetailsFragment extends Fragment {
 
     private FirebaseFirestore db;
     private ListenerRegistration waitingListListener;
+    private OnJoinWaitlistClickListener listener;
+
+    /**
+     * An interface for the Join Waitlist button.
+     * This allows decouples the EventDetailsFragment from the MainActivity
+     * such that the button can be tested in isolation.
+     *
+     */
+    public interface OnJoinWaitlistClickListener {
+        void onJoinWaitlistClicked(String eventId);
+    }
+
+    /**
+     * Called when the fragment is first attached to its context.
+     * Attaches the listener to the activity if it implements OnJoinWaitlistClickListener
+     * otherwise throws an exception.
+     * @param context
+     */
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (context instanceof OnJoinWaitlistClickListener) {
+            listener = (OnJoinWaitlistClickListener) context;
+//        } else {
+//            throw new RuntimeException(context.toString()
+//                    + " must implement OnJoinWaitlistClickListener");
+        }
+    }
+
+    // Setter for testing purposes
+    public void setOnJoinWaitlistClickListener(OnJoinWaitlistClickListener listener) {
+        this.listener = listener;
+    }
 
     /**
      * Called to have the fragment instantiate its user interface view.
@@ -122,6 +156,9 @@ public class EventDetailsFragment extends Fragment {
         // Get event ID from arguments and fetch data
         if (getArguments() != null) {
             String eventId = getArguments().getString("qr_code_data");
+//            String qrData = getArguments().getString("qr_code_data");
+//            String eventId = com.example.yellow.utils.QrUtils.getEventIdFromUri(qrData);
+
             if (eventId != null) {
                 DocumentReference eventRef = db.collection("events").document(eventId);
                 eventRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -190,8 +227,11 @@ public class EventDetailsFragment extends Fragment {
 
                         // Set up the Join Event button
                         joinEventButton.setOnClickListener(v -> {
-                            if (getActivity() instanceof MainActivity) {
-                                ((MainActivity) getActivity()).openWaitingRoom(eventId);
+//                            if (getActivity() instanceof MainActivity) {
+//                                ((MainActivity) getActivity()).openWaitingRoom(eventId);
+//                            }
+                            if (listener != null) {
+                                listener.onJoinWaitlistClicked(eventId);
                             }
                         });
 
@@ -242,5 +282,15 @@ public class EventDetailsFragment extends Fragment {
         if (waitingListListener != null) {
             waitingListListener.remove();
         }
+    }
+
+    /**
+     * Called when the fragment is no longer attached to its activity.
+     * Sets the listener to null to prevent memory leaks and crashes
+     */
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        listener = null; // Set the listener to null to prevent memory leaks and crashes
     }
 }

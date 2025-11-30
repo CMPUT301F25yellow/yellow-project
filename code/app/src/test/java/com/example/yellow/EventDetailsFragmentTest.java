@@ -5,10 +5,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -44,6 +46,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Test if the EventDetailsFragment properly processes eventId.
+ * Also tests the joinWaitlistButton functionality.
+ *
+ * @author Marcus Lau mdlau
+ */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 34)
 public class EventDetailsFragmentTest {
@@ -101,8 +109,7 @@ public class EventDetailsFragmentTest {
     // Helper to launch the fragment consistently
     private FragmentScenario<EventDetailsFragment> launchFragmentWithArgs(String eventId) {
         Bundle args = new Bundle();
-        String qrData = "yellow://eventdetails/" + eventId;
-        args.putString("qr_code_data", qrData);
+        args.putString("qr_code_data", eventId);
         return FragmentScenario.launchInContainer(
                 EventDetailsFragment.class,
                 args,
@@ -180,6 +187,27 @@ public class EventDetailsFragmentTest {
             assertEquals("", location.getText().toString()); // Should be empty
             assertEquals("", description.getText().toString()); // Should be empty
         });
+    }
+
+    /**
+     * Test that the joinWaitlistButton calls the listener when clicked.
+     *
+     */
+    @Test
+    public void joinWaitlistButton_callsListener_whenClicked() {
+        // 1. Arrange
+        mockEventDocument(TEST_EVENT_ID, new HashMap<>()); // Mock a basic event
+        EventDetailsFragment.OnJoinWaitlistClickListener mockListener = mock(EventDetailsFragment.OnJoinWaitlistClickListener.class);
+
+        // 2. Act
+        FragmentScenario<EventDetailsFragment> scenario = launchFragmentWithArgs(TEST_EVENT_ID);
+        scenario.onFragment(fragment -> {
+            fragment.setOnJoinWaitlistClickListener(mockListener);
+            fragment.getView().findViewById(R.id.joinEventButton).performClick();
+        });
+
+        // 3. Assert
+        verify(mockListener).onJoinWaitlistClicked(TEST_EVENT_ID);
     }
 
     /**
