@@ -108,4 +108,13 @@ dependencies {
 
     // Fragment testing (FragmentScenario)
     debugImplementation("androidx.fragment:fragment-testing:1.6.2")
+
+    // ---------- Additional Espresso (add to your existing Espresso dependencies) ----------
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
+
+// ---------- Mockito for Android instrumented tests ----------
+    androidTestImplementation("org.mockito:mockito-android:5.7.0")
+
+// ---------- Truth for better assertions (optional but recommended) ----------
+    androidTestImplementation("com.google.truth:truth:1.1.5")
 }
