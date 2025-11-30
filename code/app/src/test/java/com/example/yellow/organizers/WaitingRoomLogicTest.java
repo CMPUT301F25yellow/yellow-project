@@ -1,4 +1,4 @@
-package com.example.yellow;
+package com.example.yellow.organizers;
 
 import org.junit.Assert;
 import org.junit.Before;

@@ -93,6 +93,10 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("androidx.test.ext:junit:1.1.5")
+    testImplementation("org.robolectric:robolectric:4.12.2")
+    testImplementation("androidx.test:core:1.7.0")
+
+
 
     // ---------- Android instrumented tests (Espresso UI + Fragment tests) ----------
     androidTestImplementation("androidx.test:core:1.5.0")
