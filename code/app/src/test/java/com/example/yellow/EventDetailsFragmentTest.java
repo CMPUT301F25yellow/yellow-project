@@ -237,6 +237,7 @@ public class EventDetailsFragmentTest {
                         (String)data.get("description"),
                         (String)data.get("location"),
                         new Timestamp(new Date()), new Timestamp(new Date()),
+                        new Timestamp(new Date()), new Timestamp(new Date()),
                         "",
                         1,
                         1,
