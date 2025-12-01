@@ -194,7 +194,8 @@ public class MainActivity extends AppCompatActivity implements EventDetailsFragm
                 // Used to fix bug where QR Scan had no bottomNav
                 String topFragmentTag = getSupportFragmentManager().getBackStackEntryAt(backStackCount - 1).getName();
 
-                if ("QR_SCAN".equals(topFragmentTag) || "MyEvents".equals(topFragmentTag) || "History".equals(topFragmentTag)) {
+                if ("QR_SCAN".equals(topFragmentTag) || "MyEvents".equals(topFragmentTag)
+                        || "History".equals(topFragmentTag)) {
                     if (bottomNav != null) {
                         bottomNav.setVisibility(View.VISIBLE);
                     }
@@ -304,8 +305,9 @@ public class MainActivity extends AppCompatActivity implements EventDetailsFragm
     // Open Event Details (Fragment) from QR code with eventId
     private void openEventDetails(String eventId) {
         Bundle bundle = new Bundle();
-        String qrData = "yellow://eventdetails/" + eventId;
-        bundle.putString("qr_code_data", qrData);
+        // Pass the event ID directly - EventDetailsFragment expects it in
+        // "qr_code_data"
+        bundle.putString("qr_code_data", eventId);
 
         EventDetailsFragment eventDetailsFragment = new EventDetailsFragment();
         eventDetailsFragment.setArguments(bundle);
@@ -506,12 +508,18 @@ public class MainActivity extends AppCompatActivity implements EventDetailsFragm
                 openWaitingRoom(event.getId());
             });
 
+            // Add click listener to the entire card to open event details
+            card.setOnClickListener(v -> {
+                openEventDetails(event.getId());
+            });
+
             eventsContainer.addView(card);
         }
     }
 
     private void filterEvents(String keyword) {
-        if (keyword == null) keyword = "";
+        if (keyword == null)
+            keyword = "";
         keyword = keyword.toLowerCase().trim();
 
         List<Event> filtered = new ArrayList<>();
@@ -522,17 +530,16 @@ public class MainActivity extends AppCompatActivity implements EventDetailsFragm
             String name = (e.getName() != null) ? e.getName().toLowerCase() : "";
             String desc = (e.getDescription() != null) ? e.getDescription().toLowerCase() : "";
 
-            boolean matchesKeyword =
-                    keyword.isEmpty() ||
-                            name.contains(keyword) ||
-                            desc.contains(keyword);
+            boolean matchesKeyword = keyword.isEmpty() ||
+                    name.contains(keyword) ||
+                    desc.contains(keyword);
 
             String eventDate = e.getFormattedDateAndLocation();
-            if (eventDate == null) eventDate = "";
+            if (eventDate == null)
+                eventDate = "";
 
-            boolean matchesDate =
-                    (selectedDate == null) ||
-                            eventDate.contains(selectedDate);
+            boolean matchesDate = (selectedDate == null) ||
+                    eventDate.contains(selectedDate);
 
             if (matchesKeyword && matchesDate) {
                 filtered.add(e);
