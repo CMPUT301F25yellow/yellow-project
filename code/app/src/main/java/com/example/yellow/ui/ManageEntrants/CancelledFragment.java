@@ -24,7 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
+//author: waylon
 public class CancelledFragment extends Fragment {
 
     private FirebaseFirestore db;

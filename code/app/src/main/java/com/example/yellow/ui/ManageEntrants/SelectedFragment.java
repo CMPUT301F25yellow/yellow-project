@@ -34,7 +34,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
-
+//author: waylon
 public class SelectedFragment extends Fragment {
 
     private FirebaseFirestore db;
