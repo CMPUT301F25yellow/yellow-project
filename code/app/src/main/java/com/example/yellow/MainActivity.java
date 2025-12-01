@@ -45,7 +45,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-
+//author: waylon
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
