@@ -56,3 +56,4 @@ Lottery systems are great because you don’t have to be first to get a chance t
 | Storyboard Sequence| [View Storyboard](https://github.com/CMPUT301F25yellow/yellow-project/wiki/Storyboard-Sequence) |
 | UML               | [View UML](https://github.com/CMPUT301F25yellow/yellow-project/blob/main/doc/uml/YellowProjectUMLFinal.drawio.png) |
 | CRC               | [View CRC](https://github.com/CMPUT301F25yellow/yellow-project/blob/main/doc/crc/YellowProjectCRCFinal.drawio.png) |
+| Demo Video        | [View Video](https://drive.google.com/file/d/1csE7vF9wQXY3BXnUrFXGnu9Hox5KI3Tp/view?usp=drive_link) |
