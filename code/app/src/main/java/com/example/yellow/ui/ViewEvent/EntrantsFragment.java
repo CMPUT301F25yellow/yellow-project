@@ -29,6 +29,7 @@ import java.util.Locale;
  * combines waiting, selected, enrolled, and cancelled lists
  * useful for organizers who want a quick overview of all participants
  */
+//Authors: Will
 public class EntrantsFragment extends Fragment {
 
     private FirebaseFirestore db;

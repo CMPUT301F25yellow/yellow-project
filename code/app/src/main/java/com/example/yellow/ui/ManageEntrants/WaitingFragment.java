@@ -29,7 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-//author: Waylon
+//authors: Waylon
+//Will
 public class WaitingFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -148,7 +149,7 @@ public class WaitingFragment extends Fragment {
     }
 
 
-    /** Opens dialog to ask how many users to draw */
+    /** Opens dialog to ask how many users to draw*/
     private void showDrawDialog() {
         if (!isSafe()) return;
 
@@ -498,7 +499,7 @@ public class WaitingFragment extends Fragment {
                                 eventId,
                                 finalEventName,
                                 message,
-                                "loterry_non_selected",   // notification type/tag
+                                "lottery_non_selected",   // notification type/tag
                                 userIdsToNotify,
                                 new com.example.yellow.utils.NotificationManager
                                         .OnNotificationSentListener() {
