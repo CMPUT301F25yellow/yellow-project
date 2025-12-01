@@ -37,6 +37,7 @@ import java.util.Map;
 /**
  * Fragment that displays app notifications for the user.
  */
+//author: waylon
 public class NotificationFragment extends Fragment {
 
     // 🔹 Make db + adapter fields so we can reuse them (e.g. in clearAllNotifications)

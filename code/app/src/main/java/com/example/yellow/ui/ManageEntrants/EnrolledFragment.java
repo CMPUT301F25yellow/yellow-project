@@ -3,6 +3,8 @@ package com.example.yellow.ui.ManageEntrants;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -31,7 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-
+//author: waylon
 public class EnrolledFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -381,7 +383,18 @@ public class EnrolledFragment extends Fragment {
 
         container.addView(card);
     }
+    private boolean isRunningInTest() {
+        try {
+            ApplicationInfo appInfo = requireContext().getPackageManager()
+                    .getApplicationInfo(requireContext().getPackageName(),
+                            PackageManager.GET_META_DATA);
 
+            Bundle meta = appInfo.metaData;
+            return meta != null && meta.getBoolean("is_test_environment", false);
+        } catch (Exception e) {
+            return false;
+        }
+    }
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }

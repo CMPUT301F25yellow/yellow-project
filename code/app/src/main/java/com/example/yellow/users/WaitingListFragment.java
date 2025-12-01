@@ -33,6 +33,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Date;
 
+//author: waylon
 public class WaitingListFragment extends Fragment {
 
     private FirebaseFirestore db;
