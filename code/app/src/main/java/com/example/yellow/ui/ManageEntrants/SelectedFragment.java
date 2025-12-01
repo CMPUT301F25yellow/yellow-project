@@ -432,6 +432,8 @@ public class SelectedFragment extends Fragment {
                                 Toast.LENGTH_SHORT).show();
                     }
                 })
+                    // Send cancellation notifications (this is only for automatic message)
+                    // sendCancellationNotifications(userIdsToNotify);
                 .addOnFailureListener(e -> {
                     if (isSafe())
                         Toast.makeText(getContext(),
@@ -439,7 +441,75 @@ public class SelectedFragment extends Fragment {
                                 Toast.LENGTH_SHORT).show();
                 });
     }
+    private void sendCancellationNotifications(java.util.List<String> userIds) {
+        if (!isSafe() || userIds == null || userIds.isEmpty()) return;
 
+        // First load event name
+        db.collection("events").document(eventId)
+                .get()
+                .addOnSuccessListener(eventDoc -> {
+                    if (!isSafe()) return;
+
+                    String eventName = eventDoc.getString("name");
+                    if (eventName == null) eventName = "this event";
+
+                    String message = "Your selection for " + eventName +
+                            " was cancelled by the organizer.";
+
+                    // Respect per-user notification preferences
+                    java.util.List<String> enabledUserIds = new java.util.ArrayList<>();
+
+                    for (String userId : userIds) {
+                        db.collection("profiles").document(userId)
+                                .get()
+                                .addOnSuccessListener(profile -> {
+                                    if (!isSafe()) return;
+
+                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
+                                    if (enabled == null) enabled = true;
+
+                                    if (enabled) {
+                                        enabledUserIds.add(profile.getId());
+                                    }
+                                });
+                    }
+
+                    // Give profile fetches a moment, then send via NotificationManager
+                    String finalEventName = eventName;
+                    new android.os.Handler().postDelayed(() -> {
+                        if (!isSafe()) return;
+
+                        if (enabledUserIds.isEmpty()) {
+                            // Silent: everyone turned off notifications
+                            return;
+                        }
+
+                        com.example.yellow.utils.NotificationManager.sendNotification(
+                                getContext(),
+                                eventId,
+                                finalEventName,
+                                message,
+                                "entrant_cancelled",
+                                enabledUserIds,
+                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        // optional toast
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        if (isSafe()) {
+                                            Toast.makeText(getContext(),
+                                                    "Failed to send cancellation notices: " + e.getMessage(),
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }
+                        );
+                    }, 500);
+                });
+    }
     /**
      * checks if fragment is in a valid lifecycle state for ui updates
      *
