@@ -54,7 +54,7 @@
     <string name="qr_code_manual">Attendees can scan this to view event details or check in.</string>
     <string name="share_qr_code">Share QR Code</string>
 
-    <string name="event_poster_update">Update Event Poster</string>
+    <string name="event_poster_update">Edit Event Poster</string>
     <string name="manage_entrants">Manage Entrants</string>
     <string name="event_details">Event Details</string>
     <string name="lottery_criteria">

@@ -93,6 +93,10 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("androidx.test.ext:junit:1.1.5")
+    testImplementation("org.robolectric:robolectric:4.12.2")
+    testImplementation("androidx.test:core:1.7.0")
+
+
 
     // ---------- Android instrumented tests (Espresso UI + Fragment tests) ----------
     androidTestImplementation("androidx.test:core:1.5.0")
@@ -104,4 +108,13 @@ dependencies {
 
     // Fragment testing (FragmentScenario)
     debugImplementation("androidx.fragment:fragment-testing:1.6.2")
+
+    // ---------- Additional Espresso (add to your existing Espresso dependencies) ----------
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
+
+// ---------- Mockito for Android instrumented tests ----------
+    androidTestImplementation("org.mockito:mockito-android:5.7.0")
+
+// ---------- Truth for better assertions (optional but recommended) ----------
+    androidTestImplementation("com.google.truth:truth:1.1.5")
 }

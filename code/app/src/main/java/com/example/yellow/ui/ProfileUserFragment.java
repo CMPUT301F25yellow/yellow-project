@@ -18,7 +18,9 @@ import androidx.fragment.app.Fragment;
 
 import com.example.yellow.R;
 import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -42,6 +44,7 @@ public class ProfileUserFragment extends Fragment {
     private static final String TAG = "ProfileUserFragment";
 
     private TextInputEditText inputFullName, inputEmail, inputPhone;
+    private TextInputLayout layoutFullName, layoutEmail, layoutPhone;
     private MaterialButton btnSave, btnDeleteProfile;
     private MaterialSwitch switchNotifications;
 
@@ -80,6 +83,9 @@ public class ProfileUserFragment extends Fragment {
         inputFullName = v.findViewById(R.id.inputFullName);
         inputEmail = v.findViewById(R.id.inputEmail);
         inputPhone = v.findViewById(R.id.inputPhone);
+        layoutFullName = v.findViewById(R.id.layoutFullName);
+        layoutEmail = v.findViewById(R.id.layoutEmail);
+        layoutPhone = v.findViewById(R.id.layoutPhone);
         switchNotifications = v.findViewById(R.id.switchNotifications);
         btnSave = v.findViewById(R.id.btnSave);
         btnDeleteProfile = v.findViewById(R.id.btnDeleteProfile);
@@ -231,27 +237,54 @@ public class ProfileUserFragment extends Fragment {
         String email = safe(inputEmail);
         String phone = safe(inputPhone);
 
-        // (Optional) quick client-side validation
-        if (TextUtils.isEmpty(name) && TextUtils.isEmpty(email) && TextUtils.isEmpty(phone)) {
-            toast("Nothing to save.");
+        // Reset errors
+        if (layoutFullName != null)
+            layoutFullName.setError(null);
+        if (layoutEmail != null)
+            layoutEmail.setError(null);
+        if (layoutPhone != null)
+            layoutPhone.setError(null);
+
+        boolean isValid = true;
+
+        // Validate Name (Mandatory)
+        if (TextUtils.isEmpty(name)) {
+            if (layoutFullName != null)
+                layoutFullName.setError("Please fill in your name");
+            isValid = false;
+        }
+
+        // Validate Email (Mandatory)
+        if (TextUtils.isEmpty(email)) {
+            if (layoutEmail != null)
+                layoutEmail.setError("Please fill in your email");
+            isValid = false;
+        }
+
+        // Phone is optional, so no validation needed for emptiness.
+        // (You could add format validation here if desired, but requirements say just
+        // optional)
+
+        if (!isValid) {
+            // No toast needed - TextInputLayout already shows inline errors
             return;
         }
 
         Map<String, Object> data = new HashMap<>();
         data.put("fullName", name);
         data.put("email", email);
-        data.put("phone", phone);
+        data.put("phone", phone); // Optional
         data.put("updatedAt", Timestamp.now());
 
         db.collection("profiles")
                 .document(uid)
                 .set(data, SetOptions.merge()) // merge so we don’t wipe other fields
                 .addOnSuccessListener(unused -> {
-                    toast("Profile saved");
+                    showSnackbar("Profile saved successfully ✓");
                     // Propagate the updated name to other Firestore docs that cache the user name
                     com.example.yellow.utils.ProfileSyncUtils.updateUserDisplayNameEverywhere(db, uid, name);
                 })
-                .addOnFailureListener(e -> toast("Save failed: " + e.getMessage()));
+                .addOnFailureListener(e -> showSnackbar("Save failed: " + e.getMessage()));
     }
 
     /**
@@ -266,43 +299,13 @@ public class ProfileUserFragment extends Fragment {
         // Use cascade deletion to remove profile, events, and subcollections
         com.example.yellow.utils.UserCleanupUtils.deleteUserAndEvents(uid, db)
                 .addOnSuccessListener(unused -> {
-                    // After Firestore cleanup, delete the Auth user
-                    com.google.firebase.auth.FirebaseUser user = com.google.firebase.auth.FirebaseAuth.getInstance()
-                            .getCurrentUser();
-                    if (user != null) {
-                        user.delete()
-                                .addOnCompleteListener(task -> {
-                                    if (task.isSuccessful()) {
-                                        toast("Account deleted");
-                                        // Restart the app to reset state
-                                        android.content.Intent intent = new android.content.Intent(requireActivity(),
-                                                com.example.yellow.MainActivity.class);
-                                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                                | android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                                                | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                        startActivity(intent);
-                                    } else {
-                                        toast("Profile deleted, but account deletion failed: "
-                                                + task.getException().getMessage());
-                                        // At least sign out
-                                        com.google.firebase.auth.FirebaseAuth.getInstance().signOut();
-                                        // Restart the app
-                                        android.content.Intent intent = new android.content.Intent(requireActivity(),
-                                                com.example.yellow.MainActivity.class);
-                                        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                                | android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                                                | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                        startActivity(intent);
-                                    }
-                                });
-                    } else {
-                        toast("Profile deleted");
-                        inputFullName.setText("");
-                        inputEmail.setText("");
-                        inputPhone.setText("");
-                    }
+                    showSnackbar("Profile deleted successfully");
+                    // Clear the input fields
+                    inputFullName.setText("");
+                    inputEmail.setText("");
+                    inputPhone.setText("");
                 })
-                .addOnFailureListener(e -> toast("Delete failed: " + e.getMessage()));
+                .addOnFailureListener(e -> showSnackbar("Delete failed: " + e.getMessage()));
     }
 
     // ----- Admin toggle (NEW) -----
@@ -357,6 +360,18 @@ public class ProfileUserFragment extends Fragment {
     private void toast(String msg) {
         if (getContext() != null) {
             Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Shows a professional Snackbar message at the bottom of the screen.
+     *
+     * @param msg Message to display.
+     */
+    private void showSnackbar(String msg) {
+        View view = getView();
+        if (view != null) {
+            Snackbar.make(view, msg, Snackbar.LENGTH_SHORT).show();
         }
     }
 

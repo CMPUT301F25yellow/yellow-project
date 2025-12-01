@@ -98,9 +98,11 @@
 
             <!-- Full name -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutFullName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/full_name">
+                android:hint="Full Name"
+                app:errorEnabled="true">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputFullName"
@@ -111,10 +113,12 @@
 
             <!-- Email -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="@string/email_address">
+                android:hint="Email Address"
+                app:errorEnabled="true">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputEmail"
@@ -126,10 +130,12 @@
 
             <!-- Phone -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutPhone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="@string/phone_optional">
+                android:hint="Phone Number (Optional)"
+                app:errorEnabled="true">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputPhone"
