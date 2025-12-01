@@ -23,6 +23,14 @@ import com.google.firebase.firestore.FirebaseFirestore;
 /**
  * Activity that provides access to admin tools and management features.
  * Only users with the "admin" role in Firestore can access this dashboard.
+ * 
+ * This activity serves as the central hub for admin operations including:
+ * - Managing events (view and delete)
+ * - Managing user profiles (view and remove)
+ * - Managing uploaded images (view and remove)
+ * - Viewing notification logs
+ * 
+ * @author Tabrez
  */
 public class AdminDashboardActivity extends AppCompatActivity {
 

@@ -32,6 +32,17 @@ import java.util.Date;
 
 /**
  * Admin screen to browse all events as a list and allow deleting an event.
+ * 
+ * This fragment displays all events from Firestore in real-time, showing:
+ * - Event thumbnail image
+ * - Event title and organizer name
+ * - Event date and time
+ * - Delete button for each event
+ * 
+ * When an event is deleted, both the Firestore document and the associated
+ * poster image in Firebase Storage are removed.
+ * 
+ * @author Tabrez
  */
 public class ManageEventsFragment extends Fragment {
 
@@ -48,6 +59,14 @@ public class ManageEventsFragment extends Fragment {
      * @param savedInstanceState Saved state, if any.
      * @return The root view for this fragment.
      */
+    /**
+     * Creates and returns the Manage Events layout.
+     *
+     * @param inflater           Layout inflater
+     * @param container          Optional parent view
+     * @param savedInstanceState Saved state, if any
+     * @return The root view for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -62,6 +81,13 @@ public class ManageEventsFragment extends Fragment {
      *
      * @param v                  The fragment root view.
      * @param savedInstanceState Saved state, if any.
+     */
+    /**
+     * Binds views, applies window insets, sets back navigation, and starts
+     * listening to events.
+     *
+     * @param v                  The fragment root view
+     * @param savedInstanceState Saved state, if any
      */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
@@ -101,6 +127,9 @@ public class ManageEventsFragment extends Fragment {
         listenForEvents();
     }
 
+    /**
+     * Cleans up the Firestore listener and view refs.
+     */
     /**
      * Cleans up the Firestore listener and view refs.
      */
@@ -190,9 +219,9 @@ public class ManageEventsFragment extends Fragment {
      * Shows a confirmation dialog before deleting the event (and poster if
      * present).
      *
-     * @param eventId   The Firestore document ID of the event.
-     * @param title     The event name (used for dialog text).
-     * @param posterUrl The download URL of the poster image (may be empty).
+     * @param eventId   The Firestore document ID of the event
+     * @param title     The event name (used for dialog text)
+     * @param posterUrl The download URL of the poster image (may be empty)
      */
     private void confirmDelete(@NonNull String eventId,
             @NonNull String title,
@@ -210,8 +239,8 @@ public class ManageEventsFragment extends Fragment {
      * Deletes the event document and then attempts to delete its poster in Firebase
      * Storage.
      *
-     * @param eventId   The Firestore document ID to delete.
-     * @param posterUrl The download URL of the poster image (may be empty).
+     * @param eventId   The Firestore document ID to delete
+     * @param posterUrl The download URL of the poster image (may be empty)
      */
     private void deleteEventAndPoster(@NonNull String eventId, @NonNull String posterUrl) {
         db.collection("events").document(eventId)
@@ -236,9 +265,9 @@ public class ManageEventsFragment extends Fragment {
     /**
      * Safely reads a string field from a document.
      *
-     * @param d   The source document.
-     * @param key The field name.
-     * @return The trimmed string value or an empty string.
+     * @param d   The source document
+     * @param key The field name
+     * @return The trimmed string value or an empty string
      */
     private String str(DocumentSnapshot d, String key) {
         String s = d.getString(key);
@@ -248,8 +277,8 @@ public class ManageEventsFragment extends Fragment {
     /**
      * Formats a Firestore field as a "date • time" label.
      *
-     * @param raw The raw field value (Timestamp or String).
-     * @return A formatted date-time label, or an empty string if not available.
+     * @param raw The raw field value (Timestamp or String)
+     * @return A formatted date-time label, or an empty string if not available
      */
     private String formatDateField(Object raw) {
         if (raw instanceof Timestamp) {
@@ -266,7 +295,7 @@ public class ManageEventsFragment extends Fragment {
     /**
      * Shows a short toast if the fragment is attached.
      *
-     * @param m Message to display.
+     * @param m Message to display
      */
     private void toast(String m) {
         if (!isAdded())
