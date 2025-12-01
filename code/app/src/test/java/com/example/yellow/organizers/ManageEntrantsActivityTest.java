@@ -1,4 +1,4 @@
-package com.example.yellow;
+package com.example.yellow.organizers;
 
 import static org.junit.Assert.*;
 
@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.example.yellow.R;
 import com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity;
 import com.example.yellow.ui.ManageEntrants.WaitingFragment;
 import com.example.yellow.ui.ManageEntrants.SelectedFragment;
