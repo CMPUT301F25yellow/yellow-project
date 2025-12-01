@@ -1,8 +1,12 @@
 com.example.yellow
 com.example.yellow.admin
+com.example.yellow.models
 com.example.yellow.organizers
+com.example.yellow.organizers.fragments
 com.example.yellow.ui
 com.example.yellow.ui.ManageEntrants
+com.example.yellow.ui.notifications
 com.example.yellow.ui.ViewEvent
+com.example.yellow.ui.ViewEvent.Map
 com.example.yellow.users
 com.example.yellow.utils

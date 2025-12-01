@@ -38,6 +38,7 @@ android {
 }
 
 dependencies {
+    // For Creating Javadocs (uncomment to generate Javadocs)
     // implementation(files("C:\\Users\\User\\AppData\\Local\\Android\\Sdk\\platforms\\android-36\\android.jar"))
 
     // ---------- Firebase (using BoM) ----------
