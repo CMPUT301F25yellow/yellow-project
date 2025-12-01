@@ -29,11 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-/**
- * Fragment for displaying a list of waiting entrants.
- * @author Waylon Wang - waylon1
- */
+//authors: Waylon
+//Will
 public class WaitingFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -152,7 +149,7 @@ public class WaitingFragment extends Fragment {
     }
 
 
-    /** Opens dialog to ask how many users to draw */
+    /** Opens dialog to ask how many users to draw*/
     private void showDrawDialog() {
         if (!isSafe()) return;
 
@@ -283,11 +280,6 @@ public class WaitingFragment extends Fragment {
                             });
                 });
     }
-
-    /**
-     * Actually runs the draw.
-     * @param count
-     */
     private void actuallyRunDraw(int count) {
         // 1. Shuffle a copy of current waiting entrants
         List<String> entrantsCopy = new ArrayList<>(currentWaitingEntrants);
@@ -507,7 +499,7 @@ public class WaitingFragment extends Fragment {
                                 eventId,
                                 finalEventName,
                                 message,
-                                "loterry_non_selected",   // notification type/tag
+                                "lottery_non_selected",   // notification type/tag
                                 userIdsToNotify,
                                 new com.example.yellow.utils.NotificationManager
                                         .OnNotificationSentListener() {

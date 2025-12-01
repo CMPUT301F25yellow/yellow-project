@@ -27,10 +27,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 
 import android.view.ViewGroup;
-
-/**
- * Screen for organizers to view an event.
- */
+//Authors: Will
 public class ViewEventActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
@@ -113,10 +110,6 @@ public class ViewEventActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Sets up the ViewModel observers.
-     * This will run whenever the event data changes.
-     */
     private void setupObservers() {
         // This is the magic. This block will run whenever the event data changes.
         eventViewModel.getEvent().observe(this, event -> {
@@ -173,9 +166,6 @@ public class ViewEventActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * Extracts the event ID from the intent and then sets it in the ViewModel.
-     */
     private void extractEventId() {
         Uri data = getIntent().getData();
         eventId = null;
@@ -202,9 +192,6 @@ public class ViewEventActivity extends AppCompatActivity {
         // We will populate these from the loaded event object later
     }
 
-    /**
-     * This function sets up the window insets for the status bar.
-     */
     private void setupWindowInsets() {
         View root = findViewById(android.R.id.content);
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {

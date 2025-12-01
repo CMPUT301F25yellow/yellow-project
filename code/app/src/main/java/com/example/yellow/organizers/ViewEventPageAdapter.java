@@ -10,7 +10,8 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import com.example.yellow.ui.QrFragmentAfterCreateEvent;
 import com.example.yellow.ui.ViewEvent.EntrantsFragment;
 import com.example.yellow.ui.ViewEvent.Map.MapFragment;
-
+import com.example.yellow.ui.ViewEvent.NotifyFragment;
+//Authors: Will
 public class ViewEventPageAdapter extends FragmentStateAdapter {
 
     private final String eventId;

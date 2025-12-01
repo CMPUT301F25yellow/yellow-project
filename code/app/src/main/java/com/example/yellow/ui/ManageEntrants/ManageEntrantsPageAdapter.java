@@ -6,30 +6,16 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
-
-/**
- * Adapter for managing entrants of an event.
- * @author Waylon Wang - waylon1
- */
+//Authors: Will
 public class ManageEntrantsPageAdapter extends FragmentStateAdapter {
 
     private final String eventId;
 
-    /**
-     * Constructor for the adapter.
-     * @param fa
-     * @param eventId
-     */
     public ManageEntrantsPageAdapter(@NonNull FragmentActivity fa, String eventId) {
         super(fa);
         this.eventId = eventId;
     }
 
-    /**
-     * Creates a fragment for a given position.
-     * @param position: the position of the fragment
-     * @return the fragment
-     */
     @NonNull
     @Override
     public Fragment createFragment(int position) {
@@ -48,10 +34,6 @@ public class ManageEntrantsPageAdapter extends FragmentStateAdapter {
         return fragment;
     }
 
-    /**
-     * Returns the number of tabs.
-     * @return the number of tabs
-     */
     @Override
     public int getItemCount() {
         return 4;
