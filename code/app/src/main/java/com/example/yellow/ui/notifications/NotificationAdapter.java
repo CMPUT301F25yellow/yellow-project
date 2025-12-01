@@ -1,4 +1,4 @@
-    package com.example.yellow.ui.notifications;
+package com.example.yellow.ui.notifications;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,8 +38,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     private static final int TYPE_DEFAULT = 0;
     private static final int TYPE_WAITING_LIST = 1;
-    private static final int TYPE_LOTTERY_LOSER  = 2;
-    private static final int TYPE_CANCELLED      = 3;
+    private static final int TYPE_LOTTERY_LOSER = 2;
+    private static final int TYPE_CANCELLED = 3;
 
     public void setList(List<NotificationItem> newList) {
         list = newList;
@@ -51,7 +51,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         NotificationItem item = list.get(position);
 
         String type = item.getType() != null ? item.getType() : "";
-        String msg  = item.getMessage() != null ? item.getMessage().toLowerCase() : "";
+        String msg = item.getMessage() != null ? item.getMessage().toLowerCase() : "";
 
         // Waiting-list
         if (type.equalsIgnoreCase("waiting_list") ||
@@ -76,7 +76,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         return TYPE_DEFAULT;
     }
-
 
     @NonNull
     @Override
@@ -103,7 +102,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return new NotifVH(v);
     }
 
-
     @Override
     public void onBindViewHolder(@NonNull NotifVH holder, int position) {
         NotificationItem item = list.get(position);
@@ -115,17 +113,18 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         String msg = item.getMessage() != null ? item.getMessage().toLowerCase() : "";
 
         // --- Detect "non-selected" (lost lottery) notifications ---
-        boolean isLotteryNotSelected =
-                type.equalsIgnoreCase("lottery_not_selected")       // ideal
-                        || type.equalsIgnoreCase("non_selected")    // legacy / mismatch
-                        || msg.contains("you were not selected")    // fallback by message
-                        || msg.contains("not selected in the lottery");
+        boolean isLotteryNotSelected = type.equalsIgnoreCase("lottery_not_selected") // ideal
+                || type.equalsIgnoreCase("non_selected") // legacy / mismatch
+                || msg.contains("you were not selected") // fallback by message
+                || msg.contains("not selected in the lottery");
 
         // --- Detect "cancelled entrant" notifications ---
-        boolean isCancelledEntrant =
-                type.equalsIgnoreCase("entrant_cancelled")          // ideal
-                        || msg.contains("your selection for") && msg.contains("was cancelled")
-                        || msg.contains("selection was cancelled");
+        boolean isCancelledEntrant = type.equalsIgnoreCase("entrant_cancelled") // ideal
+                || msg.contains("your selection for") && msg.contains("was cancelled")
+                || msg.contains("selection was cancelled");
+
+        // --- Detect "enrolled" notifications ---
+        boolean isEnrolled = msg.contains("you are enrolled") || msg.contains("enrolled in");
 
         // ----- Title -----
         if (viewType == TYPE_DEFAULT) {
@@ -133,6 +132,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 holder.tvTitle.setText("Lottery Result");
             } else if (isCancelledEntrant) {
                 holder.tvTitle.setText("Selection Cancelled");
+            } else if (isEnrolled) {
+                holder.tvTitle.setText("Enrolled");
+                // Set green tick icon for enrolled notifications
+                if (holder.imgType != null) {
+                    holder.imgType.setImageResource(R.drawable.ic_green_tick);
+                    holder.imgType.setVisibility(View.VISIBLE);
+                }
             } else {
                 holder.tvTitle.setText("New Notification");
             }
@@ -148,32 +154,32 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             boolean hasEventId = item.getEventId() != null && !item.getEventId().isEmpty();
 
             // Only actionable if:
-            //  - it has an eventId
-            //  - and is NOT a lottery_not_selected
-            //  - and is NOT an entrant_cancelled
+            // - it has an eventId
+            // - and is NOT a lottery_not_selected
+            // - and is NOT an entrant_cancelled
+            // - and is NOT an enrolled notification
             boolean isActionable = hasEventId
                     && !isLotteryNotSelected
-                    && !isCancelledEntrant;
+                    && !isCancelledEntrant
+                    && !isEnrolled; // Hide buttons for enrolled notifications
 
             if (isActionable && listener != null) {
                 holder.actionButtons.setVisibility(View.VISIBLE);
 
                 holder.btnAccept.setOnClickListener(
-                        v -> listener.onAccept(item.getEventId(), item.getNotificationId())
-                );
+                        v -> listener.onAccept(item.getEventId(), item.getNotificationId()));
                 holder.btnDecline.setOnClickListener(
-                        v -> listener.onDecline(item.getEventId(), item.getNotificationId())
-                );
+                        v -> listener.onDecline(item.getEventId(), item.getNotificationId()));
             } else {
                 holder.actionButtons.setVisibility(View.GONE);
                 // Optional: remove old listeners for safety
-                if (holder.btnAccept != null) holder.btnAccept.setOnClickListener(null);
-                if (holder.btnDecline != null) holder.btnDecline.setOnClickListener(null);
+                if (holder.btnAccept != null)
+                    holder.btnAccept.setOnClickListener(null);
+                if (holder.btnDecline != null)
+                    holder.btnDecline.setOnClickListener(null);
             }
         }
     }
-
-
 
     @Override
     public int getItemCount() {
