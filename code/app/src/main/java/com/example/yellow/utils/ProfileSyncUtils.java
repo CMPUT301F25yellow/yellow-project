@@ -6,6 +6,15 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 
+/**
+ * Utility class for synchronizing user profile updates across the application.
+ * 
+ * This class handles the propagation of profile changes (like name updates) to
+ * denormalized data stored in other collections (events, logs, etc.) to ensure
+ * data consistency.
+ * 
+ * @author Tabrez
+ */
 public class ProfileSyncUtils {
 
     private static final String TAG = "ProfileSyncUtils";
@@ -17,9 +26,9 @@ public class ProfileSyncUtils {
      * - events where organizerId == uid (field: organizerName)
      * - notification_logs where organizerId == uid (field: organizerName)
      *
-     * @param db      The Firestore instance.
-     * @param uid     The UID of the user.
-     * @param newName The new full name of the user.
+     * @param db      The Firestore instance
+     * @param uid     The UID of the user
+     * @param newName The new full name of the user
      */
     public static void updateUserDisplayNameEverywhere(FirebaseFirestore db, String uid, String newName) {
         // 1. Update events where this user is the organizer

@@ -22,6 +22,8 @@ import java.util.Map;
  * (which resets the Anonymous UID).
  * The logic relies on Settings.Secure.ANDROID_ID, which persists across app
  * re-installs on the same device/emulator.
+ * 
+ * @author Tabrez
  */
 public class DeviceIdentityManager {
 
@@ -34,6 +36,9 @@ public class DeviceIdentityManager {
 
     /**
      * Returns the unique Android Device ID.
+     * 
+     * @param context The application context
+     * @return The unique ANDROID_ID string
      */
     public static String getDeviceId(Context context) {
         return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -46,6 +51,10 @@ public class DeviceIdentityManager {
      * 2. Updates 'devices/{deviceId}' with the current User ID and timestamp.
      * 3. Reads the 'isAdmin' flag from the device document.
      * 4. Updates the local cache.
+     * 
+     * @param context The application context
+     * @param user    The currently signed-in Firebase user
+     * @return A Task resolving to true if the device is an admin, false otherwise
      */
     public static Task<Boolean> ensureDeviceDocument(Context context, FirebaseUser user) {
         if (context == null || user == null) {
@@ -121,6 +130,8 @@ public class DeviceIdentityManager {
     /**
      * Checks if the current device has Admin privileges.
      * Uses cached value if available.
+     * 
+     * @return True if the device is cached as an admin, false otherwise
      */
     public static boolean isCurrentDeviceAdmin() {
         if (!isCacheLoaded) {
@@ -132,6 +143,8 @@ public class DeviceIdentityManager {
     /**
      * Force refresh the admin status from Firestore.
      * Useful if permissions change while app is running.
+     * 
+     * @param context The application context
      */
     public static void refreshAdminStatus(Context context) {
         String deviceId = getDeviceId(context);

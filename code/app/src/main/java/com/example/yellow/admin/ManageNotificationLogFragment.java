@@ -28,6 +28,21 @@ import java.util.Date;
 
 /**
  * Admin screen to browse all notification logs.
+ * 
+ * This fragment displays all notifications sent by organizers to entrants,
+ * showing:
+ * - Event name
+ * - Message content
+ * - Number of recipients
+ * - Timestamp of when the notification was sent
+ * - Organizer name who sent the notification
+ * 
+ * Each log entry includes a "View Recipients" button that shows the full
+ * list of users who received the notification.
+ * 
+ * Logs are ordered by timestamp in descending order (most recent first).
+ * 
+ * @author Tabrez
  */
 public class ManageNotificationLogFragment extends Fragment {
 
@@ -36,6 +51,14 @@ public class ManageNotificationLogFragment extends Fragment {
     private View spacer, scroll;
     private ListenerRegistration reg;
 
+    /**
+     * Creates and returns the Manage Notification Log layout.
+     *
+     * @param inflater           Layout inflater
+     * @param container          Optional parent container
+     * @param savedInstanceState Saved state, if any
+     * @return The root view for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -43,6 +66,12 @@ public class ManageNotificationLogFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_manage_notificationlog, container, false);
     }
 
+    /**
+     * Sets up UI elements, window insets, and starts listening to log updates.
+     *
+     * @param v                  The root view
+     * @param savedInstanceState Saved state, if any
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -85,6 +114,9 @@ public class ManageNotificationLogFragment extends Fragment {
         listenForLogs();
     }
 
+    /**
+     * Removes Firestore listener and clears references when the view is destroyed.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -160,6 +192,12 @@ public class ManageNotificationLogFragment extends Fragment {
                 });
     }
 
+    /**
+     * Shows a dialog displaying the list of recipients for a notification.
+     * 
+     * @param doc The Firestore document snapshot containing the notification log
+     *            data
+     */
     private void showRecipientsDialog(DocumentSnapshot doc) {
         java.util.List<String> recipientNames = (java.util.List<String>) doc.get("recipientNames");
         Long count = doc.getLong("recipientCount");

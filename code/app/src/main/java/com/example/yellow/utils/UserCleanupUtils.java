@@ -16,6 +16,8 @@ import java.util.List;
  * Utility class for cleaning up user data when a user account is deleted.
  * Handles cascade deletion of user profiles, events, and related
  * subcollections.
+ * 
+ * @author Tabrez
  */
 public class UserCleanupUtils {
 

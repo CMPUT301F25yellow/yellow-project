@@ -37,8 +37,15 @@ import android.util.Log;
 
 /**
  * Profile screen for users to add/view/edit/delete their profile.
+ * 
+ * This fragment allows users to:
+ * - View and edit their personal information (name, email, phone)
+ * - Enable/disable notifications
+ * - Delete their profile (which cascades to their events)
+ * - Access the Admin Dashboard if they have admin privileges
+ * 
+ * @author Tabrez
  */
-
 public class ProfileUserFragment extends Fragment {
 
     private static final String TAG = "ProfileUserFragment";
@@ -141,6 +148,7 @@ public class ProfileUserFragment extends Fragment {
     // ----- Auth -----
     /** Callback to run after sign-in. */
     private interface AfterLogin {
+        /** Executes the callback action. */
         void go();
     }
 
@@ -225,6 +233,7 @@ public class ProfileUserFragment extends Fragment {
 
     /**
      * Saves the current inputs to Firestore (merge).
+     * Validates mandatory fields (Name, Email) before saving.
      */
     private void saveProfile() {
         String uid = uidOrNull();
@@ -311,7 +320,7 @@ public class ProfileUserFragment extends Fragment {
     // ----- Admin toggle (NEW) -----
     /**
      * Shows or hides the Admin Dashboard button based on the user's role.
-     * Listens to changes on roles/{uid}.
+     * Listens to changes on roles/{uid} or checks device ID.
      */
     private void toggleAdminButtonFromFirestore() {
         View btnAdmin = getView() != null ? getView().findViewById(R.id.btnAdminDashboard) : null;

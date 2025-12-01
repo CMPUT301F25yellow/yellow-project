@@ -32,6 +32,12 @@ import java.util.List;
 /**
  * Fragment that displays the user's event history (events they have joined the
  * waiting list for).
+ * 
+ * This fragment queries all events and checks if the current user is present
+ * in any of the event's subcollections (waitingList, selected, enrolled,
+ * cancelled).
+ * 
+ * @author Tabrez
  */
 public class HistoryFragment extends Fragment {
 
@@ -40,6 +46,14 @@ public class HistoryFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseAuth auth;
 
+    /**
+     * Creates and returns the layout for the history screen.
+     *
+     * @param inflater           Layout inflater
+     * @param container          Optional parent container
+     * @param savedInstanceState Saved state, if any
+     * @return The root view for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -48,6 +62,13 @@ public class HistoryFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_history, container, false);
     }
 
+    /**
+     * Sets up UI elements, window insets, and loads the user's event history.
+     * Checks if the user profile is complete before loading data.
+     *
+     * @param v                  The root view
+     * @param savedInstanceState Saved state, if any
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -95,6 +116,10 @@ public class HistoryFragment extends Fragment {
         });
     }
 
+    /**
+     * Loads events where the current user is a participant.
+     * Queries all events and checks participation in subcollections.
+     */
     private void loadHistory() {
         FirebaseUser user = auth.getCurrentUser();
         if (user == null) {
@@ -149,6 +174,11 @@ public class HistoryFragment extends Fragment {
         });
     }
 
+    /**
+     * Toggles between the RecyclerView and the empty state view.
+     *
+     * @param isEmpty True to show the empty state message, false to show the list
+     */
     private void showEmptyState(boolean isEmpty) {
         View view = getView();
         if (view == null)
@@ -161,6 +191,14 @@ public class HistoryFragment extends Fragment {
         }
     }
 
+    /**
+     * Checks if a user exists in any of the 4 participant subcollections for an
+     * event.
+     *
+     * @param eventId  The event ID to check
+     * @param userId   The user ID to look for
+     * @param listener Callback to receive the result (true if found in any list)
+     */
     private void checkUserInEvent(String eventId, String userId, OnCheckResult listener) {
         // We need to check if the user exists in ANY of the 4 subcollections.
         // We can do this by trying to get the specific document for the user in each
@@ -204,7 +242,15 @@ public class HistoryFragment extends Fragment {
         });
     }
 
+    /**
+     * Callback interface for checking user participation.
+     */
     interface OnCheckResult {
+        /**
+         * Called when the check is complete.
+         *
+         * @param isIn True if the user is in any of the lists, false otherwise
+         */
         void onResult(boolean isIn);
     }
 

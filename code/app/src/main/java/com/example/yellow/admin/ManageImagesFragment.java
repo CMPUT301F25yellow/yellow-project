@@ -37,9 +37,18 @@ import java.util.Map;
  * - US 03.06.01: As an administrator, I want to be able to browse images
  * that are uploaded so I can remove them if necessary.
  *
+ * This fragment displays all poster images in a 2-column grid using
+ * RecyclerView.
+ * Images are loaded from events that have a posterImageUrl field. When an image
+ * is removed, only the poster fields are cleared from the event document (the
+ * event
+ * itself remains intact).
+ * 
  * NOTE: This fragment now ONLY deals with poster images
  * (posterImageUrl/posterUrl),
  * not QR images.
+ * 
+ * @author Tabrez
  */
 public class ManageImagesFragment extends Fragment {
 
@@ -49,6 +58,14 @@ public class ManageImagesFragment extends Fragment {
     private View spacer; // Removed scroll view reference as RecyclerView handles scrolling
     private ListenerRegistration reg;
 
+    /**
+     * Creates and returns the Manage Images layout.
+     *
+     * @param inflater           Layout inflater
+     * @param container          Optional parent container
+     * @param savedInstanceState Saved state, if any
+     * @return The root view for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -62,6 +79,13 @@ public class ManageImagesFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_manage_images, container, false);
     }
 
+    /**
+     * Sets up the RecyclerView, window insets, and starts listening to image
+     * updates.
+     *
+     * @param v                  The root view
+     * @param savedInstanceState Saved state, if any
+     */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
@@ -111,6 +135,9 @@ public class ManageImagesFragment extends Fragment {
         listenForImages();
     }
 
+    /**
+     * Cleans up the Firestore listener and view refs.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -165,6 +192,9 @@ public class ManageImagesFragment extends Fragment {
 
     /**
      * Ask admin before removing the POSTER image from the event doc.
+     * 
+     * @param eventId   The Firestore document ID of the event
+     * @param eventName The name of the event (for confirmation dialog)
      */
     private void confirmRemovePosterImage(@NonNull String eventId,
             @NonNull String eventName) {
@@ -183,6 +213,9 @@ public class ManageImagesFragment extends Fragment {
      *
      * - posterImageUrl: Base64 or URL for the poster
      * - posterUrl : extra field if you also store a download URL
+     * 
+     * @param eventId The Firestore document ID of the event whose poster should be
+     *                removed
      */
     private void removePosterImageFromEvent(@NonNull String eventId) {
         Map<String, Object> patch = new HashMap<>();
@@ -195,12 +228,21 @@ public class ManageImagesFragment extends Fragment {
                 .addOnFailureListener(e -> toast("Remove failed: " + (e != null ? e.getMessage() : "unknown error")));
     }
 
-    /** Null-safe trim helper. */
+    /**
+     * Null-safe trim helper.
+     * 
+     * @param s Input string
+     * @return The trimmed string or empty string if null
+     */
     private static String safe(@Nullable String s) {
         return s == null ? "" : s.trim();
     }
 
-    /** Short toast helper that checks attachment. */
+    /**
+     * Short toast helper that checks attachment.
+     * 
+     * @param m Message to display
+     */
     private void toast(String m) {
         if (!isAdded())
             return;

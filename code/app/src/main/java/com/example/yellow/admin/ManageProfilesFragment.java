@@ -27,6 +27,16 @@ import com.google.firebase.firestore.WriteBatch;
 /**
  * Admin screen for viewing and removing user profiles.
  * Displays all profiles in real-time from Firestore and allows deletion.
+ * 
+ * This fragment provides functionality to:
+ * - View all user profiles with name, email, and phone
+ * - Delete user profiles (including their events and subcollections)
+ * - Real-time updates when profiles are added or removed
+ * 
+ * Note: Deleting a profile also triggers cascade deletion of all events
+ * created by that user via UserCleanupUtils.
+ * 
+ * @author Tabrez
  */
 public class ManageProfilesFragment extends Fragment {
 
@@ -44,6 +54,14 @@ public class ManageProfilesFragment extends Fragment {
      * @param savedInstanceState Saved state, if any.
      * @return The root view for this fragment.
      */
+    /**
+     * Creates and returns the Manage Profiles layout.
+     *
+     * @param inflater           Layout inflater
+     * @param container          Optional parent container
+     * @param savedInstanceState Saved state, if any
+     * @return The root view for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -57,6 +75,12 @@ public class ManageProfilesFragment extends Fragment {
      *
      * @param v                  The root view.
      * @param savedInstanceState Saved state, if any.
+     */
+    /**
+     * Sets up UI elements, window insets, and starts listening to profile updates.
+     *
+     * @param v                  The root view
+     * @param savedInstanceState Saved state, if any
      */
     @Override
     public void onViewCreated(@NonNull View v, @Nullable Bundle savedInstanceState) {
@@ -95,6 +119,9 @@ public class ManageProfilesFragment extends Fragment {
         startLiveProfilesListener();
     }
 
+    /**
+     * Removes Firestore listener and clears references when the view is destroyed.
+     */
     /**
      * Removes Firestore listener and clears references when the view is destroyed.
      */
@@ -167,8 +194,8 @@ public class ManageProfilesFragment extends Fragment {
     /**
      * Shows a confirmation dialog before removing a profile.
      *
-     * @param uid     The user ID of the profile.
-     * @param display The name or fallback label of the user.
+     * @param uid     The user ID of the profile
+     * @param display The name or fallback label of the user
      */
     private void confirmAndRemove(@NonNull String uid, @NonNull String display) {
         new AlertDialog.Builder(requireContext())
@@ -184,7 +211,7 @@ public class ManageProfilesFragment extends Fragment {
      * Also deletes all events created by this user and their subcollections.
      * Does not delete their Firebase Auth account.
      *
-     * @param uid The user ID to remove.
+     * @param uid The user ID to remove
      */
     private void removeProfileDocs(@NonNull String uid) {
         // Use cascade deletion to remove profile, events, and subcollections
@@ -198,8 +225,8 @@ public class ManageProfilesFragment extends Fragment {
     /**
      * Safely trims a string or returns an empty string if null.
      *
-     * @param s Input string.
-     * @return The trimmed string or empty string.
+     * @param s Input string
+     * @return The trimmed string or empty string
      */
     private static String safe(@Nullable String s) {
         return s == null ? "" : s.trim();
