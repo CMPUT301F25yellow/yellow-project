@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
+//author: Waylon
 public class WaitingFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -225,7 +225,7 @@ public class WaitingFragment extends Fragment {
             return;
         }
 
-        // 🔥 0. Check event capacity BEFORE drawing
+        // Check event capacity BEFORE drawing
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(eventDoc -> {
 
