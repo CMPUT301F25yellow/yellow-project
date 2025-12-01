@@ -52,7 +52,7 @@ public class EventTest {
         Event e = new Event();
         Calendar c = Calendar.getInstance(Locale.getDefault());
         c.set(2025, Calendar.MARCH, 10, 10, 0, 0);
-        e.setStartDate(new Timestamp(c.getTime()));
+        e.setRegistrationStartDate(new Timestamp(c.getTime()));
 
         e.setLocation("Edmonton");
 
@@ -72,8 +72,8 @@ public class EventTest {
         e.setOrganizerName("Bob");
 
         Calendar c = Calendar.getInstance();
-        e.setStartDate(new Timestamp(c.getTime()));
-        e.setEndDate(new Timestamp(c.getTime()));
+        e.setRegistrationStartDate(new Timestamp(c.getTime()));
+        e.setRegistrationEndDate(new Timestamp(c.getTime()));
         e.setMaxEntrants(0);
         e.setRequireGeolocation(false);
 

@@ -30,6 +30,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.Date;
+
 //author: waylon
 public class WaitingListFragment extends Fragment {
 
@@ -210,8 +213,57 @@ public class WaitingListFragment extends Fragment {
                 .addOnFailureListener(
                         e -> Toast.makeText(getContext(), "Failed to load event info", Toast.LENGTH_SHORT).show());
     }
+    /**
+     * Returns true if the current time is within the event's registration window.
+     * Shows a Toast and returns false if registration is not open.
+     * Backward-compat: if registration dates are missing, we allow joining.
+     */
+    private boolean isWithinRegistrationWindow() {
+        if (currentEvent == null) {
+            // Let the caller handle the "event not loaded" case
+            return false;
+        }
 
-    // Join waiting list
+        com.google.firebase.Timestamp regStartTs = currentEvent.getRegistrationStartDate();
+        com.google.firebase.Timestamp regEndTs   = currentEvent.getRegistrationEndDate();
+
+        // If either is missing, don't hard-block (old events / bad data)
+        if (regStartTs == null || regEndTs == null) {
+            return true;
+        }
+
+        Date now      = new Date();
+        Date regStart = regStartTs.toDate();
+        Date regEnd   = regEndTs.toDate();
+
+        if (now.before(regStart)) {
+            if (getContext() != null) {
+                Toast.makeText(
+                        getContext(),
+                        "Registration for this event hasn’t opened yet.",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+            return false;
+        }
+
+        if (now.after(regEnd)) {
+            if (getContext() != null) {
+                Toast.makeText(
+                        getContext(),
+                        "Registration for this event is closed.",
+                        Toast.LENGTH_LONG
+                ).show();
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Attempts to join the waiting room.
+     */
     private void joinWaitingRoom() {
         if (currentEvent == null) {
             // Event details haven't loaded yet. This can happen if Firestore is slow.
@@ -223,7 +275,12 @@ public class WaitingListFragment extends Fragment {
             // wait for user action.
             return;
         }
-        // 🔥 CHECK 1 — Is user already enrolled?
+        // Check 0 — Registration window
+        if (!isWithinRegistrationWindow()) {
+            // Toast already shown in isWithinRegistrationWindow()
+            return;
+        }
+        // Check 1 — Is user already enrolled?
         db.collection("events").document(eventId)
                 .collection("enrolled").document(userId)
                 .get()
@@ -265,6 +322,10 @@ public class WaitingListFragment extends Fragment {
                             });
                 });
     }
+
+    /**
+     * Attempts to join the waiting room (continue from above).
+     */
     private void continueJoinWaitingRoom() {
         DocumentReference ref = db.collection("events").document(eventId)
                 .collection("waitingList").document(userId);

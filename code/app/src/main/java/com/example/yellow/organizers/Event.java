@@ -27,9 +27,10 @@ public class Event {
     private String organizerId;
     private String organizerName;
 
+    private Timestamp registrationStartDate;
+    private Timestamp registrationEndDate;
     private Timestamp startDate;
     private Timestamp endDate;
-
     private Integer maxEntrants;
     private Integer maxParticipants;
     private Boolean requireGeolocation;
@@ -49,13 +50,16 @@ public class Event {
      * Full constructor for creating a complete Event object.
      */
     public Event(String id, String name, String description, String location,
-            Timestamp startDate, Timestamp endDate, String posterImageUrl,
-            int maxEntrants, int maxParticipants, String organizerId, String organizerName,
-            boolean requireGeolocation, String qrDeepLink, String qrImagePng) {
+                 Timestamp registrationStartDate, Timestamp registrationEndDate, Timestamp startDate,
+                 Timestamp endDate, String posterImageUrl,
+                 int maxEntrants, int maxParticipants, String organizerId, String organizerName,
+                 boolean requireGeolocation, String qrDeepLink, String qrImagePng) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.location = location;
+        this.registrationStartDate = registrationStartDate;
+        this.registrationEndDate = registrationEndDate;
         this.startDate = startDate;
         this.endDate = endDate;
         this.posterImageUrl = posterImageUrl; // Correctly sets the single poster field
@@ -137,18 +141,30 @@ public class Event {
         this.organizerName = organizerName;
     }
 
+    public Timestamp getRegistrationStartDate() {
+        return registrationStartDate;
+    }
+
+    public void setRegistrationStartDate(Timestamp registrationStartDate) {
+        this.registrationStartDate = registrationStartDate;
+    }
+
+    public Timestamp getRegistrationEndDate() {
+        return registrationEndDate;
+    }
+
+    public void setRegistrationEndDate(Timestamp registrationEndDate) {
+        this.registrationEndDate = registrationEndDate;
+    }
     public Timestamp getStartDate() {
         return startDate;
     }
-
     public void setStartDate(Timestamp startDate) {
         this.startDate = startDate;
     }
-
     public Timestamp getEndDate() {
         return endDate;
     }
-
     public void setEndDate(Timestamp endDate) {
         this.endDate = endDate;
     }
@@ -162,7 +178,7 @@ public class Event {
     }
 
     public int getMaxParticipants() {
-        return maxParticipants;
+        return maxParticipants == null ? 0 : maxParticipants;
     }
 
     public void setMaxParticipants(Integer maxParticipants) {
@@ -240,6 +256,8 @@ public class Event {
         m.put("organizerId", organizerId);
         if (organizerName != null)
             m.put("organizerName", organizerName);
+        m.put("registrationStartDate", registrationStartDate);
+        m.put("registrationEndDate", registrationEndDate);
         m.put("startDate", startDate);
         m.put("endDate", endDate);
         if (posterImageUrl != null)

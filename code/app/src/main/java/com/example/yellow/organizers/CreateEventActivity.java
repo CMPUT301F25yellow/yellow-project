@@ -82,6 +82,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private TextInputEditText eventNameInput;
     private TextInputEditText descriptionInput;
     private TextInputEditText locationInput;
+    private TextInputEditText regStartDateInput;
+    private TextInputEditText regEndDateInput;
     private TextInputEditText startDateInput;
     private TextInputEditText endDateInput;
     private TextInputEditText maxEntrantsInput;
@@ -93,6 +95,8 @@ public class CreateEventActivity extends AppCompatActivity {
     private ImageView qrImagePreview;
 
     // State
+    private final Calendar regStartCal = Calendar.getInstance();
+    private final Calendar regEndCal = Calendar.getInstance();
     private final Calendar startCal = Calendar.getInstance();
     private final Calendar endCal = Calendar.getInstance();
     private Uri selectedPosterUri = null;
@@ -204,6 +208,8 @@ public class CreateEventActivity extends AppCompatActivity {
             eventNameInput = requireView(R.id.eventNameInput, "eventNameInput");
             descriptionInput = requireView(R.id.descriptionInput, "descriptionInput");
             locationInput = requireView(R.id.locationInput, "locationInput");
+            regStartDateInput = requireView(R.id.registrationStartInput, "registrationStartInput");
+            regEndDateInput   = requireView(R.id.registrationEndInput, "registrationEndInput");
             startDateInput = requireView(R.id.startDateInput, "startDateInput");
             endDateInput = requireView(R.id.endDateInput, "endDateInput");
             maxEntrantsInput = requireView(R.id.maxEntrantsInput, "maxEntrantsInput");
@@ -235,15 +241,24 @@ public class CreateEventActivity extends AppCompatActivity {
         posterImageView.setOnClickListener(pickImage);
 
         // Date pickers
-        startDateInput.setOnClickListener(v -> showDatePicker(true));
-        endDateInput.setOnClickListener(v -> showDatePicker(false));
+        regStartDateInput.setOnClickListener(v -> showDatePicker(DateType.REG_START));
+        regEndDateInput.setOnClickListener(v -> showDatePicker(DateType.REG_END));
+        startDateInput.setOnClickListener(v -> showDatePicker(DateType.EVENT_START));
+        endDateInput.setOnClickListener(v -> showDatePicker(DateType.EVENT_END));
+
 
         // Defaults
         startDateInput.setText(dateFmt.format(startCal.getTime()));
         endCal.setTimeInMillis(startCal.getTimeInMillis());
         endDateInput.setText(dateFmt.format(endCal.getTime()));
-
+        regStartDateInput.setText(dateFmt.format(regStartCal.getTime()));
+        regEndCal.setTimeInMillis(regStartCal.getTimeInMillis());
+        regEndDateInput.setText(dateFmt.format(regEndCal.getTime()));
         createEventButton.setOnClickListener(v -> onCreateEvent());
+    }
+
+    private enum DateType {
+        REG_START, REG_END, EVENT_START, EVENT_END
     }
 
     /**
@@ -264,30 +279,62 @@ public class CreateEventActivity extends AppCompatActivity {
 
     /**
      * Opens a date picker and writes the chosen date into the correct text box.
-     *
-     * @param isStart {@code true} to pick the start date; {@code false} for the end
-     *                date
+     * @param type the date type to show in the picker
      */
-    private void showDatePicker(boolean isStart) {
-        final Calendar cal = isStart ? startCal : endCal;
+    private void showDatePicker(DateType type) {
+        final Calendar cal;
+        switch (type) {
+            case REG_START:
+                cal = regStartCal;
+                break;
+            case REG_END:
+                cal = regEndCal;
+                break;
+            case EVENT_START:
+                cal = startCal;
+                break;
+            case EVENT_END:
+            default:
+                cal = endCal;
+                break;
+        }
+
         int y = cal.get(Calendar.YEAR);
         int m = cal.get(Calendar.MONTH);
         int d = cal.get(Calendar.DAY_OF_MONTH);
-        DatePickerDialog dlg = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                cal.set(year, month, dayOfMonth);
-                if (isStart) {
+
+        DatePickerDialog dlg = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+            cal.set(year, month, dayOfMonth);
+
+            switch (type) {
+                case REG_START:
+                    regStartDateInput.setText(dateFmt.format(cal.getTime()));
+                    // Ensure regEnd >= regStart
+                    if (regEndCal.before(regStartCal)) {
+                        regEndCal.setTimeInMillis(regStartCal.getTimeInMillis());
+                        regEndDateInput.setText(dateFmt.format(regEndCal.getTime()));
+                    }
+                    break;
+
+                case REG_END:
+                    regEndDateInput.setText(dateFmt.format(cal.getTime()));
+                    break;
+
+                case EVENT_START:
                     startDateInput.setText(dateFmt.format(cal.getTime()));
+                    // Ensure event end >= event start
                     if (endCal.before(startCal)) {
                         endCal.setTimeInMillis(startCal.getTimeInMillis());
                         endDateInput.setText(dateFmt.format(endCal.getTime()));
                     }
-                } else {
+                    break;
+
+                case EVENT_END:
                     endDateInput.setText(dateFmt.format(cal.getTime()));
-                }
+                    break;
             }
         }, y, m, d);
+
         dlg.show();
     }
 
@@ -331,6 +378,17 @@ public class CreateEventActivity extends AppCompatActivity {
         } catch (NumberFormatException e) {
             maxParticipantsInput.setError("Invalid number");
             maxParticipantsInput.requestFocus();
+            return;
+        }
+        // Registration dates
+        if (regEndCal.before(regStartCal)) {
+            toast("Registration end date cannot be before registration start date");
+            return;
+        }
+
+        // Enforce registration ends before event starts
+        if (regEndCal.after(startCal)) {
+            toast("Registration must end on or before the event start date");
             return;
         }
 
@@ -441,6 +499,13 @@ public class CreateEventActivity extends AppCompatActivity {
             Log.d(TAG, "Successfully encoded QR to Base64 string.");
 
             // --- 6. Assemble the Complete Event Object ---
+            // Registration window
+            Timestamp registrationStartDate = new Timestamp(regStartCal.getTime());
+            Calendar regEndCopy = (Calendar) regEndCal.clone();
+            regEndCopy.set(Calendar.HOUR_OF_DAY, 23);
+            regEndCopy.set(Calendar.MINUTE, 59);
+            Timestamp registrationEndDate = new Timestamp(regEndCopy.getTime());
+
             // Prepare timestamps
             Timestamp startDate = new Timestamp(startCal.getTime());
             Calendar endCopy = (Calendar) endCal.clone();
@@ -454,16 +519,18 @@ public class CreateEventActivity extends AppCompatActivity {
                     name,
                     desc,
                     loc,
-                    startDate,
-                    endDate,
-                    posterDataUri,
+                    registrationStartDate,   // registrationStartDate
+                    registrationEndDate,     // registrationEndDate
+                    startDate,               // event startDate
+                    endDate,                 // event endDate
+                    posterDataUri,           // posterImageUrl (data URI)
                     maxEntrants,
                     maxParticipants,
                     organizerId,
                     organizerName,
                     requireGeo,
-                    deepLink, // Include deep link
-                    qrDataUri // Include QR image data
+                    deepLink,                // qrDeepLink
+                    qrDataUri                // qrImagePng
             );
             completeEvent.setCreatedAt(Timestamp.now()); // Set creation time
 
