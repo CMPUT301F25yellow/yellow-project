@@ -1,6 +1,7 @@
 package com.example.yellow.utils;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 /**
  * Makes QR code bitmaps from text (e.g., "yellow://event/<docId>").
+ * Parses the event ID from a QR code.
  */
 public final class QrUtils {
     private QrUtils() {}
@@ -35,5 +37,33 @@ public final class QrUtils {
                 .encode(content, BarcodeFormat.QR_CODE, sizePx, sizePx, hints);
 
         return new BarcodeEncoder().createBitmap(matrix);
+    }
+
+    /**
+     * Parses a raw URI string from a QR code and returns the event ID if it's a valid app link.
+     *
+     * @param rawValue The scanned string from the QR code.
+     * @return The event ID, or null if the URI is invalid or doesn't match the expected format.
+     */
+    public static String getEventIdFromUri(String rawValue) {
+        if (rawValue == null || rawValue.isEmpty()) {
+            return null;
+        }
+
+        try {
+            Uri uri = Uri.parse(rawValue);
+            // Check for scheme "yellow" and host "eventdetails", yellow://eventdetails
+            if ("yellow".equals(uri.getScheme()) && "eventdetails".equals(uri.getHost())) {
+                String eventId = uri.getLastPathSegment();
+                if (eventId != null && !eventId.isEmpty()) {
+                    return eventId;
+                }
+            }
+        } catch (Exception e) {
+            // Invalid URI format, etc.
+            return null;
+        }
+
+        return null; // Not a valid app link
     }
 }
