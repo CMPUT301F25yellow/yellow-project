@@ -33,7 +33,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-//author: waylon
+/**
+ * Fragment for displaying a list of enrolled entrants.
+ * @author Waylon Wang - waylon1
+ */
 public class EnrolledFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -74,7 +77,10 @@ public class EnrolledFragment extends Fragment {
         btnExport.setOnClickListener(v -> exportEnrolledCSV());
     }
 
-    //export to csv
+    /**
+     * Exports the list of enrolled entrants to a CSV file.
+     * If there are no enrolled entrants, a message is displayed.
+     */
     private void exportEnrolledCSV() {
         db.collection("events").document(eventId)
                 .collection("enrolled")
@@ -134,6 +140,10 @@ public class EnrolledFragment extends Fragment {
                 });
     }
 
+    /**
+     * Writes the list of enrolled entrants to a CSV file and shares it.
+     * @param rows
+     */
     private void writeToDownloadsAndShare(java.util.List<Map<String, String>> rows) {
         if (!isSafe()) return;
 
@@ -159,6 +169,10 @@ public class EnrolledFragment extends Fragment {
         saveToDownloadsAndShare(csv.toString());
     }
 
+    /**
+     * Saves the CSV content to Downloads and shares it.
+     * @param csvContent
+     */
     private void saveToDownloadsAndShare(String csvContent) {
         if (!isSafe()) return;
 
@@ -190,6 +204,10 @@ public class EnrolledFragment extends Fragment {
         }
     }
 
+    /**
+     * Shares the CSV URI.
+     * @param uri
+     */
     private void shareCSVUri(Uri uri) {
         if (!isSafe()) return;
 
@@ -201,6 +219,10 @@ public class EnrolledFragment extends Fragment {
         startActivity(Intent.createChooser(intent, "Share CSV"));
     }
 
+    /**
+     * Loads the list of enrolled entrants from Firestore.
+     * If there are no enrolled entrants, a message is displayed.
+     */
     private void loadEnrolledEntrants() {
         if (!isSafe()) return;
 
@@ -248,6 +270,9 @@ public class EnrolledFragment extends Fragment {
                 });
     }
 
+    /**
+     * Shows a dialog for notifying enrolled entrants.
+     */
     private void showNotificationDialog() {
         if (!isSafe()) return;
 
@@ -270,6 +295,10 @@ public class EnrolledFragment extends Fragment {
         builder.show();
     }
 
+    /**
+     * Sends a notification to enrolled entrants.
+     * @param message
+     */
     private void sendNotificationToEnrolled(String message) {
         db.collection("events").document(eventId)
                 .collection("enrolled")
@@ -354,6 +383,11 @@ public class EnrolledFragment extends Fragment {
                 });
     }
 
+    /**
+     * Extracts the timestamp from a Firestore document.
+     * @param doc
+     * @return
+     */
     private String extractTimestamp(DocumentSnapshot doc) {
         Object ts = doc.get("timestamp");
 
@@ -366,6 +400,13 @@ public class EnrolledFragment extends Fragment {
         return "Unknown";
     }
 
+    /**
+     * Adds a card for an entrant.
+     * @param name
+     * @param email
+     * @param date
+     * @param status
+     */
     private void addEntrantCard(String name, String email, String date, String status) {
         if (!isSafe()) return;
 
@@ -383,6 +424,11 @@ public class EnrolledFragment extends Fragment {
 
         container.addView(card);
     }
+
+    /**
+     * Checks if the app is running in a test environment.
+     * @return
+     */
     private boolean isRunningInTest() {
         try {
             ApplicationInfo appInfo = requireContext().getPackageManager()
@@ -395,6 +441,11 @@ public class EnrolledFragment extends Fragment {
             return false;
         }
     }
+
+    /**
+     * Checks if the fragment is safe to use
+     * @return true if safe, false otherwise
+     */
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }

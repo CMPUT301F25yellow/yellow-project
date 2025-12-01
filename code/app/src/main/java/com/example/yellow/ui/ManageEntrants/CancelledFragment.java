@@ -24,7 +24,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-//author: waylon
+
+/**
+ * Fragment for displaying a list of cancelled entrants.
+ * @author Waylon Wang - waylon1
+ * @author Kien Tran - kht (Cancelling entrants part)
+ */
 public class CancelledFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -61,6 +66,10 @@ public class CancelledFragment extends Fragment {
         btnNotify.setOnClickListener(v -> showNotificationDialog());
     }
 
+    /**
+     * Loads the list of cancelled entrants from Firestore.
+     * If there are no cancelled entrants, a message is displayed.
+     */
     private void loadCancelledEntrants() {
         if (isRunningInTest()) {
             container.removeAllViews();
@@ -116,6 +125,9 @@ public class CancelledFragment extends Fragment {
                 });
     }
 
+    /**
+     * Shows a dialog for notifying cancelled entrants.
+     */
     private void showNotificationDialog() {
         if (!isSafe()) return;
 
@@ -142,6 +154,10 @@ public class CancelledFragment extends Fragment {
         builder.show();
     }
 
+    /**
+     * Sends a notification to cancelled entrants.
+     * @param message
+     */
     private void sendNotificationToCancelled(String message) {
         db.collection("events").document(eventId)
                 .collection("cancelled")
@@ -183,7 +199,11 @@ public class CancelledFragment extends Fragment {
                 });
     }
 
-
+    /**
+     * Extracts the timestamp from a Firestore document.
+     * @param doc
+     * @return
+     */
     private String extractTimestamp(DocumentSnapshot doc) {
         Object ts = doc.get("timestamp");
 
@@ -195,6 +215,13 @@ public class CancelledFragment extends Fragment {
         return "Unknown";
     }
 
+    /**
+     * Adds a card for an entrant.
+     * @param name
+     * @param email
+     * @param date
+     * @param status
+     */
     private void addEntrantCard(String name, String email, String date, String status) {
         if (!isSafe()) return;
 
@@ -212,6 +239,11 @@ public class CancelledFragment extends Fragment {
 
         container.addView(card);
     }
+
+    /**
+     * Checks if the app is running in a test environment.
+     * @return true if running in a test environment, false otherwise
+     */
     private boolean isRunningInTest() {
         try {
             ApplicationInfo appInfo = requireContext().getPackageManager()
@@ -224,6 +256,11 @@ public class CancelledFragment extends Fragment {
             return false;
         }
     }
+
+    /**
+     * Checks if the fragment is safe to use
+     * @return true if safe, false otherwise
+     */
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }

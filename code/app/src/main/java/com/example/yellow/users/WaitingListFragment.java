@@ -33,7 +33,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Date;
 
-//author: waylon
+/**
+ * Fragment for the waiting room.
+ * @author Waylong Wang - waylon1
+ */
 public class WaitingListFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -159,6 +162,10 @@ public class WaitingListFragment extends Fragment {
                 });
     }
 
+    /**
+     * Loads the event details from Firestore.
+     * This is called when the event is loaded from Firestore.
+     */
     private void loadEventDetails() {
         db.collection("events")
                 .document(eventId)
@@ -416,7 +423,9 @@ public class WaitingListFragment extends Fragment {
         });
     }
 
-    // Leave waiting room
+    /**
+     * Attempts to leave the waiting room.
+     */
     private void leaveWaitingRoom() {
         db.collection("events")
                 .document(eventId)

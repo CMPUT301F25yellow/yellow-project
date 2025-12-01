@@ -26,6 +26,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
 
+/**
+ * Fragment for displaying a map of entrants.
+ * @author Kien Tran - kht
+ */
 public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private static final String TAG = "MapFragment";
@@ -54,6 +58,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * Called when the map is ready to be used.
+     * This is where we can add markers or lines, add listeners or move the camera.
+     * @param map: the GoogleMap object
+     */
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         googleMap = map;
@@ -79,7 +88,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         });
     }
 
-    // This method now receives a List<WaitingUser>
+    /**
+     * Updates the map with the list of entrants.
+     * @param entrants: the list of entrants to display
+     */
     private void updateMapMarkers(List<WaitingUser> entrants) {
         if (googleMap == null) return; // Don't do anything if the map isn't ready
         googleMap.clear(); // Clear any old markers

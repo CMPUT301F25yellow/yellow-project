@@ -4,6 +4,7 @@ import java.util.Calendar;
 
 /**
  * Validation logic for the CreateEventActivity form
+ * @author Kien Tran - kht
  */
 public final class CreateEventFormValidator {
 

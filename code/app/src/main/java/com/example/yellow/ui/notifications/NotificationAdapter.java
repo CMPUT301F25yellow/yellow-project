@@ -1,4 +1,4 @@
-    package com.example.yellow.ui.notifications;
+package com.example.yellow.ui.notifications;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,10 +20,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Adapter for displaying notifications.
+ * @author Waylon Wang - waylon1
+ */
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotifVH> {
 
     private List<NotificationItem> list = new ArrayList<>();
 
+    /**
+     * Listener for accept/decline buttons and click events.
+     */
     public interface ActionListener {
         void onAccept(String eventId, String notificationId);
 
@@ -32,6 +39,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     private ActionListener listener;
 
+    /**
+     * Sets the listener for accept/decline buttons and click events.
+     * @param listener: the listener to set
+     */
     public void setActionListener(ActionListener listener) {
         this.listener = listener;
     }
@@ -41,11 +52,20 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     private static final int TYPE_LOTTERY_LOSER  = 2;
     private static final int TYPE_CANCELLED      = 3;
 
+    /**
+     * Sets the list of notifications to display.
+     * @param newList: the new list to set
+     */
     public void setList(List<NotificationItem> newList) {
         list = newList;
         notifyDataSetChanged();
     }
 
+    /**
+     * Gets the view type for the given position.
+     * @param position position to query
+     * @return view type
+     */
     @Override
     public int getItemViewType(int position) {
         NotificationItem item = list.get(position);
@@ -77,7 +97,14 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return TYPE_DEFAULT;
     }
 
-
+    /**
+     * Called when RecyclerView needs a new {@link NotifVH} of the given type to represent
+     * an item.
+     * @param parent   The ViewGroup into which the new View will be added after it is bound to
+     *                 an adapter position.
+     * @param viewType The view type of the new View.
+     * @return A new ViewHolder that holds a View of the given view type.
+     */
     @NonNull
     @Override
     public NotifVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -103,7 +130,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return new NotifVH(v);
     }
 
-
+    /**
+     * Called by RecyclerView to display the data at the specified position. This method should
+     * update the contents of the {@link NotifVH#itemView}
+     * @param holder   The ViewHolder which should be updated to represent the contents of the
+     *                 item at the given position in the data set.
+     * @param position The position of the item within the adapter's data set.
+     */
     @Override
     public void onBindViewHolder(@NonNull NotifVH holder, int position) {
         NotificationItem item = list.get(position);
@@ -173,13 +206,19 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
     }
 
-
-
+    /**
+     * Returns the total number of items in the data set held by the adapter.
+     * @return The total number of items in this adapter.
+     */
     @Override
     public int getItemCount() {
         return list.size();
     }
 
+    /**
+     * ViewHolder for notifications.
+     * @author Waylon Wang - waylon1
+     */
     static class NotifVH extends RecyclerView.ViewHolder {
 
         ImageView imgType;
@@ -201,6 +240,11 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
     }
 
+    /**
+     * Formats the time.
+     * @param ts: the timestamp to format
+     * @return the formatted time
+     */
     private String formatTime(Timestamp ts) {
         if (ts == null)
             return "";
