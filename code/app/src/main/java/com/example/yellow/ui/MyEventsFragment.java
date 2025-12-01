@@ -40,7 +40,7 @@ import java.util.Locale;
  * shows all events created by the logged-in organizer
  * updates live when events are added or removed
  */
-//author: waylon
+//authors: waylon, will
 public class MyEventsFragment extends Fragment {
 
     private ListenerRegistration registration;

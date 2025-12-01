@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
-
+//Authors: Will
 public class ManageEntrantsPageAdapter extends FragmentStateAdapter {
 
     private final String eventId;

@@ -27,7 +27,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 
 import android.view.ViewGroup;
-
+//Authors: Will
 public class ViewEventActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;

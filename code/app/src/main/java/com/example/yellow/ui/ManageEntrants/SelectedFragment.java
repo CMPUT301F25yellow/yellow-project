@@ -34,7 +34,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
-//author: waylon
+//authors: waylon, will
+
+/**
+ * fragment that displays all entrants who have been selected in the lottery
+ * allows organizers to notify selected users and cancel selected entries
+ * uses realtime snapshot listeners so ui updates whenever firestore data changes
+ */
 public class SelectedFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -44,6 +50,14 @@ public class SelectedFragment extends Fragment {
             new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
     private final Set<String> selectedUserIds = new HashSet<>();
 
+    /**
+     * inflates the layout for showing selected entrants
+     *
+     * @param inflater layout inflater used to inflate xml
+     * @param parent parent view group
+     * @param savedInstanceState saved instance bundle
+     * @return root view for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -52,6 +66,12 @@ public class SelectedFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_selected_list, parent, false);
     }
 
+    /**
+     * initializes firestore, buttons, and loads selected entrants
+     *
+     * @param view root view of this fragment
+     * @param savedInstanceState saved instance bundle
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -71,15 +91,21 @@ public class SelectedFragment extends Fragment {
 
         loadSelectedEntrants();
 
+        // handle manual notification message
         btnNotify.setOnClickListener(v -> {
             if (isSafe()) showNotificationDialog();
         });
 
+        // handle cancellation of selected entrants
         btnCancel.setOnClickListener(v -> {
             if (isSafe()) cancelSelectedEntrants();
         });
     }
 
+    /**
+     * loads selected entrants from firestore and updates ui in realtime
+     * attaches a snapshot listener so changes appear instantly
+     */
     private void loadSelectedEntrants() {
         if (!isSafe()) return;
         container.removeAllViews();
@@ -87,23 +113,23 @@ public class SelectedFragment extends Fragment {
         db.collection("events").document(eventId)
                 .collection("selected")
                 .addSnapshotListener((snapshot, e) -> {
+
                     if (!isSafe()) return;
 
                     container.removeAllViews();
                     selectedUserIds.clear();
 
                     if (snapshot == null || snapshot.isEmpty()) {
-                        if (!isSafe()) return;
-
+                        // show empty message when no selected entrants
                         TextView empty = new TextView(requireContext());
                         empty.setText("No selected entrants yet");
                         empty.setTextColor(requireContext().getColor(R.color.hinty));
                         empty.setPadding(16, 24, 16, 24);
-
                         container.addView(empty);
                         return;
                     }
 
+                    // for each selected entrant load profile info and build a card
                     for (DocumentSnapshot doc : snapshot) {
 
                         if (!isSafe()) return;
@@ -136,10 +162,13 @@ public class SelectedFragment extends Fragment {
                                             "Selected"
                                     );
                                 });
-                    }   // ← CLOSES the for-loop
-                });      // ← CLOSES addSnapshotListener
+                    }
+                });
     }
 
+    /**
+     * shows dialog allowing organizer to type custom notification message
+     */
     private void showNotificationDialog() {
         if (!isSafe()) return;
 
@@ -158,7 +187,7 @@ public class SelectedFragment extends Fragment {
 
             String msg = input.getText().toString().trim();
             if (msg.isEmpty())
-                msg = "You’ve been selected! Please sign up for the event.";
+                msg = "You’ve been selected! Please sign up for the event";
 
             sendNotificationToAllSelected(msg);
         });
@@ -167,6 +196,11 @@ public class SelectedFragment extends Fragment {
         builder.show();
     }
 
+    /**
+     * sends notification to all selected entrants whose notification preferences allow it
+     *
+     * @param message notification message to send
+     */
     private void sendNotificationToAllSelected(String message) {
         db.collection("events").document(eventId)
                 .collection("selected")
@@ -184,6 +218,7 @@ public class SelectedFragment extends Fragment {
 
                     java.util.List<String> userIds = new java.util.ArrayList<>();
 
+                    // respect per user preferences
                     for (DocumentSnapshot doc : snapshot) {
                         String userId = doc.getString("userId");
                         if (userId == null) continue;
@@ -191,7 +226,6 @@ public class SelectedFragment extends Fragment {
                         db.collection("profiles").document(userId)
                                 .get()
                                 .addOnSuccessListener(profile -> {
-
                                     if (!isSafe()) return;
 
                                     Boolean enabled = profile.getBoolean("notificationsEnabled");
@@ -201,6 +235,7 @@ public class SelectedFragment extends Fragment {
                                 });
                     }
 
+                    // small delay to wait for preference fetches
                     new android.os.Handler().postDelayed(() -> {
 
                         if (!isSafe()) return;
@@ -232,7 +267,7 @@ public class SelectedFragment extends Fragment {
                                                 public void onSuccess() {
                                                     if (isSafe())
                                                         Toast.makeText(getContext(),
-                                                                "Notification sent!",
+                                                                "Notification sent",
                                                                 Toast.LENGTH_SHORT).show();
                                                 }
 
@@ -256,6 +291,12 @@ public class SelectedFragment extends Fragment {
                 });
     }
 
+    /**
+     * extracts timestamp from firestore document and formats it
+     *
+     * @param doc firestore document snapshot containing timestamp
+     * @return formatted date string or "Unknown"
+     */
     private String extractTimestamp(DocumentSnapshot doc) {
         Object ts = doc.get("timestamp");
 
@@ -267,7 +308,15 @@ public class SelectedFragment extends Fragment {
         return "Unknown";
     }
 
-
+    /**
+     * adds a visual card representing one selected entrant
+     *
+     * @param userId id of entrant
+     * @param name entrant full name
+     * @param email entrant email
+     * @param joinDate selection date
+     * @param status selection status label
+     */
     private void addEntrantCard(String userId,
                                 String name,
                                 String email,
@@ -290,6 +339,7 @@ public class SelectedFragment extends Fragment {
         tvJoinDate.setText("Joined: " + joinDate);
         tvStatus.setText(status);
 
+        // update status color
         int colorRes;
         switch (status.toLowerCase()) {
             case "waiting":
@@ -311,24 +361,23 @@ public class SelectedFragment extends Fragment {
 
         tvStatus.getBackground().setTint(requireContext().getColor(colorRes));
 
-        // 🔥 Checkbox selection removed — always hide checkbox
+        // enable checkbox interaction
         cb.setVisibility(View.VISIBLE);
-
-        cb.setOnCheckedChangeListener(null); // avoid old listeners
+        cb.setOnCheckedChangeListener(null);
         cb.setChecked(selectedUserIds.contains(userId));
 
-        // Update selectedUserIds when user toggles checkbox
         cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                selectedUserIds.add(userId);
-            } else {
-                selectedUserIds.remove(userId);
-            }
+            if (isChecked) selectedUserIds.add(userId);
+            else selectedUserIds.remove(userId);
         });
 
         container.addView(card);
     }
 
+    /**
+     * opens confirmation dialog asking organizer if selected entrants
+     * should be moved from selected → cancelled
+     */
     private void cancelSelectedEntrants() {
         if (!isSafe()) return;
 
@@ -338,7 +387,7 @@ public class SelectedFragment extends Fragment {
         }
 
         if (selectedUserIds.isEmpty()) {
-            Toast.makeText(getContext(), "No entrants selected.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "No entrants selected", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -350,13 +399,17 @@ public class SelectedFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * performs batch firestore update to move selected entrants
+     * from selected → cancelled collection
+     */
     private void performCancellationBatch() {
         DocumentReference eventRef = db.collection("events").document(eventId);
         WriteBatch batch = db.batch();
 
-        // Copy to avoid concurrent modification issues later
         java.util.List<String> userIdsToNotify = new java.util.ArrayList<>(selectedUserIds);
 
+        // write selected → cancelled
         for (String userId : selectedUserIds) {
             DocumentReference selectedRef =
                     eventRef.collection("selected").document(userId);
@@ -375,11 +428,9 @@ public class SelectedFragment extends Fragment {
                 .addOnSuccessListener(unused -> {
                     if (isSafe()) {
                         Toast.makeText(getContext(),
-                                "Cancelled selected entrants.",
+                                "Cancelled selected entrants",
                                 Toast.LENGTH_SHORT).show();
                     }
-                    // Send cancellation notifications (this is only for automatic message)
-                    // sendCancellationNotifications(userIdsToNotify);
                 })
                 .addOnFailureListener(e -> {
                     if (isSafe())
@@ -389,75 +440,11 @@ public class SelectedFragment extends Fragment {
                 });
     }
 
-    private void sendCancellationNotifications(java.util.List<String> userIds) {
-        if (!isSafe() || userIds == null || userIds.isEmpty()) return;
-
-        // First load event name
-        db.collection("events").document(eventId)
-                .get()
-                .addOnSuccessListener(eventDoc -> {
-                    if (!isSafe()) return;
-
-                    String eventName = eventDoc.getString("name");
-                    if (eventName == null) eventName = "this event";
-
-                    String message = "Your selection for " + eventName +
-                            " was cancelled by the organizer.";
-
-                    // Respect per-user notification preferences
-                    java.util.List<String> enabledUserIds = new java.util.ArrayList<>();
-
-                    for (String userId : userIds) {
-                        db.collection("profiles").document(userId)
-                                .get()
-                                .addOnSuccessListener(profile -> {
-                                    if (!isSafe()) return;
-
-                                    Boolean enabled = profile.getBoolean("notificationsEnabled");
-                                    if (enabled == null) enabled = true;
-
-                                    if (enabled) {
-                                        enabledUserIds.add(profile.getId());
-                                    }
-                                });
-                    }
-
-                    // Give profile fetches a moment, then send via NotificationManager
-                    String finalEventName = eventName;
-                    new android.os.Handler().postDelayed(() -> {
-                        if (!isSafe()) return;
-
-                        if (enabledUserIds.isEmpty()) {
-                            // Silent: everyone turned off notifications
-                            return;
-                        }
-
-                        com.example.yellow.utils.NotificationManager.sendNotification(
-                                getContext(),
-                                eventId,
-                                finalEventName,
-                                message,
-                                "entrant_cancelled",
-                                enabledUserIds,
-                                new com.example.yellow.utils.NotificationManager.OnNotificationSentListener() {
-                                    @Override
-                                    public void onSuccess() {
-                                        // optional toast
-                                    }
-
-                                    @Override
-                                    public void onFailure(Exception e) {
-                                        if (isSafe()) {
-                                            Toast.makeText(getContext(),
-                                                    "Failed to send cancellation notices: " + e.getMessage(),
-                                                    Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                }
-                        );
-                    }, 500);
-                });
-    }
+    /**
+     * checks if fragment is in a valid lifecycle state for ui updates
+     *
+     * @return true if fragment is safe to interact with
+     */
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }
