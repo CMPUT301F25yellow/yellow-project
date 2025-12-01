@@ -1,6 +1,8 @@
 package com.example.yellow.ui.ManageEntrants;
 
 import android.app.AlertDialog;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.Button;
@@ -80,16 +82,11 @@ public class SelectedFragment extends Fragment {
 
     private void loadSelectedEntrants() {
         if (!isSafe()) return;
-
         container.removeAllViews();
-        selectedUserIds.clear();
 
         db.collection("events").document(eventId)
                 .collection("selected")
                 .addSnapshotListener((snapshot, e) -> {
-
-                    if (!isSafe()) return;
-
                     if (!isSafe()) return;
 
                     container.removeAllViews();
@@ -461,8 +458,6 @@ public class SelectedFragment extends Fragment {
                     }, 500);
                 });
     }
-
-
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }
