@@ -225,7 +225,7 @@ public class WaitingFragment extends Fragment {
             return;
         }
 
-        // 🔥 0. Check event capacity BEFORE drawing
+        // Check event capacity BEFORE drawing
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(eventDoc -> {
 
