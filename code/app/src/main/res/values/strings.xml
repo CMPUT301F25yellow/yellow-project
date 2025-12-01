@@ -40,7 +40,8 @@
     <!--For Create Event Activity-->
     <string name="upload_poster">Tap to upload poster</string>
     <string name="create_event">Create Event</string>
-    <string name="select_date">Event Dates</string>
+    <string name="select_registration_date">Registration Dates</string>
+    <string name="select_event_date">Event Dates</string>
     <string name="require_geolocation">Require Geolocation</string>
     <string name="track_entrant_location">Track entrant locations</string>
     <string name="start_date">Start Date</string>

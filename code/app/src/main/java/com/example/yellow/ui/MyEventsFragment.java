@@ -244,8 +244,8 @@ public class MyEventsFragment extends Fragment {
         inner.addView(nameView);
 
         String dateText = "";
-        if (event.getStartDate() != null) {
-            Date date = event.getStartDate().toDate();
+        if (event.getRegistrationStartDate() != null) {
+            Date date = event.getRegistrationStartDate().toDate();
             dateText = dateFormat.format(date);
         }
         if (event.getLocation() != null && !event.getLocation().isEmpty()) {
@@ -269,10 +269,10 @@ public class MyEventsFragment extends Fragment {
      * @return formatted string like "Nov 10, 2025 · Edmonton"
      */
     private String formatEventDetails(Event event) {
-        if (event.getStartDate() == null || event.getLocation() == null)
+        if (event.getRegistrationStartDate() == null || event.getLocation() == null)
             return "";
 
-        Date date = event.getStartDate().toDate();
+        Date date = event.getRegistrationStartDate().toDate();
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
         return sdf.format(date) + " · " + event.getLocation();
     }

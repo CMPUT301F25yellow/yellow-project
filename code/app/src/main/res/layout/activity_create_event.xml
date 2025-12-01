@@ -20,196 +20,93 @@
         android:layout_weight="1"
         android:background="@color/black">
 
-    <!-- App Bar -->
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/surface_dark">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/surface_dark"
-            app:titleTextColor="@color/white"
-            app:navigationIcon="@drawable/ic_arrow_back"
-            app:title="Create New Event"/>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <!-- Scrollable Content -->
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <LinearLayout
+        <!-- App Bar -->
+        <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:background="@color/surface_dark">
 
-            <!-- Poster Image Section -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/posterCard"
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/surface_dark"
-                app:cardCornerRadius="12dp"
-                app:strokeColor="@color/stroke_color"
-                app:strokeWidth="1dp"
-                app:cardUseCompatPadding="true"
-                app:cardPreventCornerOverlap="true">
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/surface_dark"
+                app:titleTextColor="@color/white"
+                app:navigationIcon="@drawable/ic_arrow_back"
+                app:title="Create New Event" />
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+        </com.google.android.material.appbar.AppBarLayout>
 
-                    <ImageView
-                        android:id="@+id/posterImageView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerCrop"
-                        android:background="@color/light_grey"/>
-
-                    <TextView
-                        android:id="@+id/uploadPosterText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
-                        android:text="@string/upload_poster"
-                        android:textColor="@color/light_grey_text"
-                        android:textSize="14sp"/>
-
-                    <ImageView
-                        android:id="@+id/uploadIcon"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_above="@id/uploadPosterText"
-                        android:layout_centerHorizontal="true"
-                        android:layout_marginBottom="8dp"
-                        android:src="@drawable/ic_upload"
-                        app:tint="@color/light_grey_text"/>
-
-                </RelativeLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Event Name -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/eventNameLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="@string/event_name"
-                android:textColorHint="@color/light_grey_text"
-                app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="@color/pink_bg"
-                app:hintTextColor="@color/pink_bg"
-                app:boxBackgroundMode="outline"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/eventNameInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:textColor="@color/white"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Description -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/descriptionLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="@string/description"
-                android:textColorHint="@color/light_grey_text"
-                app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="@color/pink_bg"
-                app:hintTextColor="@color/pink_bg"
-                app:boxBackgroundMode="outline"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/descriptionInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="textMultiLine"
-                    android:minLines="4"
-                    android:gravity="top"
-                    android:textColor="@color/white"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Location -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/locationLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="@string/location"
-                android:textColorHint="@color/light_grey_text"
-                app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="@color/pink_bg"
-                app:hintTextColor="@color/pink_bg"
-                app:boxBackgroundMode="outline"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/locationInput"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:textColor="@color/white"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Date Section -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/select_date"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp"
-                android:layout_marginTop="8dp"/>
+        <!-- Scrollable Content -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp">
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <!-- Start Date -->
+                <!-- Poster Image Section -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/posterCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="@color/surface_dark"
+                    app:cardCornerRadius="12dp"
+                    app:strokeColor="@color/stroke_color"
+                    app:strokeWidth="1dp"
+                    app:cardUseCompatPadding="true"
+                    app:cardPreventCornerOverlap="true">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <ImageView
+                            android:id="@+id/posterImageView"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:background="@color/light_grey" />
+
+                        <TextView
+                            android:id="@+id/uploadPosterText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerInParent="true"
+                            android:text="@string/upload_poster"
+                            android:textColor="@color/light_grey_text"
+                            android:textSize="14sp" />
+
+                        <ImageView
+                            android:id="@+id/uploadIcon"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_above="@id/uploadPosterText"
+                            android:layout_centerHorizontal="true"
+                            android:layout_marginBottom="8dp"
+                            android:src="@drawable/ic_upload"
+                            app:tint="@color/light_grey_text" />
+
+                    </RelativeLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Event Name -->
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/startDateLayout"
-                    android:layout_width="0dp"
+                    android:id="@+id/eventNameLayout"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:hint="@string/start_date"
+                    android:layout_marginBottom="16dp"
+                    android:hint="@string/event_name"
                     android:textColorHint="@color/light_grey_text"
                     app:boxBackgroundColor="@color/surface_dark"
                     app:boxStrokeColor="@color/pink_bg"
                     app:hintTextColor="@color/pink_bg"
-                    app:endIconMode="custom"
-                    app:endIconDrawable="@drawable/my_image"
-                    app:endIconTint="@color/pink_bg"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusTopStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
@@ -218,30 +115,25 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/startDateInput"
+                        android:id="@+id/eventNameInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:focusable="true"
-                        android:clickable="true"
-                        android:textColor="@color/white"/>
+                        android:inputType="text"
+                        android:textColor="@color/white" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- End Date -->
+                <!-- Description -->
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/endDateLayout"
-                    android:layout_width="0dp"
+                    android:id="@+id/descriptionLayout"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:hint="@string/end_date"
+                    android:layout_marginBottom="16dp"
+                    android:hint="@string/description"
                     android:textColorHint="@color/light_grey_text"
                     app:boxBackgroundColor="@color/surface_dark"
                     app:boxStrokeColor="@color/pink_bg"
                     app:hintTextColor="@color/pink_bg"
-                    app:endIconMode="custom"
-                    app:endIconDrawable="@drawable/my_image"
-                    app:endIconTint="@color/pink_bg"
                     app:boxBackgroundMode="outline"
                     app:boxCornerRadiusTopStart="12dp"
                     app:boxCornerRadiusTopEnd="12dp"
@@ -250,178 +142,368 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/endDateInput"
+                        android:id="@+id/descriptionInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:focusable="true"
-                        android:clickable="true"
-                        android:textColor="@color/white"/>
+                        android:inputType="textMultiLine"
+                        android:minLines="4"
+                        android:gravity="top"
+                        android:textColor="@color/white" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-            </LinearLayout>
-
-            <!-- Max Entrants -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/maxEntrantsLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="@string/max_entrants"
-                android:textColorHint="@color/light_grey_text"
-                app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="@color/pink_bg"
-                app:hintTextColor="@color/pink_bg"
-                app:boxBackgroundMode="outline"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/maxEntrantsInput"
+                <!-- Location -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/locationLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:textColor="@color/white"/>
+                    android:layout_marginBottom="16dp"
+                    android:hint="@string/location"
+                    android:textColorHint="@color/light_grey_text"
+                    app:boxBackgroundColor="@color/surface_dark"
+                    app:boxStrokeColor="@color/pink_bg"
+                    app:hintTextColor="@color/pink_bg"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/locationInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/white" />
 
-            <!-- Max Participants (required) -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/maxParticipantsLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="Maximum Participants"
-                android:textColorHint="@color/light_grey_text"
-                app:boxBackgroundColor="@color/surface_dark"
-                app:boxStrokeColor="@color/pink_bg"
-                app:hintTextColor="@color/pink_bg"
-                app:boxBackgroundMode="outline"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/maxParticipantsInput"
-                    android:layout_width="match_parent"
+                <!-- REGISTRATION DATE SECTION -->
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:textColor="@color/white"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Geolocation Switch -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="@color/surface_dark"
-                app:cardCornerRadius="12dp"
-                app:strokeColor="@color/stroke_color"
-                app:strokeWidth="1dp">
+                    android:text="@string/select_registration_date"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:gravity="center_vertical">
+                    android:layout_marginBottom="16dp">
 
-                    <LinearLayout
+                    <!-- Registration Start Date -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/registrationStartLayout"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:layout_marginEnd="8dp"
+                        android:hint="@string/start_date"
+                        android:textColorHint="@color/light_grey_text"
+                        app:boxBackgroundColor="@color/surface_dark"
+                        app:boxStrokeColor="@color/pink_bg"
+                        app:hintTextColor="@color/pink_bg"
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/my_image"
+                        app:endIconTint="@color/pink_bg"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/registrationStartInput"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/require_geolocation"
-                            android:textColor="@color/white"
-                            android:textSize="16sp"/>
+                            android:focusable="true"
+                            android:clickable="true"
+                            android:textColor="@color/white" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/track_entrant_location"
-                            android:textColor="@color/light_grey_text"
-                            android:textSize="12sp"
-                            android:layout_marginTop="4dp"/>
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    </LinearLayout>
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/geolocationSwitch"
-                        android:layout_width="wrap_content"
+                    <!-- Registration End Date -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/registrationEndLayout"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        app:thumbTint="@color/white"
-                        app:track="@drawable/switch_track_oval"/>
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:hint="@string/end_date"
+                        android:textColorHint="@color/light_grey_text"
+                        app:boxBackgroundColor="@color/surface_dark"
+                        app:boxStrokeColor="@color/pink_bg"
+                        app:hintTextColor="@color/pink_bg"
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/my_image"
+                        app:endIconTint="@color/pink_bg"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/registrationEndInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:focusable="true"
+                            android:clickable="true"
+                            android:textColor="@color/white" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
 
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- QR Preview (hidden until event is created) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/qrCard"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="@color/surface_dark"
-                app:cardCornerRadius="12dp"
-                app:strokeColor="@color/stroke_color"
-                app:strokeWidth="1dp">
+                <!-- EVENT DATE SECTION -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/select_event_date"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center_horizontal">
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
 
-                    <TextView
-                        android:id="@+id/qrTitle"
-                        android:layout_width="wrap_content"
+                    <!-- Event Start Date -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/startDateLayout"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="Promotional QR Code"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:hint="@string/start_date"
+                        android:textColorHint="@color/light_grey_text"
+                        app:boxBackgroundColor="@color/surface_dark"
+                        app:boxStrokeColor="@color/pink_bg"
+                        app:hintTextColor="@color/pink_bg"
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/my_image"
+                        app:endIconTint="@color/pink_bg"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
-                    <ImageView
-                        android:id="@+id/qrImage"
-                        android:layout_width="200dp"
-                        android:layout_height="200dp"
-                        android:contentDescription="@string/qr_code"
-                        android:background="@color/light_grey"
-                        android:scaleType="fitCenter"
-                        android:padding="8dp"/>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/startDateInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:focusable="true"
+                            android:clickable="true"
+                            android:textColor="@color/white" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Event End Date -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/endDateLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:hint="@string/end_date"
+                        android:textColorHint="@color/light_grey_text"
+                        app:boxBackgroundColor="@color/surface_dark"
+                        app:boxStrokeColor="@color/pink_bg"
+                        app:hintTextColor="@color/pink_bg"
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/my_image"
+                        app:endIconTint="@color/pink_bg"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/endDateInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:focusable="true"
+                            android:clickable="true"
+                            android:textColor="@color/white" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
 
-            </com.google.android.material.card.MaterialCardView>
+                <!-- Max Entrants -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/maxEntrantsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="@string/max_entrants"
+                    android:textColorHint="@color/light_grey_text"
+                    app:boxBackgroundColor="@color/surface_dark"
+                    app:boxStrokeColor="@color/pink_bg"
+                    app:hintTextColor="@color/pink_bg"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
-            <!-- Create Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/createEventButton"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:text="@string/create_event"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                app:backgroundTint="@color/pink_bg"
-                app:cornerRadius="30dp"
-                app:elevation="4dp"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/maxEntrantsInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textColor="@color/white" />
 
-        </LinearLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-    </androidx.core.widget.NestedScrollView>
+                <!-- Max Participants (required) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/maxParticipantsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="Maximum Participants"
+                    android:textColorHint="@color/light_grey_text"
+                    app:boxBackgroundColor="@color/surface_dark"
+                    app:boxStrokeColor="@color/pink_bg"
+                    app:hintTextColor="@color/pink_bg"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/maxParticipantsInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textColor="@color/white" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Geolocation Switch -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    app:cardBackgroundColor="@color/surface_dark"
+                    app:cardCornerRadius="12dp"
+                    app:strokeColor="@color/stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/require_geolocation"
+                                android:textColor="@color/white"
+                                android:textSize="16sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/track_entrant_location"
+                                android:textColor="@color/light_grey_text"
+                                android:textSize="12sp"
+                                android:layout_marginTop="4dp" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/geolocationSwitch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:thumbTint="@color/white"
+                            app:track="@drawable/switch_track_oval" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- QR Preview (hidden until event is created) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/qrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/surface_dark"
+                    app:cardCornerRadius="12dp"
+                    app:strokeColor="@color/stroke_color"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:gravity="center_horizontal">
+
+                        <TextView
+                            android:id="@+id/qrTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Promotional QR Code"
+                            android:textColor="@color/white"
+                            android:textSize="16sp"
+                            android:layout_marginBottom="8dp" />
+
+                        <ImageView
+                            android:id="@+id/qrImage"
+                            android:layout_width="200dp"
+                            android:layout_height="200dp"
+                            android:contentDescription="@string/qr_code"
+                            android:background="@color/light_grey"
+                            android:scaleType="fitCenter"
+                            android:padding="8dp" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Create Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/createEventButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:text="@string/create_event"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    app:backgroundTint="@color/pink_bg"
+                    app:cornerRadius="30dp"
+                    app:elevation="4dp" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

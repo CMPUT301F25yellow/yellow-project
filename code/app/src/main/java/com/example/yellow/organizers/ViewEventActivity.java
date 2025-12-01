@@ -2,7 +2,6 @@ package com.example.yellow.organizers;
 
 import static android.content.ContentValues.TAG;
 
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -21,14 +20,12 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.yellow.R;
 import com.example.yellow.organizers.fragments.EventPosterUpdateFragment;
-import com.example.yellow.ui.ManageEntrants.ManageEntrantsActivity;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
 import android.view.ViewGroup;
 
 public class ViewEventActivity extends AppCompatActivity {
@@ -143,9 +140,9 @@ public class ViewEventActivity extends AppCompatActivity {
 
         // --- Populate Header ---
         tvEventName.setText(event.getName()); // Corrected from event.getName()
-        if (event.getStartDate() != null) {
+        if (event.getRegistrationStartDate() != null) {
             android.text.format.DateFormat df = new android.text.format.DateFormat();
-            tvEventDate.setText(df.format("MMM dd, yyyy", event.getStartDate().toDate()));
+            tvEventDate.setText(df.format("MMM dd, yyyy", event.getRegistrationStartDate().toDate()));
         }
 
         // --- Set up ViewPager Adapter ---

@@ -1,7 +1,6 @@
 package com.example.yellow.ui;
 
 import android.content.Context;
-import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,10 +19,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
-import com.example.yellow.MainActivity;
 import com.example.yellow.R;
 import com.example.yellow.organizers.Event;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -204,17 +201,17 @@ public class EventDetailsFragment extends Fragment {
                                 });
 
                         // Format and display date range
-                        if (event.getStartDate() != null) {
+                        if (event.getRegistrationStartDate() != null) {
                             SimpleDateFormat monthDayFormat = new SimpleDateFormat("MMMM dd", Locale.getDefault());
                             SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
 
-                            if (event.getEndDate() != null && !event.getStartDate().equals(event.getEndDate())) {
-                                String startDate = monthDayFormat.format(event.getStartDate().toDate()) + ", " + yearFormat.format(event.getStartDate().toDate());
-                                String endDate = monthDayFormat.format(event.getEndDate().toDate()) + ", " + yearFormat.format(event.getEndDate().toDate());
+                            if (event.getRegistrationEndDate() != null && !event.getRegistrationStartDate().equals(event.getRegistrationEndDate())) {
+                                String startDate = monthDayFormat.format(event.getRegistrationStartDate().toDate()) + ", " + yearFormat.format(event.getRegistrationStartDate().toDate());
+                                String endDate = monthDayFormat.format(event.getRegistrationEndDate().toDate()) + ", " + yearFormat.format(event.getRegistrationEndDate().toDate());
                                 eventDateTime.setText(String.format("%s - %s ",startDate, endDate));
 
                             } else {
-                                eventDateTime.setText(monthDayFormat.format(event.getStartDate().toDate()));
+                                eventDateTime.setText(monthDayFormat.format(event.getRegistrationStartDate().toDate()));
                             }
                         }
 
