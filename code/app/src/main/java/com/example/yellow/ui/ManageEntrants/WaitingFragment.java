@@ -29,7 +29,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-//author: Waylon
+
+/**
+ * Fragment for displaying a list of waiting entrants.
+ * @author Waylon Wang - waylon1
+ */
 public class WaitingFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -279,6 +283,11 @@ public class WaitingFragment extends Fragment {
                             });
                 });
     }
+
+    /**
+     * Actually runs the draw.
+     * @param count
+     */
     private void actuallyRunDraw(int count) {
         // 1. Shuffle a copy of current waiting entrants
         List<String> entrantsCopy = new ArrayList<>(currentWaitingEntrants);

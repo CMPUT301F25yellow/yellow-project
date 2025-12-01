@@ -18,6 +18,10 @@ import com.example.yellow.R;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+/**
+ * Activity for managing entrants of an event.
+ * @author Waylon Wang - waylon1
+ */
 public class ManageEntrantsActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;

@@ -20,6 +20,10 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.yellow.R;
 import com.example.yellow.organizers.EventViewModel;
 
+/**
+ * Fragment for displaying the QR code after creating an event.
+ * @author Kien Tran - kht
+ */
 public class QrFragmentAfterCreateEvent extends Fragment {
 
     private ImageView qrImageView;
@@ -62,6 +66,11 @@ public class QrFragmentAfterCreateEvent extends Fragment {
         return view;
     }
 
+    /**
+     * Displays the QR code from the provided URI.
+     * If the URI is null or empty, a placeholder image is shown.
+     * @param qrDataUri: URI of the QR code image
+     */
     private void displayQrCode(@Nullable String qrDataUri) {
         if (qrDataUri == null || qrDataUri.trim().isEmpty()) {
             // Handle the case where the QR code data is missing

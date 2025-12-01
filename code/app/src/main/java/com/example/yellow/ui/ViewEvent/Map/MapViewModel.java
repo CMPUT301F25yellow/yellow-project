@@ -12,6 +12,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ViewModel for the MapFragment.
+ * @author Kien Tran - kht
+ */
 public class MapViewModel extends ViewModel {
     private static final String TAG = "MapViewModel";
 
@@ -21,10 +25,18 @@ public class MapViewModel extends ViewModel {
     private final MutableLiveData<List<WaitingUser>> entrantsWithLocation = new MutableLiveData<>();
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
+    /**
+     * Returns the LiveData for the list of entrants with their locations.
+     * @return The LiveData for the list of entrants with their locations.
+     */
     public LiveData<List<WaitingUser>> getEntrantsWithLocation() {
         return entrantsWithLocation;
     }
 
+    /**
+     * Returns the LiveData for error messages.
+     * @return The LiveData for error messages.
+     */
     public LiveData<String> getErrorMessage() {
         return errorMessage;
     }

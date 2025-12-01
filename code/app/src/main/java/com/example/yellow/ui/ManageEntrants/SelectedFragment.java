@@ -34,7 +34,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
-//author: waylon
+
+/**
+ * Fragment for displaying a list of selected entrants.
+ * @author Waylon Wang - waylon1
+ */
 public class SelectedFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -80,6 +84,10 @@ public class SelectedFragment extends Fragment {
         });
     }
 
+    /**
+     * Loads the list of selected entrants from Firestore.
+     * If there are no selected entrants, a message is displayed.
+     */
     private void loadSelectedEntrants() {
         if (!isSafe()) return;
         container.removeAllViews();
@@ -140,6 +148,9 @@ public class SelectedFragment extends Fragment {
                 });      // ← CLOSES addSnapshotListener
     }
 
+    /**
+     * Shows a dialog for notifying selected entrants.
+     */
     private void showNotificationDialog() {
         if (!isSafe()) return;
 
@@ -167,6 +178,10 @@ public class SelectedFragment extends Fragment {
         builder.show();
     }
 
+    /**
+     * Sends a notification to all selected entrants.
+     * @param message
+     */
     private void sendNotificationToAllSelected(String message) {
         db.collection("events").document(eventId)
                 .collection("selected")
@@ -256,6 +271,11 @@ public class SelectedFragment extends Fragment {
                 });
     }
 
+    /**
+     * Extracts the timestamp from a Firestore document.
+     * @param doc
+     * @return the timestamp as a string
+     */
     private String extractTimestamp(DocumentSnapshot doc) {
         Object ts = doc.get("timestamp");
 
@@ -267,7 +287,14 @@ public class SelectedFragment extends Fragment {
         return "Unknown";
     }
 
-
+    /**
+     * Adds a card for an entrant.
+     * @param userId
+     * @param name
+     * @param email
+     * @param joinDate
+     * @param status
+     */
     private void addEntrantCard(String userId,
                                 String name,
                                 String email,
@@ -311,7 +338,7 @@ public class SelectedFragment extends Fragment {
 
         tvStatus.getBackground().setTint(requireContext().getColor(colorRes));
 
-        // 🔥 Checkbox selection removed — always hide checkbox
+        // Checkbox selection removed — always hide checkbox
         cb.setVisibility(View.VISIBLE);
 
         cb.setOnCheckedChangeListener(null); // avoid old listeners
@@ -329,6 +356,10 @@ public class SelectedFragment extends Fragment {
         container.addView(card);
     }
 
+    /**
+     * Cancels the selected entrants.
+     * If there are no selected entrants, a message is displayed.
+     */
     private void cancelSelectedEntrants() {
         if (!isSafe()) return;
 
@@ -350,6 +381,9 @@ public class SelectedFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * Performs the cancellation batch.
+     */
     private void performCancellationBatch() {
         DocumentReference eventRef = db.collection("events").document(eventId);
         WriteBatch batch = db.batch();
@@ -389,6 +423,10 @@ public class SelectedFragment extends Fragment {
                 });
     }
 
+    /**
+     * Sends cancellation notifications to all selected entrants.
+     * @param userIds
+     */
     private void sendCancellationNotifications(java.util.List<String> userIds) {
         if (!isSafe() || userIds == null || userIds.isEmpty()) return;
 
@@ -458,6 +496,11 @@ public class SelectedFragment extends Fragment {
                     }, 500);
                 });
     }
+
+    /**
+     * Checks if the fragment is safe to use.
+     * @return true if safe, false otherwise
+     */
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }

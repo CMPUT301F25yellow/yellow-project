@@ -9,6 +9,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.example.yellow.R;
 
+/**
+ * Placeholder fragment for the settings screen.
+ */
 public class SettingsFragment extends Fragment {
     @Nullable
     @Override

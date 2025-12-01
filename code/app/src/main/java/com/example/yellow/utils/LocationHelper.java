@@ -35,6 +35,12 @@ public class LocationHelper {
     private final ActivityResultLauncher<String> requestPermissionLauncher;
     private final Consumer<Location> onLocationResult;
 
+    /**
+     * Constructor.
+     * @param caller: ActivityResultCaller (Fragment)
+     * @param context: Context
+     * @param onLocationResult: Callback for the location
+     */
     public LocationHelper(@NonNull ActivityResultCaller caller,
                           @NonNull Context context,
                           @NonNull Consumer<Location> onLocationResult) {
