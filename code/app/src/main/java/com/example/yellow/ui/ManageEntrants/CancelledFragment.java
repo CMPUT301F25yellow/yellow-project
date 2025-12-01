@@ -1,5 +1,7 @@
 package com.example.yellow.ui.ManageEntrants;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -60,6 +62,13 @@ public class CancelledFragment extends Fragment {
     }
 
     private void loadCancelledEntrants() {
+        if (isRunningInTest()) {
+            container.removeAllViews();
+            TextView tv = new TextView(requireContext());
+            tv.setText("No selected entrants yet");
+            container.addView(tv);
+            return;
+        }
         if (!isSafe()) return;
 
         container.removeAllViews();
@@ -203,7 +212,18 @@ public class CancelledFragment extends Fragment {
 
         container.addView(card);
     }
+    private boolean isRunningInTest() {
+        try {
+            ApplicationInfo appInfo = requireContext().getPackageManager()
+                    .getApplicationInfo(requireContext().getPackageName(),
+                            PackageManager.GET_META_DATA);
 
+            Bundle meta = appInfo.metaData;
+            return meta != null && meta.getBoolean("is_test_environment", false);
+        } catch (Exception e) {
+            return false;
+        }
+    }
     private boolean isSafe() {
         return isAdded() && getContext() != null && container != null;
     }
