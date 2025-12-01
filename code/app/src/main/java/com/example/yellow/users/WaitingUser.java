@@ -2,6 +2,11 @@ package com.example.yellow.users;
 
 import com.google.firebase.firestore.FieldValue;
 
+/**
+ * Represents a waiting user in the waiting room, including their name, location, and timestamp.
+ * Created to implement the Geolocation feature
+ * @author Kien Tran - kht
+ */
 public class WaitingUser {
     public String userId;
     public String eventId;
@@ -9,7 +14,7 @@ public class WaitingUser {
     private String name;
     private Double latitude;
     private Double longitude;
-    // Add any other fields from your user profile, like profileImageUrl
+
 
     public WaitingUser() {}
 

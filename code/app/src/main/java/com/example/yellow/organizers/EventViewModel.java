@@ -5,6 +5,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * ViewModel for the EventActivity.
+ * @author Kien Tran - kht
+ */
 public class EventViewModel extends ViewModel {
 
     private final MutableLiveData<Event> _event = new MutableLiveData<>();
@@ -12,6 +16,10 @@ public class EventViewModel extends ViewModel {
         return _event;
     }
 
+    /**
+     * Loads the event from Firestore so that it can be displayed.
+     * @param eventId
+     */
     public void loadEvent(String eventId) {
         if (eventId == null || eventId.isEmpty()) {
             _event.postValue(null);

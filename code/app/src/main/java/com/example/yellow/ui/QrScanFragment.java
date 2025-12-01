@@ -40,7 +40,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Fragment that handles the QR code scanning screen layout and appearance.
+ * Fragment for scanning QR codes to view event details.
+ * @author Kien Tran - kht
  */
 public class QrScanFragment extends Fragment {
 
@@ -207,7 +208,11 @@ public class QrScanFragment extends Fragment {
         }
     }
 
-    // Close camera when leaving fragment
+    /**
+     * Cleans up resources when the fragment is destroyed.
+     * This includes shutting down the camera executor and closing the scanner.
+     * @see Fragment#onDestroyView()
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();

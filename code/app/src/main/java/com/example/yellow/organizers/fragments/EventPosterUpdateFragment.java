@@ -31,6 +31,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+/**
+ * Fragment for updating the poster image of an event.
+ * @author Kien Tran - kht
+ */
 public class EventPosterUpdateFragment extends DialogFragment {
 
     private ImageView posterImageView;
@@ -39,6 +43,11 @@ public class EventPosterUpdateFragment extends DialogFragment {
     private EventViewModel eventViewModel;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
 
+    /**
+     * Factory method to create a new instance of this fragment.
+     * @param eventId
+     * @return
+     */
     public static EventPosterUpdateFragment newInstance(String eventId) {
         EventPosterUpdateFragment fragment = new EventPosterUpdateFragment();
         Bundle args = new Bundle();
@@ -46,6 +55,7 @@ public class EventPosterUpdateFragment extends DialogFragment {
         fragment.setArguments(args);
         return fragment;
     }
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -84,6 +94,10 @@ public class EventPosterUpdateFragment extends DialogFragment {
         return view;
     }
 
+    /**
+     * Called when the fragment is visible to the user and actively running.
+     * This is generally tied to Activity.onResume of the containing Activity's lifecycle.
+     */
     @Override
     public void onStart() {
         super.onStart();
@@ -98,6 +112,9 @@ public class EventPosterUpdateFragment extends DialogFragment {
     }
 
 
+    /**
+     * Initializes the image picker launcher.
+     */
     private void initializeImagePicker() {
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -112,6 +129,10 @@ public class EventPosterUpdateFragment extends DialogFragment {
         );
     }
 
+    /**
+     * Updates the poster image of the event.
+     * @param newImageUri
+     */
     private void updatePoster(Uri newImageUri) {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(getContext(), "Error: Event ID is missing.", Toast.LENGTH_SHORT).show();
@@ -221,7 +242,11 @@ public class EventPosterUpdateFragment extends DialogFragment {
         }
     }
 
-
+    /**
+     * Sets the image from a data URI.
+     * @param view
+     * @param dataUri
+     */
     private void setImageFromDataUri(@Nullable ImageView view, @Nullable String dataUri) {
         // This method is fine as is
         if (view == null || dataUri == null || dataUri.isEmpty()) return;

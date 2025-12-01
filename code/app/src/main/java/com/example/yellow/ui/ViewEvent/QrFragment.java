@@ -15,10 +15,19 @@ import androidx.fragment.app.Fragment;
 import com.example.yellow.R;
 import com.example.yellow.organizers.ViewEventActivity;
 
+/**
+ * Fragment for displaying a QR code.
+ * @author Kien Tran - kht
+ */
 public class QrFragment extends Fragment {
 
     private ImageView qrImage;
 
+    /**
+     * Called to have the fragment instantiate its user interface view.
+     * @param savedInstanceState If the fragment is being re-created from
+     * a previous saved state, this is the state.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +55,10 @@ public class QrFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Refreshes the QR code image.
+     * This is called when the event is loaded from Firestore.
+     */
     private void refreshQr() {
         ViewEventActivity parent = (ViewEventActivity) getActivity();
         if (parent == null) return;
@@ -58,6 +71,10 @@ public class QrFragment extends Fragment {
         }
     }
 
+    /**
+     * Displays the QR code image.
+     * @param dataUri The data URI of the QR code image.
+     */
     private void displayQr(String dataUri) {
         try {
             String base64 = dataUri.substring(dataUri.indexOf(",") + 1);

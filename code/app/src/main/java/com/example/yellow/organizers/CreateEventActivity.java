@@ -64,6 +64,7 @@ import java.util.Locale;
  * <li>Writes the deep link and QR image back to the same Event document.</li>
  * <li>Finishes the Activity (returns to the previous screen).</li>
  * </ol>
+ * @author Kien Tran - kht
  */
 public class CreateEventActivity extends AppCompatActivity {
 

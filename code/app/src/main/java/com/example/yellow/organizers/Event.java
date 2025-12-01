@@ -12,6 +12,7 @@ import java.util.Map;
 
 /**
  * This class represents an Event object that is stored in Firestore.
+ * @author Kien Tran - kht
  */
 public class Event {
 
